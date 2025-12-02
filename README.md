@@ -24,7 +24,7 @@
 </p>
 
 > [!NOTE]
-> Credentials are stored locally and never leave your machine. They are encrypted using Electron's safeStorage (OS-level credential storage) and optionally with an additional AES-256-GCM layer derived from your PIN - [View Storage Code](https://github.com/6E6B/voxel/blob/main/src/main/modules/system/StorageService.ts)
+> Credentials are stored locally and never leave your machine. They are encrypted using Electron's safeStorage (OS-level credential storage) and optionally with an additional AES-256-GCM layer derived from your PIN - [View Code](https://github.com/6E6B/voxel/blob/main/src/main/modules/system/StorageService.ts)
 
 ## Features
 
