@@ -93,28 +93,28 @@ export const CollectionsSection: React.FC<CollectionsSectionProps> = ({
         )}
         <div ref={scrollRef} className="overflow-x-auto pb-2 scrollbar-hide">
           <div className="flex gap-3 px-1">
-            {isLoading
-              ? Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className="w-[calc(25%-9px)] shrink-0">
-                    <SkeletonSquareCard />
-                  </div>
-                ))
-              : collections.slice(0, 6).map((item) => {
-                  const isLimited = item.cssTag === 'limited' || item.cssTag === 'limited-unique'
-                  const isLimitedUnique = item.cssTag === 'limited-unique'
-                  const isSoundHat = SOUND_HAT_IDS.includes(item.id)
-                  return (
-                    <div key={item.id} className="w-[calc(25%-9px)] shrink-0">
-                      <CollectionItemCard
-                        item={item}
-                        isLimited={isLimited}
-                        isLimitedUnique={isLimitedUnique}
-                        isSoundHat={isSoundHat}
-                        onItemClick={onItemClick}
-                      />
-                    </div>
-                  )
-                })}
+        {isLoading
+          ? Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="w-[calc(25%-9px)] shrink-0">
+                <SkeletonSquareCard />
+              </div>
+            ))
+          : collections.slice(0, 6).map((item) => {
+              const isLimited = item.cssTag === 'limited' || item.cssTag === 'limited-unique'
+              const isLimitedUnique = item.cssTag === 'limited-unique'
+              const isSoundHat = SOUND_HAT_IDS.includes(item.id)
+              return (
+                <div key={item.id} className="w-[calc(25%-9px)] shrink-0">
+                  <CollectionItemCard
+                    item={item}
+                    isLimited={isLimited}
+                    isLimitedUnique={isLimitedUnique}
+                    isSoundHat={isSoundHat}
+                    onItemClick={onItemClick}
+                  />
+                </div>
+              )
+            })}
           </div>
         </div>
       </div>

@@ -53,6 +53,7 @@ export class RobloxGameService {
       url: `https://apis.roblox.com/explore-api/v1/get-sorts?sessionId=${sessionId}&gameSortsContext=GamesDefaultSorts`
     })
 
+    // Handle different response structures
     let rawSorts: any[] = []
     if (result.sorts && Array.isArray(result.sorts)) {
       rawSorts = result.sorts
@@ -62,10 +63,11 @@ export class RobloxGameService {
       rawSorts = result
     }
 
+    // Filter out non-game sorts (e.g. Filters)
     const gameSorts = rawSorts.filter((s: any) => s.contentType === 'Games' || !s.contentType)
 
     return gameSorts.map((s: any) => ({
-      token: s.sortId || s.token || s.id,
+      token: s.sortId || s.token || s.id, // Ensure we capture the ID
       name: s.sortDisplayName || s.name || s.displayName || 'Unknown',
       displayName: s.sortDisplayName || s.displayName || s.name || 'Unknown'
     }))
@@ -104,6 +106,7 @@ export class RobloxGameService {
 
     if (!result.searchResults || result.searchResults.length === 0) return []
 
+    // Filter for groups that contain games
     const gameGroups = result.searchResults.filter(
       (g: any) =>
         (g.contentGroupType === 'Game' || g.contentGroupType === 'Games') &&
@@ -115,28 +118,35 @@ export class RobloxGameService {
       return []
     }
 
+    // Flatten all games from all matching groups
     const allGames = gameGroups.flatMap((group: any) => group.contents)
 
+    // Filter out invalid games (no universeId)
     const validGames = allGames.filter((g: any) => !!g.universeId)
 
+    // Get unique universe IDs to avoid duplicates if same game appears multiple times
     const universeIds = [...new Set(validGames.map((g: any) => g.universeId))] as number[]
 
     return this.hydrateGames(universeIds, validGames)
   }
 
+  // Helper to hydrate games with details and thumbnails
   private static async hydrateGames(universeIds: number[], initialData: any[]) {
     if (universeIds.length === 0) return []
 
+    // Chunk requests if needed
     const chunk = (arr: any[], size: number) =>
       Array.from({ length: Math.ceil(arr.length / size) }, (_, i) =>
         arr.slice(i * size, i * size + size)
       )
 
+    // 1. Get Details
     let detailsMap: Record<number, GameDetails> = {}
 
     try {
       const chunks = chunk(universeIds, 50)
 
+      // Run sequentially instead of Promise.all to avoid 429s
       for (const ids of chunks) {
         try {
           const detailsResult = await request(z.object({ data: z.array(gameDetailsSchema) }), {
@@ -150,16 +160,19 @@ export class RobloxGameService {
         } catch (err: any) {
           console.error('Failed to fetch game details chunk', err)
         }
+        // Small delay between chunks
         await new Promise((resolve) => setTimeout(resolve, 100))
       }
     } catch (e) {
       console.error('Failed to fetch game details', e)
     }
 
+    // 2. Get Thumbnails
     let thumbnailsMap: Record<number, string> = {}
 
     try {
       const chunks = chunk(universeIds, 50)
+      // Also run sequentially
       for (const ids of chunks) {
         try {
           const thumbResult = await request(z.object({ data: z.array(gameThumbnailSchema) }), {
@@ -181,6 +194,7 @@ export class RobloxGameService {
       console.error('Failed to fetch game thumbnails', e)
     }
 
+    // 3. Get Votes (only if we don't have initial data)
     let votesMap: Record<number, { up: number; down: number }> = {}
     if (initialData.length === 0) {
       try {
@@ -206,7 +220,9 @@ export class RobloxGameService {
       }
     }
 
+    // If initialData is empty (like when fetching by Place ID), we need to build it from detailsMap
     if (initialData.length === 0) {
+      // Create entries from detailsMap
       initialData = Object.values(detailsMap).map((d) => ({
         universeId: d.id,
         name: d.name,
@@ -218,6 +234,7 @@ export class RobloxGameService {
       }))
     }
 
+    // Merge
     return initialData.map((g: any) => {
       const d = detailsMap[g.universeId]
       const thumb = thumbnailsMap[g.universeId]
@@ -230,7 +247,7 @@ export class RobloxGameService {
         creatorName: d?.creator?.name || 'Unknown',
         creatorId: d?.creator?.id?.toString() || '',
         playing: d?.playing || g.playerCount || 0,
-        visits: d?.visits || g.totalVisits || 0,
+        visits: d?.visits || g.totalVisits || 0, // OmniSearch might return totalVisits
         maxPlayers: d?.maxPlayers || 0,
         genre: d?.genre || 'Unknown',
         description: d?.description || g.description || '',
@@ -247,8 +264,10 @@ export class RobloxGameService {
   static async getGamesByPlaceIds(placeIds: string[], cookie?: string) {
     if (!placeIds || placeIds.length === 0) return []
 
+    // 1. Get Universe IDs from Place IDs
     let universeIds: number[] = []
 
+    // Chunk requests
     const chunk = (arr: any[], size: number) =>
       Array.from({ length: Math.ceil(arr.length / size) }, (_, i) =>
         arr.slice(i * size, i * size + size)
@@ -261,7 +280,7 @@ export class RobloxGameService {
           const result = await request(z.array(placeDetailsSchema), {
             url: `https://games.roblox.com/v1/games/multiget-place-details?placeIds=${ids.join(',')}`,
             headers: { accept: 'application/json' },
-            cookie
+            cookie // Use cookie if available
           })
           if (result) {
             result.forEach((item) => {
@@ -277,6 +296,7 @@ export class RobloxGameService {
       return []
     }
 
+    // 2. Hydrate Games
     return this.hydrateGames(universeIds, [])
   }
 
@@ -364,9 +384,12 @@ export class RobloxGameService {
 
   static async getRegionFromAddress(address: string) {
     let cleanIp = address
+    // Handle IPv4 with port
     if (address.includes('.') && address.includes(':')) {
       cleanIp = address.split(':')[0]
-    } else if (address.startsWith('[') && address.includes(']:')) {
+    }
+    // Handle IPv6 with port ([ip]:port)
+    else if (address.startsWith('[') && address.includes(']:')) {
       const match = address.match(/^\[(.*?)\]/)
       if (match) cleanIp = match[1]
     }
@@ -395,6 +418,7 @@ export class RobloxGameService {
   }
 
   static async getRegionsBatch(addresses: string[]) {
+    // 1. Normalize and Deduplicate
     const uniqueIps = [
       ...new Set(
         addresses.map((addr) => {
@@ -408,7 +432,11 @@ export class RobloxGameService {
       )
     ]
 
+    // 2. Create IP to region map
     const ipToRegion: Map<string, string> = new Map()
+
+    // 3. Fetch all IPs in batches
+    // Chunk into 100s (API limit)
     const chunks: string[][] = []
     for (let i = 0; i < uniqueIps.length; i += 100) {
       chunks.push(uniqueIps.slice(i, i + 100))
@@ -447,9 +475,11 @@ export class RobloxGameService {
       } catch (e) {
         console.error('Batch IP lookup failed', e)
       }
+      // Small delay to be nice to the API if we have multiple chunks
       if (chunks.length > 1) await new Promise((r) => setTimeout(r, 1000))
     }
 
+    // 4. Construct Result
     const result: Record<string, string> = {}
     addresses.forEach((addr) => {
       let cleanIp = addr
@@ -472,6 +502,7 @@ export class RobloxGameService {
     try {
       const joinResult = await this.getJoinScript(placeId, serverId, cookie)
 
+      // queuePosition is 0 when there's no queue, > 0 when queued
       if (typeof joinResult.queuePosition === 'number') {
         return joinResult.queuePosition
       }
@@ -491,6 +522,8 @@ export class RobloxGameService {
     try {
       const joinResult = await this.getJoinScript(placeId, serverId, cookie)
 
+      // Handle Full Servers (status 10) or Queued (status 22)
+      // 10 = Game Full, 6 = Game Full/Error, 22 = Waiting in Queue
       if (joinResult.status === 10 || joinResult.status === 6) {
         console.warn('[RobloxGameService] Server full or restricted, cannot get IP directly.')
         return 'Full/Restricted'
@@ -510,6 +543,8 @@ export class RobloxGameService {
       const address = joinScript.UdmuxEndpoints?.[0]?.Address
 
       if (!address) return 'Unknown'
+
+      // 2. Get Geo Info
 
       return await this.getRegionFromAddress(address)
     } catch (error) {

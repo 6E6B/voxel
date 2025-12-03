@@ -56,11 +56,13 @@ interface UnifiedInstallation {
 const InstallTab: React.FC = () => {
   const { showNotification } = useNotification()
 
+  // Zustand store state and actions
   const installations = useInstallations()
   const history = useDeployHistory()
   const { addInstallation, updateInstallation, removeInstallation, setDeployHistory } =
     useInstallationsStore()
 
+  // Modal state
   const [showNewModal, setShowNewModal] = useState(false)
   const [showConfigModal, setShowConfigModal] = useState<UnifiedInstallation | null>(null)
   const [contextMenu, setContextMenu] = useState<{
@@ -68,6 +70,7 @@ const InstallTab: React.FC = () => {
     install: UnifiedInstallation | null
   }>({ position: null, install: null })
 
+  // Local form state (not persisted)
   const [newName, setNewName] = useState('')
   const [newType, setNewType] = useState<BinaryType>(BinaryType.WindowsPlayer)
   const [newVersion, setNewVersion] = useState('')
@@ -76,10 +79,12 @@ const InstallTab: React.FC = () => {
   const [isVerifying, setIsVerifying] = useState<string | null>(null)
   const [installProgress, setInstallProgress] = useState({ status: '', percent: 0, detail: '' })
 
+  // FFlags State
   const [fflags, setFFlags] = useState<Record<string, any>>({})
   const [newFlagKey, setNewFlagKey] = useState('')
   const [newFlagValue, setNewFlagValue] = useState('')
 
+  // Detected default installations
   const [detectedInstallations, setDetectedInstallations] = useState<DetectedInstallation[]>([])
 
   const [confirmModal, setConfirmModal] = useState<{
@@ -97,11 +102,13 @@ const InstallTab: React.FC = () => {
     isDangerous: false
   })
 
+  // Load deploy history on mount
   useEffect(() => {
     // @ts-ignore
     window.api.getDeployHistory().then(setDeployHistory).catch(console.error)
   }, [setDeployHistory])
 
+  // Detect default Roblox installations on mount
   useEffect(() => {
     const detectInstallations = async () => {
       try {
@@ -155,9 +162,10 @@ const InstallTab: React.FC = () => {
       })
     )
 
-    return [...userInstalls, ...detectedInstallations]
+    return [...userInstalls, ...detectedInstalls]
   }, [installations, filteredDetectedInstallations])
 
+  // Load FFlags when config modal opens
   useEffect(() => {
     if (showConfigModal) {
       loadFFlags(showConfigModal)
@@ -309,6 +317,7 @@ const InstallTab: React.FC = () => {
   }
 
   const handleVerify = (install: UnifiedInstallation) => {
+    // Get the binary type for API call
     const binaryType =
       install.original?.binaryType ??
       (install.binaryType === 'WindowsStudio' ? BinaryType.WindowsStudio : BinaryType.WindowsPlayer)
@@ -335,6 +344,7 @@ const InstallTab: React.FC = () => {
           // @ts-ignore
           await window.api.verifyRobloxFiles(getApiType(binaryType), install.version, install.path)
 
+          // Only update store for user installations
           if (!install.isSystem) {
             updateInstallation(install.id, {
               lastUpdated: new Date().toISOString().split('T')[0],
@@ -771,6 +781,7 @@ const InstallTab: React.FC = () => {
                     }
                   ]
                 },
+                // Only show delete option for non-system installations
                 ...(!contextMenu.install.isSystem
                   ? [
                       {

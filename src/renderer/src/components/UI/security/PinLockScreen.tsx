@@ -67,6 +67,11 @@ const PinLockScreen: React.FC<PinLockScreenProps> = ({ onUnlock }) => {
   // Verify PIN when all digits are entered
   useEffect(() => {
     const enteredPin = pin.join('')
+    // Only verify if:
+    // 1. PIN is complete (6 digits)
+    // 2. Not currently verifying
+    // 3. Not locked out
+    // 4. This PIN hasn't already been verified (prevents duplicate calls)
     if (
       enteredPin.length === 6 &&
       !isVerifying &&

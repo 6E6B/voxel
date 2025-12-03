@@ -79,14 +79,16 @@ export function convertProperties(properties: Properties): PropertiesXML {
     const { value, type } = properties[name]
 
     if (!grouped[type]) {
+      // create category if list doesn't exists
       grouped[type] = []
     }
 
     let property: any = { $: { name: name } }
     if (typeof value == 'object') {
-      property = Object.assign({}, property, value)
+      property = Object.assign({}, property, value) // merge
       grouped[type].push(property)
     } else if (value) {
+      // set value on xml
       property._ = value.toString()
       grouped[type].push(property)
     }

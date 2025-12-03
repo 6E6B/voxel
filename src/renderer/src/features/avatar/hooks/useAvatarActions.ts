@@ -52,7 +52,6 @@ export const useAvatarActions = ({
 }: UseAvatarActionsOptions) => {
   const { showNotification } = useNotification()
   const [isUpdatingAvatar, setIsUpdatingAvatar] = useState(false)
-  const [loadingItemId, setLoadingItemId] = useState<number | null>(null)
   const favoriteBurstTimeouts = useRef<Map<number, number>>(new Map())
   const [favoriteBurstKeys, setFavoriteBurstKeys] = useState<Record<number, number>>({})
 
@@ -85,6 +84,7 @@ export const useAvatarActions = ({
     favoriteBurstTimeouts.current.set(id, timeoutId)
   }, [])
 
+  // Cleanup favorite burst timeouts
   useEffect(() => {
     return () => {
       favoriteBurstTimeouts.current.forEach((timeoutId) => clearTimeout(timeoutId))
@@ -127,9 +127,9 @@ export const useAvatarActions = ({
     async (itemId: number) => {
       if (!account?.cookie || isUpdatingAvatar) return
 
+      // Handle Outfits
       if (mainCategory === 'Characters') {
         setIsUpdatingAvatar(true)
-        setLoadingItemId(itemId)
         try {
           const result = await wearOutfitMutation.mutateAsync(itemId)
           if (result.success) {
@@ -144,13 +144,11 @@ export const useAvatarActions = ({
           showNotification('Error wearing outfit', 'error')
         } finally {
           setIsUpdatingAvatar(false)
-          setLoadingItemId(null)
         }
         return
       }
 
       setIsUpdatingAvatar(true)
-      setLoadingItemId(itemId)
       const isRemoving = equippedIds.has(itemId)
 
       try {
@@ -211,7 +209,6 @@ export const useAvatarActions = ({
         await refetchCurrentAvatar()
       } finally {
         setIsUpdatingAvatar(false)
-        setLoadingItemId(null)
       }
     },
     [
@@ -301,7 +298,6 @@ export const useAvatarActions = ({
 
   return {
     isUpdatingAvatar,
-    loadingItemId,
     favoriteBurstKeys,
     handleFavorite,
     toggleEquip,

@@ -50,6 +50,7 @@ export class RobloxUserService {
       return resultMap
     }
 
+    // Deduplicate and filter valid IDs
     const uniqueIds = Array.from(
       new Set(userIds.filter((id) => typeof id === 'number' && Number.isFinite(id)))
     )
@@ -58,6 +59,7 @@ export class RobloxUserService {
       return resultMap
     }
 
+    // Batch API has a limit of ~100 items per request
     const BATCH_LIMIT = 100
     const chunks: number[][] = []
     for (let i = 0; i < uniqueIds.length; i += BATCH_LIMIT) {
@@ -75,8 +77,10 @@ export class RobloxUserService {
       )
     })
 
+    // Helper function to delay execution
     const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
+    // Helper function to fetch a chunk with retry logic for rate limiting
     const fetchChunkWithRetry = async (
       chunkIds: number[],
       maxRetries: number = 3
@@ -110,9 +114,11 @@ export class RobloxUserService {
               }
             })
           }
-          return
+          return // Success, exit retry loop
         } catch (error: any) {
+          // Check if it's a rate limit error (429)
           if (error?.statusCode === 429 && attempt < maxRetries) {
+            // Parse retry-after header or use exponential backoff
             const retryAfter = error?.headers?.['retry-after']
             const waitTime = retryAfter
               ? parseInt(retryAfter, 10) * 1000
@@ -124,6 +130,7 @@ export class RobloxUserService {
             continue
           }
 
+          // Non-retryable error or max retries exceeded
           console.error('[RobloxUserService] Failed to fetch batch user avatars for chunk:', error)
           chunkIds.forEach((id) => resultMap.set(id, null))
           return
@@ -131,12 +138,14 @@ export class RobloxUserService {
       }
     }
 
+    // Process all chunks in parallel - rate limiting is handled by retry logic
     await Promise.all(chunks.map((chunk) => fetchChunkWithRetry(chunk)))
 
     return resultMap
   }
 
   static async getAccountStats(cookie: string, userId: number) {
+    // Schemas for partial responses
     const countSchema = z.object({ count: z.number() })
     const currencySchema = z.object({ robux: z.number() })
 
@@ -191,10 +200,12 @@ export class RobloxUserService {
       return result
     }
 
+    // Step 1: Get all authenticated users in parallel
     const authResults = await Promise.allSettled(
       cookies.map((cookie) => this.getAuthenticatedUser(cookie).then((user) => ({ cookie, user })))
     )
 
+    // Step 2: Collect all userIds and map cookies to userIds
     const cookieToUserId = new Map<string, number>()
     const userIds: number[] = []
     let firstValidCookie: string | null = null
@@ -211,10 +222,12 @@ export class RobloxUserService {
           firstValidCookie = cookie
         }
       } else {
+        // Failed to get authenticated user
         result.set(cookie, null)
       }
     }
 
+    // Step 3: Batch get all presences in a single request (or chunked if needed)
     if (userIds.length > 0 && firstValidCookie) {
       try {
         // Presence API can handle up to 100 userIds at once, but let's chunk to be safe
@@ -237,12 +250,14 @@ export class RobloxUserService {
           }
         }
 
+        // Step 4: Map results back to cookies
         for (const [cookie, userId] of cookieToUserId.entries()) {
           const presence = presenceMap.get(userId) || null
           result.set(cookie, { userId, presence })
         }
       } catch (error) {
         console.error('Failed to batch get presences:', error)
+        // If batch presence fails, set all to null
         for (const [cookie] of cookieToUserId.entries()) {
           result.set(cookie, null)
         }
@@ -262,8 +277,10 @@ export class RobloxUserService {
 
     let allPresences: any[] = []
 
+    // Helper function to delay execution
     const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
+    // Process chunk with retry logic
     const fetchChunkWithRetry = async (chunkIds: number[], maxRetries: number = 3) => {
       for (let attempt = 0; attempt <= maxRetries; attempt++) {
         try {
@@ -293,6 +310,7 @@ export class RobloxUserService {
       return []
     }
 
+    // Process all chunks in parallel with retry logic
     const results = await Promise.all(chunks.map((chunk) => fetchChunkWithRetry(chunk)))
     allPresences = results.flat()
 
@@ -335,6 +353,7 @@ export class RobloxUserService {
       data: z.array(userGroupRoleSchema)
     })
 
+    // Using v1 as requested
     const result = await request(groupRolesResponseSchema, {
       url: `https://groups.roblox.com/v1/users/${userId}/groups/roles`
     })
@@ -369,6 +388,7 @@ export class RobloxUserService {
   }
 
   static async getDetailedStats(_cookie: string, userId: number) {
+    // 1. Join Date & Description
     const userDetails = await request(
       z.object({
         created: z.string(),
@@ -379,8 +399,10 @@ export class RobloxUserService {
       }
     )
 
+    // 2. Group Count
     const groups = await this.getUserGroups(userId)
 
+    // 3. Developer Stats (Visits, Players, Favorites via Games)
     const games = await request(
       z.object({
         data: z.array(
@@ -473,6 +495,7 @@ export class RobloxUserService {
       return resultMap
     }
 
+    // Deduplicate and filter valid IDs
     const uniqueIds = Array.from(
       new Set(userIds.filter((id) => typeof id === 'number' && Number.isFinite(id)))
     )
@@ -481,6 +504,7 @@ export class RobloxUserService {
       return resultMap
     }
 
+    // Batch API has a limit of ~100 items per request
     const BATCH_LIMIT = 100
     const chunks: number[][] = []
     for (let i = 0; i < uniqueIds.length; i += BATCH_LIMIT) {
@@ -497,8 +521,10 @@ export class RobloxUserService {
       )
     })
 
+    // Helper function to delay execution
     const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
+    // Helper function to fetch a chunk with retry logic for rate limiting
     const fetchChunkWithRetry = async (
       chunkIds: number[],
       maxRetries: number = 3
@@ -521,13 +547,15 @@ export class RobloxUserService {
             })
           }
 
+          // Set null for IDs that weren't returned (user not found/banned)
           chunkIds.forEach((id) => {
             if (!resultMap.has(id)) {
               resultMap.set(id, null)
             }
           })
-          return
+          return // Success, exit retry loop
         } catch (error: any) {
+          // Check if it's a rate limit error (429)
           if (error?.statusCode === 429 && attempt < maxRetries) {
             const retryAfter = error?.headers?.['retry-after']
             const waitTime = retryAfter
@@ -547,6 +575,7 @@ export class RobloxUserService {
       }
     }
 
+    // Process all chunks in parallel - rate limiting is handled by retry logic
     await Promise.all(chunks.map((chunk) => fetchChunkWithRetry(chunk)))
 
     return resultMap

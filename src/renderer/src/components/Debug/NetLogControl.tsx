@@ -17,6 +17,7 @@ export function NetLogControl() {
   const [logPath, setLogPath] = useState<string | null>(null)
   const [statusMessage, setStatusMessage] = useState('')
 
+  // Check initial status
   useEffect(() => {
     checkStatus()
   }, [])
@@ -199,13 +200,19 @@ export function NetLogControl() {
   )
 }
 
+// Quick example of using the API directly in your code:
 export async function exampleUsage() {
+  // Check if logging is active
   const status = await window.api.getNetLogStatus()
+
+  // Get the current log file path
   await window.api.getNetLogPath()
 
+  // Start logging if not already active
   if (!status.isLogging) {
     await window.api.startNetLog()
   }
 
+  // Stop logging
   await window.api.stopNetLog()
 }

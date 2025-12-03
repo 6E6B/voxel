@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { queryKeys } from '../../../../../shared/queryKeys'
 import { Account } from '@renderer/types'
-import { avatar3DKeys } from '../hooks/useAvatar3DManifest'
 
 interface AvatarAsset {
   id: number
@@ -25,6 +24,7 @@ interface AvatarState {
   playerAvatarType: string | null
 }
 
+// Fetch current avatar state
 export function useCurrentAvatar(account: Account | null) {
   const cookie = account?.cookie
   const userId = account?.userId ? parseInt(account.userId) : undefined
@@ -52,6 +52,7 @@ export function useCurrentAvatar(account: Account | null) {
   })
 }
 
+// Fetch inventory for a specific asset type
 export function useInventory(
   account: Account | null,
   assetTypeIds: number[],
@@ -60,6 +61,7 @@ export function useInventory(
   const cookie = account?.cookie
   const userId = account?.userId ? parseInt(account.userId) : undefined
   const accountId = account?.id || ''
+  // Use first asset type as key identifier
   const primaryAssetTypeId = assetTypeIds[0] || 0
 
   return useQuery({
@@ -67,12 +69,14 @@ export function useInventory(
     queryFn: async (): Promise<InventoryItem[]> => {
       if (!cookie || !userId) return []
 
+      // Fetch inventory for all asset types
       const inventoryPromises = assetTypeIds.map((assetTypeId) =>
         window.api.getInventory(cookie, userId, assetTypeId)
       )
 
       const invResponses = await Promise.all(inventoryPromises)
 
+      // Combine all results
       const allAssets: any[] = []
       invResponses.forEach((invResponse) => {
         if (invResponse.data && invResponse.data.length > 0) {
@@ -82,6 +86,7 @@ export function useInventory(
 
       if (allAssets.length === 0) return []
 
+      // Fetch thumbnails
       const assetIds = allAssets.map((i: any) => i.assetId)
       const thumbResponse = await window.api.getBatchThumbnails(assetIds)
       const thumbMap = new Map(thumbResponse.data.map((t: any) => [t.targetId, t.imageUrl]))
@@ -98,6 +103,7 @@ export function useInventory(
   })
 }
 
+// Fetch user outfits
 export function useUserOutfits(account: Account | null, isEditable: boolean) {
   const cookie = account?.cookie
   const userId = account?.userId ? parseInt(account.userId) : undefined
@@ -115,6 +121,7 @@ export function useUserOutfits(account: Account | null, isEditable: boolean) {
       const outfits = response.data
       const outfitIds = outfits.map((o: any) => o.id)
 
+      // Fetch thumbnails for outfits
       const thumbResponse = await window.api.getBatchThumbnails(outfitIds, 'Outfit')
       const thumbMap = new Map(thumbResponse.data.map((t: any) => [t.targetId, t.imageUrl]))
 
@@ -130,6 +137,7 @@ export function useUserOutfits(account: Account | null, isEditable: boolean) {
   })
 }
 
+// Fetch favorite items
 export function useFavoriteItems() {
   return useQuery({
     queryKey: queryKeys.avatar.favorites(),
@@ -153,6 +161,7 @@ export function useFavoriteItems() {
   })
 }
 
+// Add favorite item mutation
 export function useAddFavoriteItem() {
   const queryClient = useQueryClient()
 
@@ -165,6 +174,7 @@ export function useAddFavoriteItem() {
   })
 }
 
+// Remove favorite item mutation
 export function useRemoveFavoriteItem() {
   const queryClient = useQueryClient()
 
@@ -176,11 +186,11 @@ export function useRemoveFavoriteItem() {
   })
 }
 
+// Set wearing assets mutation
 export function useSetWearingAssets(account: Account | null) {
   const queryClient = useQueryClient()
   const cookie = account?.cookie
   const accountId = account?.id || ''
-  const userId = account?.userId || ''
 
   return useMutation({
     mutationFn: (assets: AvatarAsset[]) => {
@@ -189,18 +199,15 @@ export function useSetWearingAssets(account: Account | null) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.avatar.current(accountId) })
-      if (userId) {
-        queryClient.resetQueries({ queryKey: avatar3DKeys.manifest(userId) })
-      }
     }
   })
 }
 
+// Wear outfit mutation
 export function useWearOutfit(account: Account | null) {
   const queryClient = useQueryClient()
   const cookie = account?.cookie
   const accountId = account?.id || ''
-  const userId = account?.userId || ''
 
   return useMutation({
     mutationFn: (outfitId: number) => {
@@ -209,18 +216,15 @@ export function useWearOutfit(account: Account | null) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.avatar.current(accountId) })
-      if (userId) {
-        queryClient.resetQueries({ queryKey: avatar3DKeys.manifest(userId) })
-      }
     }
   })
 }
 
+// Set body colors mutation
 export function useSetBodyColors(account: Account | null) {
   const queryClient = useQueryClient()
   const cookie = account?.cookie
   const accountId = account?.id || ''
-  const userId = account?.userId || ''
 
   return useMutation({
     mutationFn: (bodyColors: any) => {
@@ -229,18 +233,15 @@ export function useSetBodyColors(account: Account | null) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.avatar.current(accountId) })
-      if (userId) {
-        queryClient.resetQueries({ queryKey: avatar3DKeys.manifest(userId) })
-      }
     }
   })
 }
 
+// Set avatar scales mutation
 export function useSetAvatarScales(account: Account | null) {
   const queryClient = useQueryClient()
   const cookie = account?.cookie
   const accountId = account?.id || ''
-  const userId = account?.userId || ''
 
   return useMutation({
     mutationFn: (scales: {
@@ -255,18 +256,15 @@ export function useSetAvatarScales(account: Account | null) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.avatar.current(accountId) })
-      if (userId) {
-        queryClient.resetQueries({ queryKey: avatar3DKeys.manifest(userId) })
-      }
     }
   })
 }
 
+// Set player avatar type mutation
 export function useSetPlayerAvatarType(account: Account | null) {
   const queryClient = useQueryClient()
   const cookie = account?.cookie
   const accountId = account?.id || ''
-  const userId = account?.userId || ''
 
   return useMutation({
     mutationFn: (avatarType: 'R6' | 'R15') => {
@@ -275,13 +273,11 @@ export function useSetPlayerAvatarType(account: Account | null) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.avatar.current(accountId) })
-      if (userId) {
-        queryClient.resetQueries({ queryKey: avatar3DKeys.manifest(userId) })
-      }
     }
   })
 }
 
+// Update outfit mutation
 export function useUpdateOutfit(account: Account | null) {
   const queryClient = useQueryClient()
   const cookie = account?.cookie
@@ -299,6 +295,7 @@ export function useUpdateOutfit(account: Account | null) {
   })
 }
 
+// Delete outfit mutation
 export function useDeleteOutfit(account: Account | null) {
   const queryClient = useQueryClient()
   const cookie = account?.cookie

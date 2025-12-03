@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { avatarStateSchema, thumbnailBatchSchema } from '@shared/ipc-schemas/avatar'
 import { brickColorToHex } from './utils/bodyColorUtils'
 
+// Schema for avatar render response
 const avatarRenderResponseSchema = z.object({
   targetId: z.number(),
   state: z.string(),
@@ -31,8 +32,10 @@ export class RobloxAvatarRenderService {
     userId: number,
     assetIdToTryOn: number
   ): Promise<{ imageUrl: string }> {
+    // Get the user's current avatar definition
     const currentAvatar = await this.getCurrentAvatar(cookie, userId)
 
+    // Build the assets array - existing assets + the new one to try on
     const existingAssetIds = currentAvatar.assets?.map((a: any) => a.id) || []
     const allAssetIds = [...new Set([...existingAssetIds, assetIdToTryOn])]
     const assetsPayload = allAssetIds.map((id) => ({ id }))
@@ -52,11 +55,16 @@ export class RobloxAvatarRenderService {
       for (const mapping of colorMappings) {
         let hexColor: string | undefined
 
+        // Try to get from *Color3 key directly (hex string)
         if (bc[mapping.color3Key]) {
           hexColor = String(bc[mapping.color3Key]).replace('#', '').toUpperCase()
-        } else if (bc.bodyColor3s && bc.bodyColor3s[mapping.color3Key]) {
+        }
+        // Try to get from nested bodyColor3s object
+        else if (bc.bodyColor3s && bc.bodyColor3s[mapping.color3Key]) {
           hexColor = String(bc.bodyColor3s[mapping.color3Key]).replace('#', '').toUpperCase()
-        } else if (typeof bc[mapping.colorIdKey] === 'number') {
+        }
+        // Try to convert from BrickColor ID
+        else if (typeof bc[mapping.colorIdKey] === 'number') {
           hexColor = brickColorToHex(bc[mapping.colorIdKey])
         }
 
@@ -66,7 +74,8 @@ export class RobloxAvatarRenderService {
       }
     }
 
-    const defaultColor = 'FFFFCC'
+    // If bodyColors is still empty or incomplete, fill with default skin color
+    const defaultColor = 'FFFFCC' // Pastel yellow - common default skin tone
     const requiredColors = [
       'headColor',
       'torsoColor',
@@ -81,6 +90,7 @@ export class RobloxAvatarRenderService {
       }
     }
 
+    // Build scales - ensure all required scale properties are present
     const scales: Record<string, number> = {
       height: 1,
       width: 1,
@@ -99,11 +109,13 @@ export class RobloxAvatarRenderService {
       if (typeof s.bodyType === 'number') scales.bodyType = s.bodyType
     }
 
+    // Player avatar type
     const playerAvatarType = currentAvatar.playerAvatarType || 'R6'
 
+    // Build the render request payload matching Roblox's expected format
     const payload = {
       thumbnailConfig: {
-        thumbnailId: userId,
+        thumbnailId: userId, // Use userId as the thumbnailId (target for the render)
         thumbnailType: '3d',
         size: '420x420'
       },
@@ -117,6 +129,7 @@ export class RobloxAvatarRenderService {
       }
     }
 
+    // POST to render endpoint to initiate the render
     const renderResponse = await requestWithCsrf(avatarRenderResponseSchema, {
       method: 'POST',
       url: 'https://avatar.roblox.com/v1/avatar/render',
@@ -127,16 +140,21 @@ export class RobloxAvatarRenderService {
       body: payload
     })
 
+    // If already complete, return immediately
     if (renderResponse.state === 'Completed' && renderResponse.imageUrl) {
       return { imageUrl: renderResponse.imageUrl }
     }
 
+    // Poll for completion using the thumbnails batch API
+    // The render creates a thumbnail that can be fetched via the batch endpoint
     const maxAttempts = 20
-    const pollInterval = 1000
+    const pollInterval = 1000 // ms - give more time between polls
 
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
       await this.sleep(pollInterval)
 
+      // Use the thumbnails batch API to check if the render is complete
+      // Request type "AvatarHeadShot" or use the avatar thumbnail endpoint
       try {
         const thumbnailResponse = await request(thumbnailBatchSchema, {
           method: 'POST',
@@ -166,6 +184,7 @@ export class RobloxAvatarRenderService {
         console.warn('[RobloxAvatarRenderService] Poll error:', pollError)
       }
 
+      // Also try re-posting to the render endpoint to check status (without CSRF retry)
       try {
         const statusResponse = await request(avatarRenderResponseSchema, {
           method: 'POST',
@@ -185,6 +204,7 @@ export class RobloxAvatarRenderService {
           throw new Error('Avatar render failed')
         }
       } catch (renderPollError: any) {
+        // 403 is expected without CSRF, ignore it
         if (renderPollError.statusCode !== 403) {
           console.warn('[RobloxAvatarRenderService] Render poll error:', renderPollError)
         }

@@ -39,6 +39,9 @@ const AddAccountStep: React.FC<AddAccountStepProps> = ({ onAccountAdded, onSkip 
   const [quickLoginStatus, setQuickLoginStatus] = useState('')
   const pollingRef = React.useRef<NodeJS.Timeout | null>(null)
 
+  // Browser login state
+  const [browserLoginStatus, setBrowserLoginStatus] = useState<'idle' | 'waiting' | 'error'>('idle')
+
   React.useEffect(() => {
     if (method === 'quick' && !quickLoginData && !isLoading) {
       generateCode()
@@ -112,12 +115,14 @@ const AddAccountStep: React.FC<AddAccountStepProps> = ({ onAccountAdded, onSkip 
   const handleBrowserLogin = async () => {
     if (isLoading) return
     setError(null)
+    setBrowserLoginStatus('waiting')
     setIsLoading(true)
     try {
       const cookieValue = await requestRobloxLoginCookie()
       await addAccountFromCookie(cookieValue)
     } catch (err: any) {
       console.error('Browser login failed:', err)
+      setBrowserLoginStatus('error')
       if (err.message === 'LOGIN_WINDOW_CLOSED') {
         setError('Login window closed before completing sign-in.')
       } else {

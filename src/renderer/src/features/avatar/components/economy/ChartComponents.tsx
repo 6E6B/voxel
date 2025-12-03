@@ -8,11 +8,13 @@ import {
   Download,
   BarChart3,
   ChevronDown,
-  Minus
+  Minus,
+  Sparkles
 } from 'lucide-react'
 import { cn } from '@renderer/lib/utils'
 import { RobuxIcon } from '@renderer/components/UI/icons/RobuxIcon'
 import { DateRange, formatPrice, formatPercentChange } from './index'
+import { PredictionConfidence } from './predictionAlgorithm'
 
 // ============================================================================
 // Stat Badge Component
@@ -128,7 +130,11 @@ interface ChartControlsProps {
   onToggleMA: () => void
   movingAveragePeriod?: number
 
-  // Prediction (removed)
+  // Prediction
+  showPredictionToggle?: boolean
+  isPredicting: boolean
+  onTogglePrediction: () => void
+  predictionConfidence?: PredictionConfidence | null
 
   // Export
   allowExport?: boolean
@@ -144,11 +150,85 @@ export const ChartControls: React.FC<ChartControlsProps> = ({
   showMA,
   onToggleMA,
   movingAveragePeriod = 7,
+  showPredictionToggle = false,
+  isPredicting,
+  onTogglePrediction,
+  predictionConfidence,
   allowExport = true,
   onExportPNG,
   onExportCSV
 }) => (
   <div className="flex items-center gap-1 border-r border-neutral-700 pr-2">
+    {/* Prediction toggle */}
+    {showPredictionToggle && (
+      <div className="relative group">
+        <button
+          onClick={onTogglePrediction}
+          className={cn(
+            'flex items-center gap-1 p-1.5 rounded transition-colors text-xs font-medium',
+            isPredicting
+              ? 'bg-cyan-500/20 text-cyan-400'
+              : 'text-neutral-500 hover:text-white hover:bg-neutral-800'
+          )}
+          title="Show 30-day prediction"
+        >
+          <Sparkles size={12} />
+          Predict
+        </button>
+        {isPredicting && predictionConfidence && (
+          <div className="absolute left-0 top-full mt-1.5 p-3 bg-neutral-900/95 backdrop-blur-sm border border-neutral-800/50 rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 min-w-[200px]">
+            <div className="flex items-center justify-between mb-2.5">
+              <div className="text-xs font-medium text-neutral-300 flex items-center gap-1.5">
+                <Sparkles size={10} className="text-cyan-400" />
+                Confidence
+              </div>
+              <span
+                className={cn(
+                  'text-xs font-bold px-1.5 py-0.5 rounded',
+                  predictionConfidence.level === 'high'
+                    ? 'text-emerald-400 bg-emerald-500/10'
+                    : predictionConfidence.level === 'medium'
+                      ? 'text-amber-400 bg-amber-500/10'
+                      : 'text-red-400 bg-red-500/10'
+                )}
+              >
+                {predictionConfidence.level.charAt(0).toUpperCase() +
+                  predictionConfidence.level.slice(1)}
+              </span>
+            </div>
+            <div className="flex items-center gap-2 mb-3">
+              <div className="flex-1 h-1.5 bg-neutral-800 rounded-full overflow-hidden">
+                <div
+                  className={cn(
+                    'h-full rounded-full transition-all duration-500',
+                    predictionConfidence.level === 'high'
+                      ? 'bg-emerald-500'
+                      : predictionConfidence.level === 'medium'
+                        ? 'bg-amber-500'
+                        : 'bg-red-500'
+                  )}
+                  style={{ width: `${predictionConfidence.percentage}%` }}
+                />
+              </div>
+              <span className="text-xs font-semibold text-neutral-300 tabular-nums w-8 text-right">
+                {predictionConfidence.percentage}%
+              </span>
+            </div>
+            {predictionConfidence.factors.length > 0 && (
+              <div className="space-y-1 mb-2.5">
+                {predictionConfidence.factors.map((factor, i) => (
+                  <div key={i} className="flex items-start gap-1.5 text-[12px] text-neutral-400">
+                    <span className="text-neutral-600 mt-px">•</span>
+                    <span>{factor}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    )}
+
     {/* Moving average toggle */}
     {showMovingAverage && (
       <button
@@ -266,6 +346,8 @@ interface ChartLegendProps {
   showMA: boolean
   maDataLength: number
   movingAveragePeriod: number
+  isPredicting: boolean
+  hasPredictions: boolean
 }
 
 export const ChartLegend: React.FC<ChartLegendProps> = ({
@@ -273,9 +355,13 @@ export const ChartLegend: React.FC<ChartLegendProps> = ({
   title,
   showMA,
   maDataLength,
-  movingAveragePeriod
+  movingAveragePeriod,
+  isPredicting,
+  hasPredictions
 }) => {
-  if (!showMA || maDataLength === 0) return null
+  const showLegend = (showMA && maDataLength > 0) || isPredicting
+
+  if (!showLegend) return null
 
   return (
     <div className="mt-2 flex items-center gap-4 text-xs">
@@ -287,6 +373,13 @@ export const ChartLegend: React.FC<ChartLegendProps> = ({
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-0.5 rounded bg-amber-500" style={{ borderStyle: 'dashed' }} />
           <span className="text-neutral-400">{movingAveragePeriod}-day MA</span>
+        </div>
+      )}
+      {isPredicting && hasPredictions && (
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-0.5 rounded bg-cyan-500 opacity-60" />
+          <span className="text-cyan-400/80">30-day Prediction</span>
+          <Sparkles size={10} className="text-cyan-400/60" />
         </div>
       )}
     </div>

@@ -100,6 +100,7 @@ class PinService {
       encrypted = Buffer.concat([encrypted, cipher.final()])
       const authTag = cipher.getAuthTag()
 
+      // Combine IV + AuthTag + CipherText
       const combined = Buffer.concat([iv, authTag, encrypted])
       return combined.toString('base64')
     } catch (error) {
@@ -117,6 +118,7 @@ class PinService {
       const key = this.deriveEncryptionKey(pin, salt)
       const combined = Buffer.from(encryptedData, 'base64')
 
+      // Extract IV, AuthTag, and CipherText
       const iv = combined.subarray(0, PIN_ENCRYPTION_IV_LENGTH)
       const authTag = combined.subarray(
         PIN_ENCRYPTION_IV_LENGTH,
@@ -180,6 +182,7 @@ class PinService {
    * Load lockout state from stored PIN data
    */
   private loadLockoutFromPinData(pinData: PinData): void {
+    // If no lockout data exists, start fresh
     if (!pinData.lockout) {
       this.attemptTracker = {
         count: 0,
@@ -193,6 +196,7 @@ class PinService {
     const now = Date.now()
     const lockout = pinData.lockout
 
+    // Validate lockout state - if invalid, start fresh
     if (
       typeof lockout.count !== 'number' ||
       typeof lockout.lastAttempt !== 'number' ||
@@ -207,6 +211,7 @@ class PinService {
       return
     }
 
+    // Check if lockout has expired
     if (lockout.lockedUntil && now >= lockout.lockedUntil) {
       // Lockout expired, reset count but keep lockoutCount for progressive lockouts
       this.attemptTracker = {
@@ -224,6 +229,7 @@ class PinService {
         lockoutCount: 0
       }
     } else {
+      // Load the stored state as-is
       this.attemptTracker = {
         count: lockout.count,
         lastAttempt: lockout.lastAttempt,
@@ -243,19 +249,23 @@ class PinService {
       return null
     }
 
+    // Validate PIN format
     if (!/^\d{6}$/.test(pin)) {
       console.error('Invalid PIN format')
       return null
     }
 
     try {
+      // Generate random salt for hashing
       const salt = randomBytes(SALT_LENGTH)
 
       // Generate separate salt for encryption key derivation
       const encryptionSalt = randomBytes(SALT_LENGTH)
 
+      // Hash the PIN
       const hash = this.hashPin(pin, salt)
 
+      // Create PIN data object with reset lockout state
       const pinData: PinData = {
         hash: hash.toString('base64'),
         salt: salt.toString('base64'),
@@ -268,9 +278,11 @@ class PinService {
         }
       }
 
+      // Convert to JSON and encrypt using OS-level encryption
       const jsonData = JSON.stringify(pinData)
       const encrypted = safeStorage.encryptString(jsonData)
 
+      // Reset in-memory tracker
       this.attemptTracker = {
         count: 0,
         lastAttempt: 0,
@@ -299,6 +311,7 @@ class PinService {
       const decryptedJson = safeStorage.decryptString(encryptedBuffer)
       const pinData: PinData = JSON.parse(decryptedJson)
 
+      // Update lockout state
       pinData.lockout = {
         count: this.attemptTracker.count,
         lastAttempt: this.attemptTracker.lastAttempt,
@@ -306,6 +319,7 @@ class PinService {
         lockoutCount: this.attemptTracker.lockoutCount
       }
 
+      // Re-encrypt
       const jsonData = JSON.stringify(pinData)
       const encrypted = safeStorage.encryptString(jsonData)
       return encrypted.toString('base64')
@@ -331,6 +345,7 @@ class PinService {
   } {
     const now = Date.now()
 
+    // First, load lockout state from PIN data
     try {
       if (safeStorage.isEncryptionAvailable()) {
         const encryptedBuffer = Buffer.from(encryptedData, 'base64')
@@ -356,6 +371,7 @@ class PinService {
       }
     }
 
+    // Check if locked out
     if (this.attemptTracker.lockedUntil) {
       if (now < this.attemptTracker.lockedUntil) {
         const lockoutSeconds = Math.ceil((this.attemptTracker.lockedUntil - now) / 1000)
@@ -367,6 +383,7 @@ class PinService {
       }
     }
 
+    // Reset attempt count if enough time has passed since last attempt
     if (
       this.attemptTracker.lastAttempt &&
       now - this.attemptTracker.lastAttempt > ATTEMPT_RESET_MS
@@ -383,10 +400,12 @@ class PinService {
     }
 
     try {
+      // Decrypt the stored data
       const encryptedBuffer = Buffer.from(encryptedData, 'base64')
       const decryptedJson = safeStorage.decryptString(encryptedBuffer)
       const pinData: PinData = JSON.parse(decryptedJson)
 
+      // Recreate the hash with the stored salt
       const salt = Buffer.from(pinData.salt, 'base64')
       const storedHash = Buffer.from(pinData.hash, 'base64')
       const enteredHash = this.hashPin(enteredPin, salt)
@@ -399,7 +418,7 @@ class PinService {
         this.attemptTracker.count = 0
         this.attemptTracker.lastAttempt = 0
         this.attemptTracker.lockedUntil = null
-        this.attemptTracker.lockoutCount = 0
+        this.attemptTracker.lockoutCount = 0 // Reset progressive lockout on success
 
         // Mark as verified in main process and store PIN for encryption
         this.isPinVerified = true
@@ -413,11 +432,13 @@ class PinService {
           updatedEncryptedData: updatedEncryptedData || undefined
         }
       } else {
+        // Increment failed attempt counter
         this.attemptTracker.count++
         this.attemptTracker.lastAttempt = now
 
         const remainingAttempts = MAX_ATTEMPTS - this.attemptTracker.count
 
+        // Check if should lock out
         if (this.attemptTracker.count >= MAX_ATTEMPTS) {
           // Increment lockout count for progressive lockouts
           this.attemptTracker.lockoutCount = Math.min(
@@ -483,11 +504,13 @@ class PinService {
       }
     }
 
+    // Check if lockout expired
     if (this.attemptTracker.lockedUntil) {
       if (now < this.attemptTracker.lockedUntil) {
         const lockoutSeconds = Math.ceil((this.attemptTracker.lockedUntil - now) / 1000)
         return { locked: true, lockoutSeconds, remainingAttempts: 0 }
       } else {
+        // Lockout expired
         this.attemptTracker.lockedUntil = null
         this.attemptTracker.count = 0
       }
@@ -556,6 +579,7 @@ class PinService {
     remainingAttempts: number
     updatedEncryptedData?: string
   } {
+    // Use the same verification logic
     return this.verifyPin(currentPin, encryptedData)
   }
 }

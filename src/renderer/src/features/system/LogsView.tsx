@@ -91,6 +91,7 @@ const parseLogLines = (content: string): LogEntry[] => {
         }
       }
 
+      // Handle lines that don't match standard format (continuations or different formats)
       if (line.trim() === '') return null
 
       return {
@@ -361,7 +362,9 @@ const LogsTab: React.FC = () => {
   }, [selectedLogMeta?.universeId])
 
   return (
+    /* LOGS TAB */
     <div className="flex flex-col h-full bg-neutral-950">
+      {/* Toolbar */}
       <div className="shrink-0 h-[72px] bg-neutral-950 border-b border-neutral-800 flex items-center justify-between px-6 z-20">
         <h1 className="text-xl font-bold text-white">Logs</h1>
         <div className="flex items-center gap-3">
@@ -409,6 +412,7 @@ const LogsTab: React.FC = () => {
       </div>
 
       <div className="flex-1 flex overflow-hidden">
+        {/* Sidebar List */}
         <div className="w-80 bg-[#111111] border-r border-neutral-800 flex flex-col shrink-0">
           <div className="flex-1 overflow-y-auto scrollbar-thin p-4 space-y-6">
             {isLoading ? (
@@ -470,9 +474,11 @@ const LogsTab: React.FC = () => {
           </div>
         </div>
 
+        {/* Main Viewer */}
         <div className="flex-1 flex flex-col bg-neutral-950 min-w-0">
           {selectedLog ? (
             <>
+              {/* Log Analytics Summary */}
               <div className="shrink-0 grid grid-cols-2 xl:grid-cols-3 gap-4 p-6 border-b border-neutral-800 bg-neutral-900/20">
                 <div className="bg-neutral-900 border border-neutral-800 rounded-lg p-4 flex items-start gap-3 group hover:border-neutral-700 transition-colors">
                   <div className="p-2 rounded-md bg-neutral-800 text-neutral-400 group-hover:text-white transition-colors">
@@ -586,9 +592,10 @@ const LogsTab: React.FC = () => {
                     </>
                   )}
                 </div>
-                <div className="flex items-center gap-2"></div>
+                <div className="flex items-center gap-2">{/* Export removed */}</div>
               </div>
 
+              {/* Log Entries */}
               <div className="flex-1 overflow-hidden font-mono text-sm bg-[#0d0d0d]">
                 {selectedLog.isLoadingContent ? (
                   <div className="flex items-center justify-center h-full text-neutral-500">

@@ -1,5 +1,6 @@
 import koffi from 'koffi'
 
+// Load kernel32.dll
 let kernel32: any
 try {
   kernel32 = koffi.load('kernel32.dll')
@@ -11,7 +12,11 @@ let CreateMutexW: any
 let CloseHandle: any
 
 if (kernel32) {
+  // HANDLE CreateMutexW(LPSECURITY_ATTRIBUTES lpMutexAttributes, BOOL bInitialOwner, LPCWSTR lpName);
+  // Use __stdcall for Windows API
   CreateMutexW = kernel32.func('__stdcall', 'CreateMutexW', 'void*', ['void*', 'int', 'str16'])
+
+  // BOOL CloseHandle(HANDLE hObject);
   CloseHandle = kernel32.func('__stdcall', 'CloseHandle', 'int', ['void*'])
 }
 
@@ -23,6 +28,7 @@ export namespace MultiInstance {
 
     if (!g_mutex) {
       try {
+        // CreateMutexW(nullptr, FALSE, L"ROBLOX_singletonEvent");
         g_mutex = CreateMutexW(null, 0, 'ROBLOX_singletonEvent')
 
         if (g_mutex) {

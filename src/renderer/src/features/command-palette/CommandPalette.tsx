@@ -1,6 +1,6 @@
-import React, { useEffect, useRef, useMemo, useState, useCallback, memo } from 'react'
+import React, { useEffect, useRef, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Virtuoso, VirtuosoHandle } from 'react-virtuoso'
+import { Virtuoso } from 'react-virtuoso'
 import {
   Search,
   User,
@@ -31,10 +31,7 @@ import {
   Copy,
   ExternalLink,
   ShieldCheck,
-  Cookie,
-  Gem,
-  Flame,
-  Zap
+  Cookie
 } from 'lucide-react'
 import { cn } from '@renderer/lib/utils'
 import {
@@ -57,10 +54,7 @@ import {
   useCommandPaletteGoBack,
   useCommandPaletteSetResultSelectedIndex,
   useCommandPaletteSelectResult,
-  Command as CommandType,
-  LimitedSearchResult,
-  CatalogSearchResult,
-  UniversalSearchResult
+  Command as CommandType
 } from './stores/useCommandPaletteStore'
 import { useSetActiveTab, useOpenModal } from '../../stores/useUIStore'
 import { useSelectedIds, useSetSelectedIds } from '../../stores/useSelectionStore'
@@ -68,10 +62,7 @@ import { JoinMethod } from '../../types'
 import { useAccountsManager, useFriends } from '../../hooks/queries/index'
 import { useNotification } from '../system/stores/useSnackbarStore'
 import { createAllCommands, CommandCallbacks } from './commands/index'
-import { useLimitedsSearch, useCatalogSearch } from './hooks'
-import { LimitedThumbnail } from './components/LimitedThumbnail'
 import VerifiedIcon from '../../components/UI/icons/VerifiedIcon'
-import { DEMAND_COLORS, TREND_COLORS } from '../avatar/api/useRolimons'
 
 const iconMap: Record<string, React.ReactNode> = {
   user: <User size={18} />,
@@ -129,212 +120,6 @@ interface CatalogResultItemForAccessory {
   name: string
   imageUrl?: string
 }
-
-// Memoized row components to prevent re-renders when selectedIndex changes
-// Only re-render when the item becomes selected or deselected
-
-interface UniversalLimitedRowProps {
-  result: LimitedSearchResult
-  idx: number
-  selectedIndex: number
-  onSelect: (result: UniversalSearchResult) => void
-}
-
-const UniversalLimitedRow = memo(
-  ({ result, idx, selectedIndex, onSelect }: UniversalLimitedRowProps) => {
-    const isSelected = idx === selectedIndex
-    return (
-      <button
-        data-selected={isSelected}
-        data-index={idx}
-        onClick={() => onSelect(result)}
-        className={cn(
-          'w-full flex items-center gap-3 px-4 py-2.5 text-left',
-          isSelected ? 'bg-neutral-800/80' : 'hover:bg-neutral-900'
-        )}
-      >
-        <LimitedThumbnail
-          assetId={result.id}
-          name={result.name}
-          className="flex-shrink-0 w-10 h-10 rounded-lg"
-        />
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <span
-              className={cn(
-                'text-sm font-medium truncate',
-                isSelected ? 'text-white' : 'text-neutral-300'
-              )}
-            >
-              {result.name}
-            </span>
-            {result.isRare && <Gem size={12} className="text-purple-400 flex-shrink-0" />}
-            {result.isHyped && <Flame size={12} className="text-orange-400 flex-shrink-0" />}
-            {result.isProjected && <Zap size={12} className="text-yellow-400 flex-shrink-0" />}
-          </div>
-          <div className="flex items-center gap-2 text-xs text-neutral-500">
-            {result.value !== null ? (
-              <span className="text-green-400">{result.value.toLocaleString()} Value</span>
-            ) : (
-              <span className="text-neutral-500">{result.rap.toLocaleString()} RAP</span>
-            )}
-            <span>·</span>
-            <span className={DEMAND_COLORS[result.demand]}>{result.demandLabel}</span>
-            <span>·</span>
-            <span className={TREND_COLORS[result.trend]}>{result.trendLabel}</span>
-          </div>
-        </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <span className="text-xs text-neutral-600 px-2 py-0.5 bg-neutral-800 rounded">
-            Limited
-          </span>
-          {isSelected && <ExternalLink size={14} className="text-neutral-500" />}
-        </div>
-      </button>
-    )
-  },
-  (prev, next) => {
-    const wasSelected = prev.idx === prev.selectedIndex
-    const isSelected = next.idx === next.selectedIndex
-    return prev.result === next.result && wasSelected === isSelected
-  }
-)
-UniversalLimitedRow.displayName = 'UniversalLimitedRow'
-
-interface UniversalCatalogRowProps {
-  result: CatalogSearchResult
-  idx: number
-  selectedIndex: number
-  onSelect: (result: UniversalSearchResult) => void
-}
-
-const UniversalCatalogRow = memo(
-  ({ result, idx, selectedIndex, onSelect }: UniversalCatalogRowProps) => {
-    const isSelected = idx === selectedIndex
-    return (
-      <button
-        data-selected={isSelected}
-        data-index={idx}
-        onClick={() => onSelect(result)}
-        className={cn(
-          'w-full flex items-center gap-3 px-4 py-2.5 text-left',
-          isSelected ? 'bg-neutral-800/80' : 'hover:bg-neutral-900'
-        )}
-      >
-        <LimitedThumbnail
-          assetId={result.id}
-          name={result.name}
-          className="flex-shrink-0 w-10 h-10 rounded-lg"
-        />
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <span
-              className={cn(
-                'text-sm font-medium truncate',
-                isSelected ? 'text-white' : 'text-neutral-300'
-              )}
-            >
-              {result.name}
-            </span>
-            {(result.isLimited || result.isLimitedUnique) && (
-              <Gem size={12} className="text-amber-400 flex-shrink-0" />
-            )}
-          </div>
-          <div className="flex items-center gap-2 text-xs text-neutral-500">
-            {result.isForSale && result.price > 0 ? (
-              <span className="text-green-400">R$ {result.price.toLocaleString()}</span>
-            ) : (
-              <span className="text-neutral-500">Off Sale</span>
-            )}
-            {result.description && (
-              <>
-                <span>·</span>
-                <span className="truncate max-w-[200px]">{result.description}</span>
-              </>
-            )}
-          </div>
-        </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <span className="text-xs text-neutral-600 px-2 py-0.5 bg-neutral-800 rounded">
-            Catalog
-          </span>
-          {isSelected && <ExternalLink size={14} className="text-neutral-500" />}
-        </div>
-      </button>
-    )
-  },
-  (prev, next) => {
-    const wasSelected = prev.idx === prev.selectedIndex
-    const isSelected = next.idx === next.selectedIndex
-    return prev.result === next.result && wasSelected === isSelected
-  }
-)
-UniversalCatalogRow.displayName = 'UniversalCatalogRow'
-
-interface UniversalCommandRowProps {
-  result: { type: 'command'; command: CommandType }
-  idx: number
-  selectedIndex: number
-  onSelect: (result: UniversalSearchResult) => void
-}
-
-const UniversalCommandRow = memo(
-  ({ result, idx, selectedIndex, onSelect }: UniversalCommandRowProps) => {
-    const isSelected = idx === selectedIndex
-    const cmd = result.command
-    return (
-      <button
-        data-selected={isSelected}
-        data-index={idx}
-        onClick={() => onSelect(result)}
-        className={cn(
-          'w-full flex items-center gap-3 px-4 py-2.5 text-left',
-          isSelected ? 'bg-neutral-800/80' : 'hover:bg-neutral-900'
-        )}
-      >
-        <div
-          className={cn(
-            'flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center',
-            isSelected
-              ? 'bg-[var(--accent-color)] text-[var(--accent-color-foreground)]'
-              : 'bg-neutral-800 text-neutral-400'
-          )}
-        >
-          {iconMap[cmd.icon] || <Sparkles size={18} />}
-        </div>
-        <div className="flex-1 min-w-0">
-          <span
-            className={cn(
-              'text-sm font-medium truncate block',
-              isSelected ? 'text-white' : 'text-neutral-300'
-            )}
-          >
-            {cmd.label}
-          </span>
-          {cmd.description && (
-            <div className="text-xs text-neutral-500 truncate">{cmd.description}</div>
-          )}
-        </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <span className="text-xs text-neutral-600 px-2 py-0.5 bg-neutral-800 rounded">
-            Command
-          </span>
-          {cmd.requiresInput ? (
-            <ChevronRight size={16} className="text-neutral-600" />
-          ) : (
-            isSelected && <CornerDownLeft size={14} className="text-neutral-500" />
-          )}
-        </div>
-      </button>
-    )
-  },
-  (prev, next) => {
-    const wasSelected = prev.idx === prev.selectedIndex
-    const isSelected = next.idx === next.selectedIndex
-    return prev.result === next.result && wasSelected === isSelected
-  }
-)
-UniversalCommandRow.displayName = 'UniversalCommandRow'
 
 interface CommandPaletteProps {
   onViewProfile: (userId: string) => void
@@ -400,6 +185,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   const setSelectedIds = useSetSelectedIds()
   const { showNotification } = useNotification()
 
+  // Get selected account for friends suggestions
   const selectedAccountId = useMemo(() => {
     return selectedIds.size === 1 ? Array.from(selectedIds)[0] : null
   }, [selectedIds])
@@ -410,28 +196,13 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     )
   }, [accounts, selectedAccountId])
 
+  // Fetch friends for suggestions
   const { data: friends = [] } = useFriends(selectedAccount)
 
-  // Limiteds search (FlexSearch powered)
-  const {
-    searchLimiteds,
-    resetSearch: resetLimitedsSearch,
-    results: limitedsResults,
-    isLoading: limitedsLoading,
-    itemCount: limitedsCount
-  } = useLimitedsSearch({ maxResults: 20 })
-
-  // Catalog search (FlexSearch powered)
-  const {
-    searchCatalog,
-    resetSearch: resetCatalogSearch,
-    results: catalogResults,
-    isLoading: catalogLoading,
-    itemCount: catalogCount
-  } = useCatalogSearch({ maxResults: 20 })
-
+  // State for friend suggestion selection
   const [suggestionIndex, setSuggestionIndex] = useState(0)
 
+  // Use refs to store callbacks to avoid re-creating commands on every render
   const callbacksRef = useRef<CommandCallbacks>({
     setActiveTab,
     openModal,
@@ -444,6 +215,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     getAccounts: () => accounts
   })
 
+  // Keep callbacks ref updated
   useEffect(() => {
     callbacksRef.current = {
       setActiveTab,
@@ -458,65 +230,15 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     }
   })
 
+  // Build commands based on current context - only re-create when accounts change
   const commands = useMemo<CommandType[]>(() => {
     return createAllCommands(callbacksRef.current)
   }, [accounts])
 
-  // Trigger searches when query changes
-  useEffect(() => {
-    if (step === 'search' && query.trim()) {
-      searchLimiteds(query)
-      searchCatalog(query)
-    }
-  }, [step, query, searchLimiteds, searchCatalog])
-
-  // Universal search results - combines limiteds, catalog items, and commands
-  const universalSearchResults = useMemo<UniversalSearchResult[]>(() => {
-    if (step !== 'search' || !query.trim()) return []
-
-    const results: UniversalSearchResult[] = []
-
-    limitedsResults.forEach((limited) => {
-      results.push(limited)
-    })
-
-    catalogResults.forEach((item) => {
-      const isLimitedDuplicate = limitedsResults.some((l) => l.id === item.AssetId)
-      if (!isLimitedDuplicate) {
-        results.push({
-          type: 'catalog',
-          id: item.AssetId,
-          name: item.Name,
-          description: item.Description || '',
-          assetTypeId: item.AssetTypeId,
-          isLimited: item.IsLimited,
-          isLimitedUnique: item.IsLimitedUnique,
-          price: item.PriceInRobux,
-          isForSale: item.IsForSale
-        })
-      }
-    })
-
-    // Search commands
-    const lowerQuery = query.toLowerCase()
-    const matchingCommands = commands
-      .filter((cmd) => {
-        const matchLabel = cmd.label.toLowerCase().includes(lowerQuery)
-        const matchDesc = cmd.description?.toLowerCase().includes(lowerQuery)
-        const matchKeywords = cmd.keywords?.some((k) => k.includes(lowerQuery))
-        return matchLabel || matchDesc || matchKeywords
-      })
-      .slice(0, 5) // Limit commands to 5 in universal search
-
-    matchingCommands.forEach((cmd) => {
-      results.push({ type: 'command', command: cmd })
-    })
-
-    return results
-  }, [step, query, limitedsResults, catalogResults, commands])
-
+  // Filter commands based on query
   const filteredCommands = useMemo(() => {
     if (!query.trim()) {
+      // Show recent + top commands when no query
       const recent = recentCommandIds
         .map((id) => commands.find((c) => c.id === id))
         .filter(Boolean) as CommandType[]
@@ -545,6 +267,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       groups[cmd.category].push(cmd)
     })
 
+    // Sort by category order
     const sortedGroups: { category: string; commands: CommandType[] }[] = []
     categoryOrder.forEach((cat) => {
       if (groups[cat]?.length) {
@@ -560,35 +283,16 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     return groupedCommands.flatMap((g) => g.commands)
   }, [groupedCommands])
 
-  const handleSelectUniversalResult = useCallback(
-    (result: UniversalSearchResult) => {
-      if (result.type === 'command') {
-        selectCommand(result.command)
-      } else if (result.type === 'limited') {
-        onViewAccessory({
-          id: result.id,
-          itemType: 'Asset',
-          name: result.name
-        })
-        close()
-      } else if (result.type === 'catalog') {
-        onViewAccessory({
-          id: result.id,
-          itemType: 'Asset',
-          name: result.name
-        })
-        close()
-      }
-    },
-    [selectCommand, onViewAccessory, close]
-  )
-
+  // Filter friends based on input value (for username-based commands)
   const filteredFriends = useMemo(() => {
     if (step !== 'input' || !activeCommand) return []
+
+    // Only show suggestions for username-based commands
     const usernameCommands = ['view-profile-username', 'launch-username', 'view-value', 'view-rap']
     if (!usernameCommands.includes(activeCommand.id)) return []
 
     if (!inputValue.trim()) {
+      // Show first 8 friends when no input
       return friends.slice(0, 8)
     }
 
@@ -602,18 +306,17 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       .slice(0, 8)
   }, [step, activeCommand, inputValue, friends])
 
+  // Reset suggestion index when filtered friends change
   useEffect(() => {
     setSuggestionIndex(0)
   }, [filteredFriends.length, inputValue])
 
+  // Focus input when opened
   useEffect(() => {
     if (isOpen) {
       setTimeout(() => inputRef.current?.focus(), 50)
-    } else {
-      resetLimitedsSearch()
-      resetCatalogSearch()
     }
-  }, [isOpen, step, resetLimitedsSearch, resetCatalogSearch])
+  }, [isOpen, step])
 
   // Keyboard navigation
   useEffect(() => {
@@ -623,55 +326,13 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       if (e.key === 'Escape') {
         if (step === 'input' || step === 'results') {
           goBack()
-        } else if (step === 'select') {
-          goBack()
         } else {
           close()
         }
         return
       }
 
-      if (step === 'search') {
-        // In command mode (query starts with >)
-        if (query.startsWith('>')) {
-          const cmdQuery = query.slice(1).trim().toLowerCase()
-          const filteredCmds = cmdQuery
-            ? commands.filter((cmd) => {
-                const matchLabel = cmd.label.toLowerCase().includes(cmdQuery)
-                const matchDesc = cmd.description?.toLowerCase().includes(cmdQuery)
-                const matchKeywords = cmd.keywords?.some((k) => k.includes(cmdQuery))
-                return matchLabel || matchDesc || matchKeywords
-              })
-            : commands
-          const maxIndex = Math.min(filteredCmds.length, 15) - 1
-
-          if (e.key === 'ArrowDown') {
-            e.preventDefault()
-            setSelectedIndex(Math.min(selectedIndex + 1, maxIndex))
-          } else if (e.key === 'ArrowUp') {
-            e.preventDefault()
-            setSelectedIndex(Math.max(selectedIndex - 1, 0))
-          } else if (e.key === 'Enter' && filteredCmds[selectedIndex]) {
-            e.preventDefault()
-            selectCommand(filteredCmds[selectedIndex])
-          } else if (e.key === 'Backspace' && query === '>') {
-            e.preventDefault()
-            setQuery('')
-          }
-        } else {
-          // Normal universal search mode
-          if (e.key === 'ArrowDown') {
-            e.preventDefault()
-            setSelectedIndex(Math.min(selectedIndex + 1, universalSearchResults.length - 1))
-          } else if (e.key === 'ArrowUp') {
-            e.preventDefault()
-            setSelectedIndex(Math.max(selectedIndex - 1, 0))
-          } else if (e.key === 'Enter' && universalSearchResults[selectedIndex]) {
-            e.preventDefault()
-            handleSelectUniversalResult(universalSearchResults[selectedIndex])
-          }
-        }
-      } else if (step === 'select') {
+      if (step === 'select') {
         if (e.key === 'ArrowDown') {
           e.preventDefault()
           setSelectedIndex(Math.min(selectedIndex + 1, flatCommands.length - 1))
@@ -698,6 +359,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
           }
         } else if (e.key === 'Enter' && !isLoading) {
           e.preventDefault()
+          // If there's a selected friend suggestion, use that username
           if (filteredFriends.length > 0 && !inputValue.trim()) {
             const selectedFriend = filteredFriends[suggestionIndex]
             if (selectedFriend) {
@@ -745,12 +407,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     searchResults,
     resultSelectedIndex,
     setResultSelectedIndex,
-    selectResult,
-    universalSearchResults,
-    handleSelectUniversalResult,
-    query,
-    setQuery,
-    commands
+    selectResult
   ])
 
   // Scroll selected item into view
@@ -860,31 +517,6 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                 </div>
               </div>
             </>
-          ) : step === 'select' ? (
-            <>
-              <button
-                onClick={goBack}
-                className="p-1.5 rounded-md hover:bg-neutral-800 text-neutral-400 hover:text-white transition-colors"
-              >
-                <ArrowLeft size={18} />
-              </button>
-              <Command size={18} className="text-neutral-500" />
-              <input
-                ref={inputRef}
-                type="text"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search commands..."
-                className="flex-1 bg-transparent text-white text-sm placeholder:text-neutral-500 focus:outline-none"
-                autoFocus
-              />
-              <div className="flex items-center gap-1.5 text-xs text-neutral-600">
-                <kbd className="px-1.5 py-0.5 bg-neutral-900 rounded text-neutral-500 border border-neutral-800 font-mono">
-                  esc
-                </kbd>
-                <span>back</span>
-              </div>
-            </>
           ) : (
             <>
               <Search size={18} className="text-neutral-500" />
@@ -893,18 +525,11 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search limiteds, items, commands..."
+                placeholder="Type a command or search..."
                 className="flex-1 bg-transparent text-white text-sm placeholder:text-neutral-500 focus:outline-none"
                 autoFocus
               />
               <div className="flex items-center gap-1.5 text-xs text-neutral-600">
-                {(limitedsCount > 0 || catalogCount > 0) && (
-                  <span className="text-neutral-600 mr-2">
-                    {limitedsCount > 0 && `${limitedsCount.toLocaleString()} limiteds`}
-                    {limitedsCount > 0 && catalogCount > 0 && ' · '}
-                    {catalogCount > 0 && `${catalogCount.toLocaleString()} items`}
-                  </span>
-                )}
                 <kbd className="px-1.5 py-0.5 bg-neutral-900 rounded text-neutral-500 border border-neutral-800 font-mono">
                   esc
                 </kbd>
@@ -913,170 +538,6 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
             </>
           )}
         </div>
-
-        {/* Universal Search Results */}
-        {step === 'search' && (
-          <div ref={listRef} className="overflow-y-auto py-2" style={{ maxHeight: listMaxHeight }}>
-            {!query.trim() ? (
-              <div className="px-4 py-8 text-center">
-                <div className="text-neutral-400 text-sm mb-2">
-                  Search for anything Roblox-related
-                </div>
-                <div className="flex flex-wrap justify-center gap-2 text-xs text-neutral-600">
-                  <span className="px-2 py-1 bg-neutral-900 rounded">Limiteds</span>
-                  <span className="px-2 py-1 bg-neutral-900 rounded">Catalog Items</span>
-                  <span className="px-2 py-1 bg-neutral-900 rounded">Commands</span>
-                </div>
-                <div className="mt-4 text-xs text-neutral-600">
-                  Type{' '}
-                  <kbd className="px-1.5 py-0.5 bg-neutral-800 rounded font-mono mx-1">&gt;</kbd>{' '}
-                  for commands only
-                </div>
-              </div>
-            ) : query.startsWith('>') ? (
-              (() => {
-                const cmdQuery = query.slice(1).trim().toLowerCase()
-                const filteredCmds = cmdQuery
-                  ? commands.filter((cmd) => {
-                      const matchLabel = cmd.label.toLowerCase().includes(cmdQuery)
-                      const matchDesc = cmd.description?.toLowerCase().includes(cmdQuery)
-                      const matchKeywords = cmd.keywords?.some((k) => k.includes(cmdQuery))
-                      return matchLabel || matchDesc || matchKeywords
-                    })
-                  : commands
-
-                if (filteredCmds.length === 0) {
-                  return (
-                    <div className="px-4 py-8 text-center text-neutral-500 text-sm">
-                      No commands found
-                    </div>
-                  )
-                }
-
-                return (
-                  <>
-                    <div className="px-4 py-1.5 text-[11px] font-medium text-neutral-600 uppercase tracking-wider">
-                      Commands
-                    </div>
-                    {filteredCmds.slice(0, 15).map((cmd, idx) => {
-                      const isSelected = idx === selectedIndex
-                      return (
-                        <button
-                          key={cmd.id}
-                          data-selected={isSelected}
-                          onClick={() => selectCommand(cmd)}
-                          onMouseEnter={() => setSelectedIndex(idx)}
-                          className={cn(
-                            'w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors',
-                            isSelected ? 'bg-neutral-800/80' : 'hover:bg-neutral-900'
-                          )}
-                        >
-                          <div
-                            className={cn(
-                              'flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center',
-                              isSelected
-                                ? 'bg-[var(--accent-color)] text-[var(--accent-color-foreground)]'
-                                : 'bg-neutral-800 text-neutral-400'
-                            )}
-                          >
-                            {iconMap[cmd.icon] || <Sparkles size={18} />}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <span
-                              className={cn(
-                                'text-sm font-medium truncate block',
-                                isSelected ? 'text-white' : 'text-neutral-300'
-                              )}
-                            >
-                              {cmd.label}
-                            </span>
-                            {cmd.description && (
-                              <div className="text-xs text-neutral-500 truncate">
-                                {cmd.description}
-                              </div>
-                            )}
-                          </div>
-                          {cmd.requiresInput ? (
-                            <ChevronRight size={16} className="text-neutral-600 flex-shrink-0" />
-                          ) : (
-                            <CornerDownLeft
-                              size={14}
-                              className={cn(
-                                'flex-shrink-0 transition-opacity',
-                                isSelected ? 'opacity-100 text-neutral-500' : 'opacity-0'
-                              )}
-                            />
-                          )}
-                        </button>
-                      )
-                    })}
-                  </>
-                )
-              })()
-            ) : universalSearchResults.length === 0 ? (
-              <div className="px-4 py-8 text-center text-neutral-500 text-sm">
-                {limitedsLoading || catalogLoading ? (
-                  <div className="flex items-center justify-center gap-2">
-                    <motion.div
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                    >
-                      <RefreshCw size={16} />
-                    </motion.div>
-                    <span>Indexing items...</span>
-                  </div>
-                ) : (
-                  'No results found'
-                )}
-              </div>
-            ) : (
-              <Virtuoso
-                data={universalSearchResults}
-                overscan={20}
-                computeItemKey={(idx, item) =>
-                  item.type === 'command' ? `cmd-${item.command.id}` : `${item.type}-${item.id}`
-                }
-                style={{ height: listMaxHeight - 16 }}
-                itemContent={(idx, result) => {
-                  if (result.type === 'limited') {
-                    return (
-                      <UniversalLimitedRow
-                        result={result}
-                        idx={idx}
-                        selectedIndex={selectedIndex}
-                        onSelect={handleSelectUniversalResult}
-                      />
-                    )
-                  }
-
-                  if (result.type === 'catalog') {
-                    return (
-                      <UniversalCatalogRow
-                        result={result}
-                        idx={idx}
-                        selectedIndex={selectedIndex}
-                        onSelect={handleSelectUniversalResult}
-                      />
-                    )
-                  }
-
-                  if (result.type === 'command') {
-                    return (
-                      <UniversalCommandRow
-                        result={result}
-                        idx={idx}
-                        selectedIndex={selectedIndex}
-                        onSelect={handleSelectUniversalResult}
-                      />
-                    )
-                  }
-
-                  return null
-                }}
-              />
-            )}
-          </div>
-        )}
 
         {/* Command List */}
         {step === 'select' && (
@@ -1281,18 +742,17 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
               ) : (
                 <Virtuoso
                   data={searchResults}
-                  overscan={20}
-                  computeItemKey={(idx, item) => `${item.itemType}-${item.id}`}
+                  overscan={200}
                   itemContent={(idx, item) => {
                     const isSelected = idx === resultSelectedIndex
                     return (
                       <button
                         key={`${item.itemType}-${item.id}`}
                         data-result-selected={isSelected}
-                        data-index={idx}
                         onClick={() => selectResult(item)}
+                        onMouseEnter={() => setResultSelectedIndex(idx)}
                         className={cn(
-                          'w-full flex items-center gap-3 px-4 py-2.5 text-left',
+                          'w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors',
                           isSelected ? 'bg-neutral-800/80' : 'hover:bg-neutral-900'
                         )}
                       >
@@ -1395,14 +855,6 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
               </kbd>
               <span className="ml-1">select</span>
             </div>
-            {step === 'search' && (
-              <div className="flex items-center gap-1">
-                <kbd className="px-1.5 py-0.5 bg-neutral-900 rounded border border-neutral-800 font-mono">
-                  &gt;
-                </kbd>
-                <span className="ml-1">commands</span>
-              </div>
-            )}
           </div>
           <div className="flex items-center gap-1 text-xs text-neutral-600">
             <Command size={12} />

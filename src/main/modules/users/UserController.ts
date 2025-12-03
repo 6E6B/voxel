@@ -19,6 +19,7 @@ export const registerUserHandlers = (): void => {
         userIds,
         size || '420x420'
       )
+      // Convert Map to object for IPC serialization
       const resultObj: Record<number, string | null> = {}
       for (const [userId, url] of resultMap.entries()) {
         resultObj[userId] = url
@@ -33,19 +34,25 @@ export const registerUserHandlers = (): void => {
 
   handle('fetch-account-stats', z.tuple([z.string()]), async (_, cookieRaw) => {
     const cookie = RobloxAuthService.extractCookie(cookieRaw)
+    // Step 1: Get User ID
     const authData = await RobloxUserService.getAuthenticatedUser(cookie)
+
+    // Step 2: Get Stats
     return RobloxUserService.getAccountStats(cookie, authData.id)
   })
 
   handle('get-account-status', z.tuple([z.string()]), async (_, cookieRaw) => {
     const cookie = RobloxAuthService.extractCookie(cookieRaw)
+    // Step 1: Get User ID
     const authData = await RobloxUserService.getAuthenticatedUser(cookie)
+
+    // Step 2: Get Presence
     return RobloxUserService.getPresence(cookie, authData.id)
   })
 
   handle('get-batch-account-statuses', z.tuple([z.array(z.string())]), async (_, cookieRaws) => {
     // Extract cookies for the service, but keep original cookies for the result keys
-    const cookieMap = new Map<string, string>()
+    const cookieMap = new Map<string, string>() // original -> extracted
     const extractedCookies: string[] = []
 
     for (const cookieRaw of cookieRaws) {
@@ -56,6 +63,7 @@ export const registerUserHandlers = (): void => {
 
     const results = await RobloxUserService.getBatchAccountStatuses(extractedCookies)
 
+    // Convert Map to object for IPC serialization, using original cookies as keys
     const resultObj: Record<string, { userId: number; presence: any } | null> = {}
     for (const [originalCookie] of cookieMap.entries()) {
       const extractedCookie = cookieMap.get(originalCookie)!
@@ -98,6 +106,7 @@ export const registerUserHandlers = (): void => {
 
   handle('get-batch-user-details', z.tuple([z.array(z.number())]), async (_, userIds) => {
     const resultMap = await RobloxUserService.getBatchUserDetails(userIds)
+    // Convert Map to object for IPC serialization
     const resultObj: Record<number, { id: number; name: string; displayName: string } | null> = {}
     for (const [userId, details] of resultMap.entries()) {
       resultObj[userId] = details

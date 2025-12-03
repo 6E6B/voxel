@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
 
-export type CommandStep = 'search' | 'select' | 'input' | 'results'
+export type CommandStep = 'select' | 'input' | 'results'
 
 // Catalog search result item type
 export interface CatalogResultItem {
@@ -25,45 +25,6 @@ export interface CatalogResultItem {
   // Thumbnail URL (loaded after search)
   imageUrl?: string
 }
-
-// Universal search result types
-export type SearchResultType = 'limited' | 'catalog' | 'user' | 'game' | 'command'
-
-export interface LimitedSearchResult {
-  type: 'limited'
-  id: number
-  name: string
-  acronym: string
-  rap: number
-  value: number | null
-  demand: number
-  demandLabel: string
-  trend: number
-  trendLabel: string
-  isProjected: boolean
-  isHyped: boolean
-  isRare: boolean
-  imageUrl?: string
-}
-
-export interface CommandSearchResult {
-  type: 'command'
-  command: Command
-}
-
-export interface CatalogSearchResult {
-  type: 'catalog'
-  id: number
-  name: string
-  description: string
-  assetTypeId: number
-  isLimited: boolean
-  isLimitedUnique: boolean
-  price: number
-  isForSale: boolean
-}
-
-export type UniversalSearchResult = LimitedSearchResult | CommandSearchResult | CatalogSearchResult
 
 export interface Command {
   id: string
@@ -108,8 +69,6 @@ interface CommandPaletteState {
   // For results step
   searchResults: CatalogResultItem[]
   resultSelectedIndex: number
-  // Universal search results (limiteds, commands, etc.)
-  universalResults: UniversalSearchResult[]
 }
 
 interface CommandPaletteActions {
@@ -128,16 +87,13 @@ interface CommandPaletteActions {
   setSearchResults: (results: CatalogResultItem[]) => void
   setResultSelectedIndex: (index: number) => void
   selectResult: (item: CatalogResultItem) => void
-  // Universal search
-  setUniversalResults: (results: UniversalSearchResult[]) => void
-  selectUniversalResult: (result: UniversalSearchResult) => void
 }
 
 type CommandPaletteStore = CommandPaletteState & CommandPaletteActions
 
 const initialState: CommandPaletteState = {
   isOpen: false,
-  step: 'search',
+  step: 'select',
   query: '',
   selectedIndex: 0,
   activeCommand: null,
@@ -145,8 +101,7 @@ const initialState: CommandPaletteState = {
   isLoading: false,
   recentCommands: [],
   searchResults: [],
-  resultSelectedIndex: 0,
-  universalResults: []
+  resultSelectedIndex: 0
 }
 
 export const useCommandPaletteStore = create<CommandPaletteStore>()(
@@ -154,7 +109,7 @@ export const useCommandPaletteStore = create<CommandPaletteStore>()(
     (set, get) => ({
       ...initialState,
 
-      open: () => set({ isOpen: true, step: 'search', query: '', selectedIndex: 0 }, false, 'open'),
+      open: () => set({ isOpen: true, step: 'select', query: '', selectedIndex: 0 }, false, 'open'),
 
       close: () => set({ ...initialState }, false, 'close'),
 
@@ -187,6 +142,7 @@ export const useCommandPaletteStore = create<CommandPaletteStore>()(
       submitInput: async () => {
         const { activeCommand, inputValue, addRecentCommand, close, setLoading } = get()
 
+        // Handle search commands that show results
         if (activeCommand?.showsResults && activeCommand.onSearch && inputValue.trim()) {
           setLoading(true)
           try {
@@ -209,6 +165,7 @@ export const useCommandPaletteStore = create<CommandPaletteStore>()(
           return
         }
 
+        // Handle regular input commands
         if (activeCommand?.onInputSubmit && inputValue.trim()) {
           setLoading(true)
           try {
@@ -226,6 +183,7 @@ export const useCommandPaletteStore = create<CommandPaletteStore>()(
       goBack: () => {
         const { step } = get()
         if (step === 'results') {
+          // Go back to input from results
           set(
             {
               step: 'input',
@@ -235,26 +193,18 @@ export const useCommandPaletteStore = create<CommandPaletteStore>()(
             false,
             'goBack:toInput'
           )
-        } else if (step === 'input') {
+        } else {
+          // Go back to select from input
           set(
             {
-              step: 'search',
+              step: 'select',
               activeCommand: null,
               inputValue: '',
               searchResults: [],
               resultSelectedIndex: 0
             },
             false,
-            'goBack:toSearch'
-          )
-        } else if (step === 'select') {
-          set(
-            {
-              step: 'search',
-              query: ''
-            },
-            false,
-            'goBack:toSearch'
+            'goBack:toSelect'
           )
         }
       },
@@ -264,7 +214,7 @@ export const useCommandPaletteStore = create<CommandPaletteStore>()(
       addRecentCommand: (commandId) => {
         const { recentCommands } = get()
         const filtered = recentCommands.filter((id) => id !== commandId)
-        const updated = [commandId, ...filtered].slice(0, 5)
+        const updated = [commandId, ...filtered].slice(0, 5) // Keep last 5
         set({ recentCommands: updated }, false, 'addRecentCommand')
       },
 
@@ -282,20 +232,6 @@ export const useCommandPaletteStore = create<CommandPaletteStore>()(
           activeCommand.onResultSelect(item)
         }
         close()
-      },
-
-      // Universal search actions
-      setUniversalResults: (universalResults) =>
-        set({ universalResults }, false, 'setUniversalResults'),
-
-      selectUniversalResult: (result) => {
-        const { close, selectCommand } = get()
-        if (result.type === 'command') {
-          selectCommand(result.command)
-        } else if (result.type === 'limited') {
-          // Open limited item - will be handled by the component via callback
-          close()
-        }
       }
     }),
     { name: 'CommandPaletteStore' }
@@ -314,8 +250,6 @@ export const useCommandPaletteRecentCommands = () => useCommandPaletteStore((s) 
 export const useCommandPaletteSearchResults = () => useCommandPaletteStore((s) => s.searchResults)
 export const useCommandPaletteResultSelectedIndex = () =>
   useCommandPaletteStore((s) => s.resultSelectedIndex)
-export const useCommandPaletteUniversalResults = () =>
-  useCommandPaletteStore((s) => s.universalResults)
 
 // Selectors - Actions (individual to avoid object recreation)
 export const useCommandPaletteClose = () => useCommandPaletteStore((s) => s.close)
@@ -329,7 +263,3 @@ export const useCommandPaletteGoBack = () => useCommandPaletteStore((s) => s.goB
 export const useCommandPaletteSetResultSelectedIndex = () =>
   useCommandPaletteStore((s) => s.setResultSelectedIndex)
 export const useCommandPaletteSelectResult = () => useCommandPaletteStore((s) => s.selectResult)
-export const useCommandPaletteSetUniversalResults = () =>
-  useCommandPaletteStore((s) => s.setUniversalResults)
-export const useCommandPaletteSelectUniversalResult = () =>
-  useCommandPaletteStore((s) => s.selectUniversalResult)

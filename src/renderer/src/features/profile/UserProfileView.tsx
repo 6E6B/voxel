@@ -109,9 +109,11 @@ const UserProfileView: React.FC<ProfileViewProps> = ({
 
   const userIdNum = typeof userId === 'string' ? parseInt(userId) : userId
 
+  // Use custom hooks for data fetching
   const { profile } = useProfileData({ userId: userIdNum, requestCookie, initialData })
   const { sortedFriends, friendCount } = useFriendStatuses(userIdNum, requestCookie)
 
+  // Additional data fetching hooks
   const { data: groups = [], isLoading: isLoadingGroups } = useUserGroups(userIdNum)
   const { data: collections = [], isLoading: isLoadingCollections } = useUserCollections(
     userIdNum,
@@ -144,6 +146,7 @@ const UserProfileView: React.FC<ProfileViewProps> = ({
   const loading =
     isLoadingGroups || isLoadingCollections || isLoadingRobloxBadges || isLoadingExperienceBadges
 
+  // Description handling
   const rawDescription = profile.notes?.trim() || ''
   const hasRawDescription = rawDescription.length > 0
 
@@ -182,8 +185,10 @@ const UserProfileView: React.FC<ProfileViewProps> = ({
       className="relative flex flex-col w-full h-full bg-neutral-950 overflow-hidden font-sans"
       onContextMenu={handleContextMenu}
     >
+      {/* Main Scrollable Area */}
       <div className="flex-1 overflow-y-auto scrollbar-thin p-6">
         <div className="max-w-[1400px] mx-auto space-y-6">
+          {/* Profile Header */}
           <ProfileHeader
             userId={userIdNum}
             profile={profile}
@@ -199,8 +204,11 @@ const UserProfileView: React.FC<ProfileViewProps> = ({
             rawDescription={rawDescription}
           />
 
+          {/* Main Grid Layout */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            {/* Left Column - Info & Stats (4 cols) */}
             <div className="lg:col-span-4 space-y-6">
+              {/* Quick Actions */}
               <div className="bg-neutral-900/50 border border-neutral-800 rounded-xl p-5">
                 <h3 className="text-lg font-bold text-white mb-3">Quick Actions</h3>
                 <div className="grid grid-cols-2 gap-2">
@@ -246,6 +254,7 @@ const UserProfileView: React.FC<ProfileViewProps> = ({
               />
             </div>
 
+            {/* Right Column - Actions & Content (8 cols) */}
             <div className="lg:col-span-8 space-y-6">
               <FriendsSection
                 friends={sortedFriends as any}
@@ -282,6 +291,7 @@ const UserProfileView: React.FC<ProfileViewProps> = ({
         </div>
       </div>
 
+      {/* Currently Wearing Dialog */}
       <Dialog isOpen={isWearingOpen} onClose={() => setIsWearingOpen(false)}>
         <DialogContent className="max-w-3xl bg-neutral-950 border-neutral-800/60">
           <DialogHeader>
@@ -369,6 +379,7 @@ const UserProfileView: React.FC<ProfileViewProps> = ({
         </DialogContent>
       </Dialog>
 
+      {/* View Outfits Dialog */}
       <Dialog isOpen={isOutfitsOpen} onClose={() => setIsOutfitsOpen(false)}>
         <DialogContent className="max-w-3xl bg-neutral-950 border-neutral-800/60">
           <DialogHeader>
@@ -447,6 +458,14 @@ const UserProfileView: React.FC<ProfileViewProps> = ({
                         }
                       }}
                     >
+                      {/* Type badge - always visible */}
+                      {outfit.type && (
+                        <div className="absolute top-2 left-2 z-30">
+                          <span className="px-1.5 py-0.5 text-[10px] font-medium bg-neutral-800 text-neutral-400 rounded border border-neutral-700">
+                            {outfit.type}
+                          </span>
+                        </div>
+                      )}
                       <div className="w-full h-full p-3 flex items-center justify-center">
                         {outfit.imageUrl ? (
                           <img
@@ -492,6 +511,7 @@ const UserProfileView: React.FC<ProfileViewProps> = ({
         </DialogContent>
       </Dialog>
 
+      {/* Outfit Details Dialog */}
       <Dialog
         isOpen={!!selectedOutfit}
         onClose={() => {
@@ -589,6 +609,7 @@ const UserProfileView: React.FC<ProfileViewProps> = ({
         </DialogContent>
       </Dialog>
 
+      {/* Past Usernames Dialog */}
       <Dialog isOpen={isPastNamesOpen} onClose={() => setIsPastNamesOpen(false)}>
         <DialogContent className="max-w-md bg-neutral-950/95 backdrop-blur-xl border-neutral-800">
           <DialogHeader>
@@ -627,6 +648,7 @@ const UserProfileView: React.FC<ProfileViewProps> = ({
         </DialogContent>
       </Dialog>
 
+      {/* User List Modal */}
       <UserListModal
         isOpen={userListModal.isOpen}
         onClose={() => setUserListModal((prev) => ({ ...prev, isOpen: false }))}
@@ -640,6 +662,7 @@ const UserProfileView: React.FC<ProfileViewProps> = ({
         }}
       />
 
+      {/* Accessory Details Modal */}
       <AccessoryDetailsModal
         isOpen={!!selectedAccessory}
         onClose={() => setSelectedAccessory(null)}
@@ -660,6 +683,7 @@ const UserProfileView: React.FC<ProfileViewProps> = ({
         }
       />
 
+      {/* Expanded 3D Avatar Modal */}
       <ExpandedAvatarModal
         isOpen={isAvatarExpanded}
         onClose={() => setIsAvatarExpanded(false)}
@@ -668,6 +692,7 @@ const UserProfileView: React.FC<ProfileViewProps> = ({
         cookie={requestCookie}
       />
 
+      {/* Context Menu */}
       {contextMenu &&
         createPortal(
           <AnimatePresence>
@@ -730,6 +755,7 @@ const UserProfileView: React.FC<ProfileViewProps> = ({
           document.body
         )}
 
+      {/* Player Inventory Sheet */}
       <PlayerInventorySheet
         isOpen={isInventoryOpen}
         onClose={() => setIsInventoryOpen(false)}
@@ -738,6 +764,7 @@ const UserProfileView: React.FC<ProfileViewProps> = ({
         cookie={requestCookie}
       />
 
+      {/* Group Details Modal */}
       <GroupDetailsModal
         isOpen={!!selectedGroupId}
         onClose={() => setSelectedGroupId(null)}

@@ -21,6 +21,7 @@ export const registerInstallHandlers = (): void => {
       const targetPath =
         installPath || path.join(app.getPath('userData'), 'Versions', `${binaryType}-${version}`)
 
+      // Since we can't pass a callback through IPC directly, we'll emit events
       const success = await RobloxInstallService.downloadAndInstall(
         binaryType,
         version,
@@ -58,6 +59,7 @@ export const registerInstallHandlers = (): void => {
     z.tuple([z.string(), z.string(), z.string()]),
     async (event, binaryType, version, installPath) => {
       const webContents = event.sender
+      // Reinstall over existing path to verify/fix files
       const success = await RobloxInstallService.downloadAndInstall(
         binaryType,
         version,

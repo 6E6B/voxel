@@ -11,6 +11,7 @@ interface LogMetadata {
   path: string
   lastModified: number
   size: number
+  // Parsed fields
   timestamp?: string
   channel?: string
   version?: string
@@ -23,44 +24,61 @@ interface LogMetadata {
 const parseLogContent = (content: string): Partial<LogMetadata> => {
   const metadata: Partial<LogMetadata> = {}
 
+  // 1. Date (Timestamp from first line usually)
   const timestampMatch = content.match(/^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z)/m)
   if (timestampMatch) {
     metadata.timestamp = timestampMatch[1]
   }
 
+  // 2. Channel
   const channelMatch = content.match(/\[FLog::ClientRunInfo\] The channel is (\w+)/)
   if (channelMatch) {
     metadata.channel = channelMatch[1]
   }
 
+  // 3. Version
+  // Strategy A: version response
   const versionMatchA = content.match(/"version":"([\d\.]+)"/)
+  // Strategy B: Server Prefix
   const versionMatchB = content.match(/Server Prefix: ([\d\.]+)_/)
+  // Strategy C: userAgent
   const versionMatchC = content.match(/userAgent: Roblox\/[^/]+\/([\d\.]+)/)
 
   if (versionMatchA) metadata.version = versionMatchA[1]
   else if (versionMatchB) metadata.version = versionMatchB[1]
   else if (versionMatchC) metadata.version = versionMatchC[1]
 
+  // 4. Job ID
+  // Strategy A: Joining game
   const jobIdMatchA = content.match(/! Joining game '([0-9a-f-]{36})'/)
+  // Strategy B: JoinedVoice event
   const jobIdMatchB = content.match(/game_\d+_\d+_([0-9a-f-]{36})_/)
 
   if (jobIdMatchA) metadata.jobId = jobIdMatchA[1]
   else if (jobIdMatchB) metadata.jobId = jobIdMatchB[1]
 
+  // 5. Universe ID
   const universeIdMatch = content.match(/universeid:(\d+)/)
   if (universeIdMatch) {
     metadata.universeId = universeIdMatch[1]
   }
 
+  // 6. Server IP
+  // Strategy A: UDMUX Address
   const ipMatchA = content.match(/UDMUX Address = ([\d\.]+)/)
+  // Strategy B: Connection accepted from
   const ipMatchB = content.match(/Connection accepted from ([\d\.]+)/)
+  // Strategy C: Connecting to UDMUX server
   const ipMatchC = content.match(/Connecting to UDMUX server ([\d\.]+)/)
 
   if (ipMatchA) metadata.serverIp = ipMatchA[1]
   else if (ipMatchB) metadata.serverIp = ipMatchB[1]
   else if (ipMatchC) metadata.serverIp = ipMatchC[1]
 
+  // 7. Place ID
+  // Strategy A: placeid in GameJoinLoadTime
   const placeIdMatchA = content.match(/placeid:(\d+)/)
+  // Strategy B: Joining game ... place
   const placeIdMatchB = content.match(/place (\d+) at/)
 
   if (placeIdMatchA) metadata.placeId = placeIdMatchA[1]
@@ -131,6 +149,7 @@ export const registerLogsHandlers = () => {
         })
       )
 
+      // Sort by newest first
       return logs.sort((a, b) => b.lastModified - a.lastModified)
     } catch (error) {
       console.error('Error fetching logs:', error)
@@ -141,6 +160,7 @@ export const registerLogsHandlers = () => {
   handle('get-log-content', z.tuple([logFilenameSchema]), async (_, filename) => {
     try {
       const filePath = path.join(LOGS_DIR, filename)
+      // validation to prevent directory traversal
       if (path.dirname(filePath) !== LOGS_DIR) {
         throw new Error('Invalid file path')
       }

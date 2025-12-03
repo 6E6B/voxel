@@ -16,11 +16,13 @@ export class RobloxLauncherService {
       if (stdout.includes('No tasks')) {
         return 0
       }
+      // Count lines that contain the executable name
       return stdout
         .trim()
         .split('\n')
         .filter((line) => line.includes('RobloxPlayerBeta.exe')).length
     } catch (error) {
+      // If tasklist fails or returns error code (which it does if no process found on some versions), return 0
       return 0
     }
   }
@@ -52,6 +54,7 @@ export class RobloxLauncherService {
           `&joinAttemptId=${joinAttemptId}` +
           `&joinAttemptOrigin=followUser`
       } else if (jobId) {
+        // Joining a specific server (job)
         placeLauncherUrl =
           `https://www.roblox.com/Game/PlaceLauncher.ashx?` +
           `request=RequestGameJob` +
@@ -62,6 +65,7 @@ export class RobloxLauncherService {
           `&joinAttemptId=${joinAttemptId}` +
           `&joinAttemptOrigin=publicServerListJoin`
       } else {
+        // Joining any server
         placeLauncherUrl =
           `https://www.roblox.com/Game/PlaceLauncher.ashx?` +
           `request=RequestGame` +
@@ -83,19 +87,22 @@ export class RobloxLauncherService {
         `+channel:` +
         `+LaunchExp:InApp`
 
+      // 1. Get initial process count
       const initialCount = await this.getRobloxProcessCount()
 
+      // 2. Launch
       if (installPath) {
         await RobloxInstallService.launchWithProtocol(installPath, protocolLaunchCommand)
       } else {
         await shell.openExternal(protocolLaunchCommand)
       }
 
+      // 3. Poll for process increase
       const startTime = Date.now()
-      const timeout = 10000
+      const timeout = 10000 // 10 seconds
 
       while (Date.now() - startTime < timeout) {
-        await new Promise((resolve) => setTimeout(resolve, 1000))
+        await new Promise((resolve) => setTimeout(resolve, 1000)) // Wait 1s
         const currentCount = await this.getRobloxProcessCount()
 
         if (currentCount > initialCount) {

@@ -22,6 +22,7 @@ import {
   ChartDataPoint,
   ChartConfig,
   DateRange,
+  PredictionConfidence,
   formatPrice,
   filterDataByDateRange,
   calculateStatistics,
@@ -48,6 +49,12 @@ interface EconomyChartProps {
   config: ChartConfig
   className?: string
   isLoading?: boolean
+  showPredictionToggle?: boolean
+  onPredictionToggle?: (enabled: boolean) => void
+  isPredicting?: boolean
+  predictionConfidence?: PredictionConfidence | null
+  predictionStartIndex?: number
+  predictionData?: ChartDataPoint[]
 }
 
 // ============================================================================
@@ -58,7 +65,13 @@ export const EconomyChart: React.FC<EconomyChartProps> = ({
   data,
   config,
   className,
-  isLoading = false
+  isLoading = false,
+  showPredictionToggle = false,
+  onPredictionToggle,
+  isPredicting = false,
+  predictionConfidence,
+  predictionStartIndex,
+  predictionData = []
 }) => {
   const {
     color,
@@ -80,6 +93,7 @@ export const EconomyChart: React.FC<EconomyChartProps> = ({
   const chartContainerRef = useRef<HTMLDivElement>(null)
   const chartRef = useRef<IChartApi | null>(null)
   const mainSeriesRef = useRef<ISeriesApi<'Area'> | null>(null)
+  const predictionSeriesRef = useRef<ISeriesApi<'Area'> | null>(null)
   const maSeriesRef = useRef<ISeriesApi<'Line'> | null>(null)
   const volumeSeriesRef = useRef<ISeriesApi<'Histogram'> | null>(null)
 
@@ -113,6 +127,7 @@ export const EconomyChart: React.FC<EconomyChartProps> = ({
       chartRef.current.remove()
       chartRef.current = null
       mainSeriesRef.current = null
+      predictionSeriesRef.current = null
       maSeriesRef.current = null
       volumeSeriesRef.current = null
     }
@@ -175,6 +190,35 @@ export const EconomyChart: React.FC<EconomyChartProps> = ({
     mainSeries.setData(chartData)
     mainSeriesRef.current = mainSeries
 
+    // Add prediction series (cyan color, distinct from main series)
+    if (isPredicting && predictionData.length > 0) {
+      const predictionColor = '#06b6d4' // Cyan
+      const predictionSeries = chart.addSeries(AreaSeries, {
+        lineColor: predictionColor,
+        topColor: `${predictionColor}40`,
+        bottomColor: `${predictionColor}05`,
+        lineWidth: 2,
+        lineStyle: 2, // Dashed line
+        priceFormat: { type: 'custom', formatter: (price: number) => formatPrice(price) },
+        crosshairMarkerVisible: true,
+        crosshairMarkerRadius: 5,
+        crosshairMarkerBorderColor: predictionColor,
+        crosshairMarkerBackgroundColor: '#0a0a0a',
+        crosshairMarkerBorderWidth: 2
+      })
+
+      // Include the last historical point to connect the series smoothly
+      const lastHistoricalPoint = filteredData[filteredData.length - 1]
+      const predictionChartData: AreaData<Time>[] = [
+        ...(lastHistoricalPoint
+          ? [{ time: lastHistoricalPoint.time, value: lastHistoricalPoint.value }]
+          : []),
+        ...predictionData.map((p) => ({ time: p.time, value: p.value }))
+      ]
+      predictionSeries.setData(predictionChartData)
+      predictionSeriesRef.current = predictionSeries
+    }
+
     // Add moving average line
     if (showMA && maData.length > 0) {
       const maSeries = chart.addSeries(LineSeries, {
@@ -226,7 +270,14 @@ export const EconomyChart: React.FC<EconomyChartProps> = ({
         return
       }
 
-      const priceData = param.seriesData.get(mainSeries)
+      // Check main series first, then prediction series
+      let priceData = param.seriesData.get(mainSeries)
+      let isPredictionPoint = false
+
+      if ((!priceData || !('value' in priceData)) && predictionSeriesRef.current) {
+        priceData = param.seriesData.get(predictionSeriesRef.current)
+        isPredictionPoint = true
+      }
 
       if (!priceData || !('value' in priceData)) {
         setTooltipData(null)
@@ -234,15 +285,17 @@ export const EconomyChart: React.FC<EconomyChartProps> = ({
       }
 
       const point = filteredData.find((p) => p.time === param.time)
+      const predPoint = predictionData.find((p) => p.time === param.time)
       const maPoint = maData.find((p) => p.time === param.time)
 
       const dateStr =
         point?.dateStr ||
+        predPoint?.dateStr ||
         new Date((param.time as number) * 1000).toLocaleString(undefined, {
           year: 'numeric',
           month: 'short',
           day: 'numeric'
-        })
+        }) + (isPredictionPoint ? ' (Predicted)' : '')
 
       setTooltipData({
         visible: true,
@@ -317,11 +370,12 @@ export const EconomyChart: React.FC<EconomyChartProps> = ({
         chartRef.current.remove()
         chartRef.current = null
         mainSeriesRef.current = null
+        predictionSeriesRef.current = null
         maSeriesRef.current = null
         volumeSeriesRef.current = null
       }
     }
-  }, [filteredData, showMA, maData, showVolume, color, height])
+  }, [filteredData, showMA, maData, showVolume, color, height, isPredicting, predictionData])
 
   // Zoom controls
   const handleZoomIn = useCallback(() => {
@@ -439,6 +493,10 @@ export const EconomyChart: React.FC<EconomyChartProps> = ({
             showMA={showMA}
             onToggleMA={() => setShowMA(!showMA)}
             movingAveragePeriod={movingAveragePeriod}
+            showPredictionToggle={showPredictionToggle}
+            isPredicting={isPredicting}
+            onTogglePrediction={() => onPredictionToggle?.(!isPredicting)}
+            predictionConfidence={predictionConfidence}
             allowExport={allowExport}
             onExportPNG={handleExportPNG}
             onExportCSV={handleExportCSV}
@@ -487,6 +545,8 @@ export const EconomyChart: React.FC<EconomyChartProps> = ({
         showMA={showMA}
         maDataLength={maData.length}
         movingAveragePeriod={movingAveragePeriod}
+        isPredicting={isPredicting}
+        hasPredictions={predictionStartIndex !== undefined}
       />
 
       {/* Tooltip */}
@@ -527,6 +587,7 @@ export const ValueChart: React.FC<ValueChartProps> = ({ valueChanges, className,
     <div className="relative">
       <EconomyChart
         data={data}
+        predictionData={[]}
         config={{
           color: '#a855f7',
           title: 'Value History',
@@ -540,6 +601,10 @@ export const ValueChart: React.FC<ValueChartProps> = ({ valueChanges, className,
         }}
         className={className}
         isLoading={isLoading}
+        showPredictionToggle={false}
+        isPredicting={false}
+        predictionConfidence={null}
+        predictionStartIndex={undefined}
       />
     </div>
   )
@@ -571,6 +636,7 @@ export const PriceChart: React.FC<PriceChartProps> = ({ historyData, className, 
     <div className="relative">
       <EconomyChart
         data={data}
+        predictionData={[]}
         config={{
           color: '#10b981',
           title: 'RAP History',
@@ -584,6 +650,10 @@ export const PriceChart: React.FC<PriceChartProps> = ({ historyData, className, 
         }}
         className={className}
         isLoading={isLoading}
+        showPredictionToggle={false}
+        isPredicting={false}
+        predictionConfidence={null}
+        predictionStartIndex={undefined}
       />
     </div>
   )

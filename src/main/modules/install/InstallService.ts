@@ -153,6 +153,7 @@ export class RobloxInstallService {
       }
     }
 
+    // Limit to 30
     for (const k in found) {
       found[k] = found[k].slice(0, 30)
     }
@@ -173,6 +174,7 @@ export class RobloxInstallService {
       const verTag = version.startsWith('version-') ? version : `version-${version}`
       const base = `${AWS_MIRROR}${blobDir}${verTag}-`
 
+      // Get manifest
       onProgress('Fetching manifest...', 0)
       let manifest = ''
       try {
@@ -182,6 +184,7 @@ export class RobloxInstallService {
         return false
       }
 
+      // Deduplicate packages
       const pkgsRaw = manifest
         .split(/\r?\n/)
         .map((l) => l.trim())
@@ -192,10 +195,12 @@ export class RobloxInstallService {
         ? EXTRACT_ROOTS['player']
         : EXTRACT_ROOTS['studio']
 
+      // Prepare output folder
       if (!fs.existsSync(installPath)) {
         fs.mkdirSync(installPath, { recursive: true })
       }
 
+      // Write AppSettings.xml
       const appSettingsPath = path.join(installPath, 'AppSettings.xml')
       const appSettingsContent = `<?xml version="1.0" encoding="UTF-8"?>
 <Settings>
@@ -207,15 +212,18 @@ export class RobloxInstallService {
 
       let completed = 0
       const total = pkgs.length
-      const concurrency = 8
+      const concurrency = 8 // Adjust concurrency limit as needed
 
+      // Helper for processing a single package
       const processPackage = async (pkg: string) => {
         const url = base + pkg
         const zipPath = path.join(installPath, pkg)
         const rootDir = roots[pkg]
 
+        // Download
         await this.downloadFile(url, zipPath)
 
+        // Extract if needed
         if (rootDir !== undefined) {
           const targetExtractPath = rootDir === '' ? installPath : path.join(installPath, rootDir)
           if (!fs.existsSync(targetExtractPath)) {
@@ -223,6 +231,7 @@ export class RobloxInstallService {
           }
           await this.extractZip(zipPath, targetExtractPath)
 
+          // Retry unlink logic
           let attempts = 0
           while (attempts < 3) {
             try {
@@ -233,17 +242,19 @@ export class RobloxInstallService {
               if (attempts >= 3) {
                 console.warn(`Failed to delete ${zipPath} after 3 attempts:`, e)
               } else {
-                await new Promise((r) => setTimeout(r, 500))
+                await new Promise((r) => setTimeout(r, 500)) // wait 500ms
               }
             }
           }
         }
       }
 
+      // Reset for the actual run
       completed = 0
       const queue = [...pkgs]
       const activeWorkers: Promise<void>[] = []
 
+      // If only one package, just process it
       if (queue.length === 1) {
         await processPackage(queue[0])
         onProgress('Complete', 100)
@@ -253,17 +264,22 @@ export class RobloxInstallService {
       while (queue.length > 0 || activeWorkers.length > 0) {
         while (queue.length > 0 && activeWorkers.length < concurrency) {
           const pkg = queue.shift()!
+          // Create a worker promise that processes the package
           const worker = (async () => {
             await processPackage(pkg)
             completed++
             onProgress('Installing...', Math.floor((completed / total) * 100), pkg)
           })()
 
+          // Add to active workers
           activeWorkers.push(worker)
 
+          // When this worker finishes, remove it from the active list
+          // Note: We need to catch errors inside the main loop or here
           worker
             .catch((err) => {
               console.error(`Failed to process package ${pkg}`, err)
+              // We should probably stop everything if one fails
               throw err
             })
             .finally(() => {
@@ -275,6 +291,7 @@ export class RobloxInstallService {
         }
 
         if (activeWorkers.length > 0) {
+          // Wait for at least one worker to finish before checking queue again
           await Promise.race(activeWorkers)
         }
       }
@@ -352,6 +369,7 @@ export class RobloxInstallService {
   }
 
   static async setFFlags(installPath: string, flags: Record<string, any>): Promise<void> {
+    // Validate before writing
     fflagsSchema.parse(flags)
 
     const clientSettingsDir = path.join(installPath, 'ClientSettings')
@@ -439,7 +457,15 @@ export class RobloxInstallService {
   }
 
   static async removeActive(): Promise<void> {
+    // We delete the registry keys we created
     const keyPath = 'HKCU\\Software\\Classes\\roblox-player'
+
+    // verify if key exists first to avoid error? reg delete throws if not found.
+    // We'll just try to delete the whole key tree for roblox-player class we managed.
+    // NOTE: This might remove a "real" roblox installation's association if we overwrote it.
+    // But the user asked to "not have an active one".
+
+    // Command: reg delete HKCU\Software\Classes\roblox-player /f
 
     return new Promise<void>((resolve) => {
       const child = spawn('reg', ['delete', keyPath, '/f'], { stdio: 'ignore', windowsHide: true })
@@ -483,6 +509,7 @@ export class RobloxInstallService {
         if (match && match[1]) {
           const exePath = match[1].trim()
 
+          // Return directory containing the exe
           resolve(path.dirname(exePath))
         } else {
           resolve(null)
@@ -502,6 +529,7 @@ export class RobloxInstallService {
       throw new Error('RobloxPlayerBeta.exe not found in ' + installPath)
     }
 
+    // Spawn detached
     const child = spawn(playerExe, [protocolUrl], {
       detached: true,
       cwd: installPath,
@@ -512,9 +540,11 @@ export class RobloxInstallService {
 
   private static downloadFile(url: string, dest: string): Promise<void> {
     return new Promise((resolve, reject) => {
+      // Prepare directory
       const dir = path.dirname(dest)
       if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
 
+      // Try to remove file if it exists
       if (fs.existsSync(dest)) {
         try {
           fs.unlinkSync(dest)
@@ -663,6 +693,7 @@ export class RobloxInstallService {
     const detected: DetectedInstallation[] = []
 
     try {
+      // Default Roblox install path
       const robloxVersionsPath = path.join(os.homedir(), 'AppData', 'Local', 'Roblox', 'Versions')
 
       if (!fs.existsSync(robloxVersionsPath)) {
@@ -672,6 +703,7 @@ export class RobloxInstallService {
       const entries = await fs.promises.readdir(robloxVersionsPath, { withFileTypes: true })
 
       for (const entry of entries) {
+        // Look for directories named version-<hash>
         if (!entry.isDirectory() || !entry.name.startsWith('version-')) {
           continue
         }
@@ -679,6 +711,7 @@ export class RobloxInstallService {
         const versionDir = path.join(robloxVersionsPath, entry.name)
         const versionHash = entry.name.replace('version-', '')
 
+        // Check for RobloxPlayerBeta.exe
         const playerExe = path.join(versionDir, 'RobloxPlayerBeta.exe')
         if (fs.existsSync(playerExe)) {
           detected.push({
@@ -690,6 +723,7 @@ export class RobloxInstallService {
           continue
         }
 
+        // Check for RobloxStudioBeta.exe
         const studioExe = path.join(versionDir, 'RobloxStudioBeta.exe')
         if (fs.existsSync(studioExe)) {
           detected.push({

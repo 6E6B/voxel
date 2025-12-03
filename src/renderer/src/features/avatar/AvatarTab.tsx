@@ -13,7 +13,6 @@ import {
   useUserOutfits,
   useFavoriteItems
 } from '@renderer/hooks/queries'
-import { useInvalidateAvatar3D } from './hooks/useAvatar3DManifest'
 import { useAvatarStore } from './stores/useAvatarStore'
 import { AvatarViewport } from './components/AvatarViewport'
 import { InventoryGrid } from './components/InventoryGrid'
@@ -42,6 +41,7 @@ interface InventoryItem {
 const AvatarTab: React.FC<AvatarTabProps> = ({ account }) => {
   const { showNotification } = useNotification()
 
+  // Persistent state from store
   const {
     mainCategory,
     subCategory,
@@ -53,14 +53,17 @@ const AvatarTab: React.FC<AvatarTabProps> = ({ account }) => {
     setScrollPosition
   } = useAvatarStore()
 
+  // 3D Scene setup - now using React Three Fiber
   const avatarRenderContainerRef = useRef<HTMLDivElement | null>(null)
   const { avatarRenderWidth, isResizing, handleResizeStart } =
     useAvatarRenderResize(avatarRenderContainerRef)
   const [isLargeScreen, setIsLargeScreen] = useState(window.innerWidth >= 1024)
 
+  // R3F rendering state
   const [isRendering, setIsRendering] = useState(false)
   const [renderText, setRenderText] = useState('')
 
+  // R3F callbacks
   const handleRenderStart = useCallback(() => {
     setIsRendering(true)
   }, [])
@@ -77,14 +80,21 @@ const AvatarTab: React.FC<AvatarTabProps> = ({ account }) => {
     setRenderText(status)
   }, [])
 
-  const resetCamera = useCallback(() => {}, [])
+  // Placeholder for camera reset (handled internally by R3F scene)
+  const resetCamera = useCallback(() => {
+    // Camera reset is handled by the R3F scene component
+  }, [])
 
-  const renderAvatar = useCallback(async (_userId: string) => {}, [])
+  // Placeholder for render avatar (R3F handles this declaratively)
+  const renderAvatar = useCallback(async (_userId: string) => {
+    // R3F renders declaratively, this is for API compatibility
+  }, [])
 
+  // TanStack Query hooks
   const { data: currentAvatarData, refetch: refetchCurrentAvatar } = useCurrentAvatar(account)
   const { data: favoriteItems = [] } = useFavoriteItems()
-  const { invalidateAvatar } = useInvalidateAvatar3D()
 
+  // Determine asset type IDs for inventory query
   const assetTypeIds = useMemo(() => {
     return getAssetTypeIds(mainCategory, subCategory)
   }, [mainCategory, subCategory])
@@ -103,6 +113,7 @@ const AvatarTab: React.FC<AvatarTabProps> = ({ account }) => {
     isEditable
   )
 
+  // Derived data
   const equippedIds = useMemo(() => {
     return new Set<number>(currentAvatarData?.assets.map((a) => a.id) || [])
   }, [currentAvatarData])
@@ -119,6 +130,7 @@ const AvatarTab: React.FC<AvatarTabProps> = ({ account }) => {
     return new Set<number>(favoriteItems.map((f) => f.id))
   }, [favoriteItems])
 
+  // Currently wearing items with thumbnails
   const currentlyWearingItems = useMemo((): InventoryItem[] => {
     if (!currentAvatarData?.assets) return []
     return currentAvatarData.assets.map((asset) => ({
@@ -129,6 +141,7 @@ const AvatarTab: React.FC<AvatarTabProps> = ({ account }) => {
     }))
   }, [currentAvatarData])
 
+  // Compute inventory items based on category
   const inventoryItems = useMemo((): InventoryItem[] => {
     if (mainCategory === 'Currently Wearing') {
       return currentlyWearingItems
@@ -145,15 +158,16 @@ const AvatarTab: React.FC<AvatarTabProps> = ({ account }) => {
   const isLoading =
     mainCategory === 'Characters' ? isLoadingOutfits : isInventoryCat ? isLoadingInventory : false
 
+  // Filtering hook
   const { filteredItems } = useInventoryFilter({
     inventoryItems,
     searchQuery,
     favoriteIds
   })
 
+  // Avatar actions hook
   const {
     isUpdatingAvatar,
-    loadingItemId,
     favoriteBurstKeys,
     handleFavorite,
     toggleEquip,
@@ -180,6 +194,7 @@ const AvatarTab: React.FC<AvatarTabProps> = ({ account }) => {
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
+  // Modal States
   const [renameModal, setRenameModal] = useState<{
     isOpen: boolean
     outfitId: number | null
@@ -207,6 +222,7 @@ const AvatarTab: React.FC<AvatarTabProps> = ({ account }) => {
     canEdit?: boolean
   } | null>(null)
 
+  // Handlers
   const handleContextMenu = (e: React.MouseEvent, item: InventoryItem) => {
     e.preventDefault()
     const isCreation = mainCategory === 'Characters' && subCategory === 'Creations'
@@ -238,7 +254,7 @@ const AvatarTab: React.FC<AvatarTabProps> = ({ account }) => {
   const handleRefreshAvatar = async () => {
     if (account?.userId) {
       await refetchCurrentAvatar()
-      invalidateAvatar(account.userId)
+      await renderAvatar(account.userId)
     }
   }
 
@@ -280,7 +296,7 @@ const AvatarTab: React.FC<AvatarTabProps> = ({ account }) => {
   const handleUpdate = async () => {
     await refetchCurrentAvatar()
     if (account?.userId) {
-      invalidateAvatar(account.userId)
+      await renderAvatar(account.userId)
     }
   }
 
@@ -295,29 +311,28 @@ const AvatarTab: React.FC<AvatarTabProps> = ({ account }) => {
 
   return (
     <div className="flex flex-col lg:flex-row h-full w-full bg-neutral-950 animate-tab-enter overflow-hidden">
-      <div className="w-full lg:w-1/2 h-full">
-        <AvatarViewport
-          userId={account?.userId}
-          cookie={account?.cookie}
-          account={account}
-          currentAvatarType={currentAvatarType}
-          isRendering={isRendering}
-          renderText={renderText}
-          onRefresh={handleRefreshAvatar}
-          onReset={resetCamera}
-          onRenderStart={handleRenderStart}
-          onRenderComplete={handleRenderComplete}
-          onRenderError={handleRenderError}
-          onRenderStatusChange={handleRenderStatusChange}
-          isLargeScreen={isLargeScreen}
-          isResizing={isResizing}
-          onResizeStart={handleResizeStart}
-          avatarRenderWidth={avatarRenderWidth}
-          containerRef={avatarRenderContainerRef}
-        />
-      </div>
+      {/* LEFT SIDE: 3D Viewport */}
+      <AvatarViewport
+        userId={account?.userId}
+        cookie={account?.cookie}
+        isRendering={isRendering}
+        renderText={renderText}
+        onRefresh={handleRefreshAvatar}
+        onReset={resetCamera}
+        onRenderStart={handleRenderStart}
+        onRenderComplete={handleRenderComplete}
+        onRenderError={handleRenderError}
+        onRenderStatusChange={handleRenderStatusChange}
+        isLargeScreen={isLargeScreen}
+        isResizing={isResizing}
+        onResizeStart={handleResizeStart}
+        avatarRenderWidth={avatarRenderWidth}
+        containerRef={avatarRenderContainerRef}
+      />
 
-      <div className="w-full lg:w-1/2 h-full bg-neutral-950 flex flex-col min-w-0">
+      {/* RIGHT SIDE: Inventory Grid & Selection */}
+      <div className="flex-1 h-full bg-neutral-950 flex flex-col min-w-0">
+        {/* Top Navigation Panel */}
         <div className="flex flex-col border-b border-neutral-800 bg-neutral-950 z-10 shadow-sm">
           <CategorySelector
             mainCategory={mainCategory}
@@ -334,12 +349,12 @@ const AvatarTab: React.FC<AvatarTabProps> = ({ account }) => {
           />
         </div>
 
+        {/* Inventory Grid */}
         <InventoryGrid
           account={account}
           filteredItems={filteredItems}
           isLoading={isLoading}
           isUpdatingAvatar={isUpdatingAvatar}
-          loadingItemId={loadingItemId}
           equippedIds={equippedIds}
           favoriteIds={favoriteIds}
           favoriteBurstKeys={favoriteBurstKeys}

@@ -7,6 +7,7 @@ import type {
   CatalogItemsSearchResponse
 } from '@renderer/ipc/windowApi'
 
+// Fetch catalog navigation menu (categories)
 export function useCatalogNavigation() {
   return useQuery({
     queryKey: queryKeys.catalog.navigation(),
@@ -15,6 +16,7 @@ export function useCatalogNavigation() {
   })
 }
 
+// Search catalog items with infinite scrolling
 export function useCatalogSearch(params: CatalogItemsSearchParams, enabled = true) {
   return useInfiniteQuery({
     queryKey: queryKeys.catalog.search(params as Record<string, unknown>),
@@ -34,6 +36,7 @@ export function useCatalogSearch(params: CatalogItemsSearchParams, enabled = tru
       if (error?.statusCode === 429 || error?.message?.includes('429')) {
         return failureCount < 3
       }
+      // Don't retry other errors
       return false
     },
     retryDelay: (attemptIndex, error: any) => {
@@ -51,6 +54,7 @@ export function useCatalogSearch(params: CatalogItemsSearchParams, enabled = tru
 
 import { useCatalogStore, useSetCatalogThumbnails } from '../stores/useCatalogStore'
 
+// Get thumbnails for catalog items
 export function useCatalogThumbnails(
   items: Array<{ id: number; itemType: string }>,
   enabled = true
@@ -58,9 +62,12 @@ export function useCatalogThumbnails(
   const thumbnails = useCatalogStore((state) => state.thumbnails)
   const setThumbnails = useSetCatalogThumbnails()
 
+  // Filter items that are missing from the Zustand store
+  // We check for undefined specifically to differentiate from failed requests (which might be stored as '')
   const itemsNeedingThumbnails = items.filter((item) => thumbnails[item.id] === undefined)
   const idsToFetch = itemsNeedingThumbnails.map((i) => i.id).sort((a, b) => a - b)
 
+  // Only run query if we have items to fetch
   const shouldFetch = enabled && itemsNeedingThumbnails.length > 0
 
   const query = useQuery({
@@ -84,11 +91,15 @@ export function useCatalogThumbnails(
     gcTime: 10 * 60 * 1000 // Garbage collect after 10 mins if unused
   })
 
+  // Sync with Zustand store when data is available
   if (query.data && !query.isFetching) {
+    // We can't call setThumbnails directly in render, so we check if we need to update
     const hasNewData = Object.entries(query.data).some(
       ([id, url]) => thumbnails[parseInt(id)] !== url
     )
 
+    // Check if we have any missing IDs that we tried to fetch but got no result (failures)
+    // We should mark them as failed ('') to prevent infinite refetching
     const returnedIds = Object.keys(query.data).map(Number)
     const missingIds = idsToFetch.filter((id) => !returnedIds.includes(id))
     const hasMissingIds = missingIds.some((id) => thumbnails[id] !== '')
@@ -99,11 +110,13 @@ export function useCatalogThumbnails(
     }
   }
 
+  // We use a useEffect to sync state changes
   useEffect(() => {
     if (query.data) {
       const newThumbnails: Record<number, string> = {}
       const returnedIds = Object.keys(query.data).map(Number)
 
+      // 1. Add successful thumbnails
       Object.entries(query.data).forEach(([id, url]) => {
         // Only update if different (avoid unnecessary state updates)
         if (thumbnails[parseInt(id)] !== url) {
@@ -111,6 +124,7 @@ export function useCatalogThumbnails(
         }
       })
 
+      // 2. Mark failed/missing thumbnails as empty string
       idsToFetch.forEach((id) => {
         if (!returnedIds.includes(id) && thumbnails[id] !== '') {
           newThumbnails[id] = ''
@@ -121,6 +135,7 @@ export function useCatalogThumbnails(
         setThumbnails({ ...thumbnails, ...newThumbnails })
       }
     } else if (query.isError) {
+      // If the whole batch failed, mark all as failed
       const failedThumbnails: Record<number, string> = {}
       let hasUpdates = false
       idsToFetch.forEach((id) => {
@@ -138,6 +153,7 @@ export function useCatalogThumbnails(
   return query
 }
 
+// Get search suggestions
 export function useCatalogSearchSuggestions(prefix: string) {
   return useQuery({
     queryKey: queryKeys.catalog.suggestions(prefix),

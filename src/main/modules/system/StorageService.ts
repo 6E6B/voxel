@@ -87,6 +87,7 @@ class StorageService {
         this.data = {}
       }
 
+      // Apply multi-instance setting
       if (this.data.settings?.allowMultipleInstances) {
         MultiInstance.Enable()
       } else {
@@ -145,10 +146,13 @@ class StorageService {
     const accounts = (this.data.accounts || []) as Account[]
     const pinHash = this.getPinHash()
 
+    // Security check: If a PIN is set, only decrypt cookies if PIN has been verified in main process
     if (pinHash && !pinService.isPinCurrentlyVerified()) {
+      // Return accounts without cookies until PIN is verified
+      // This is expected behavior on app startup before PIN entry
       return accounts.map((account) => ({
         ...account,
-        cookie: undefined
+        cookie: undefined // Don't expose cookie data until authenticated
       }))
     }
 
@@ -157,15 +161,18 @@ class StorageService {
       return accounts
     }
 
+    // Get encryption salt and verified PIN for PIN-layer decryption
     const encryptionSalt = pinHash ? pinService.getEncryptionSalt(pinHash) : null
     const verifiedPin = pinService.getVerifiedPin()
 
     return accounts.map((account) => {
       if (account.cookie) {
         try {
+          // First, decrypt with safeStorage (OS-level encryption)
           const encryptedBuffer = Buffer.from(account.cookie, 'base64')
           let decryptedCookie = safeStorage.decryptString(encryptedBuffer)
 
+          // If PIN is set and we have the verified PIN, decrypt the PIN layer
           if (pinHash && encryptionSalt && verifiedPin) {
             const pinDecrypted = pinService.decryptWithPin(
               decryptedCookie,
@@ -197,6 +204,7 @@ class StorageService {
       return
     }
 
+    // Get encryption salt and verified PIN for PIN-layer encryption
     const pinHash = this.getPinHash()
     const encryptionSalt = pinHash ? pinService.getEncryptionSalt(pinHash) : null
     const verifiedPin = pinService.getVerifiedPin()
@@ -206,6 +214,7 @@ class StorageService {
         try {
           let cookieToEncrypt = account.cookie
 
+          // If PIN is set and verified, first encrypt with PIN-derived key
           if (pinHash && encryptionSalt && verifiedPin) {
             const pinEncrypted = pinService.encryptWithPin(
               account.cookie,
@@ -220,10 +229,12 @@ class StorageService {
             }
           }
 
+          // Then encrypt with safeStorage (OS-level encryption)
           const encryptedBuffer = safeStorage.encryptString(cookieToEncrypt)
           return { ...account, cookie: encryptedBuffer.toString('base64') }
         } catch (error) {
           console.error(`Failed to encrypt cookie for account ${account.username}:`, error)
+          // If encryption fails, we probably shouldn't save the plain cookie.
           return { ...account, cookie: undefined }
         }
       }
@@ -277,6 +288,7 @@ class StorageService {
       defaultInstallationPath: this.data.settings?.defaultInstallationPath ?? null,
       accentColor: this.data.settings?.accentColor ?? DEFAULT_ACCENT_COLOR,
       showSidebarProfileCard: this.data.settings?.showSidebarProfileCard ?? true,
+      // Return whether a PIN is set (never expose actual PIN data)
       pinCode: this.data.settings?.pinCodeHash ? 'SET' : null
     }
   }
@@ -303,13 +315,16 @@ class StorageService {
   } {
     const existingHash = this.getPinHash()
 
+    // If a PIN is already set, require current PIN verification before change/removal
     if (existingHash) {
       if (!currentPin) {
         return { success: false, error: 'Current PIN required to change or remove PIN' }
       }
 
+      // Verify current PIN
       const verifyResult = pinService.verifyCurrentPinForChange(currentPin, existingHash)
       if (!verifyResult.success) {
+        // Update stored hash with new lockout state
         if (verifyResult.updatedEncryptedData) {
           if (!this.data.settings) {
             this.data.settings = {}
@@ -357,6 +372,7 @@ class StorageService {
     pinService.markVerified()
     pinService.resetAttempts()
 
+    // Temporarily set the verified PIN in PinService for re-encryption.
     const newEncryptionSalt = pinService.getEncryptionSalt(hash)
     if (newEncryptionSalt && decryptedAccounts.length > 0) {
       this.save()
@@ -385,12 +401,14 @@ class StorageService {
     const encryptedAccounts = accounts.map((account) => {
       if (account.cookie) {
         try {
+          // First encrypt with PIN-derived key
           const pinEncrypted = pinService.encryptWithPin(account.cookie, pin, encryptionSalt)
           if (!pinEncrypted) {
             console.error(`Failed to PIN-encrypt cookie for account ${account.username}`)
             return { ...account, cookie: undefined }
           }
 
+          // Then encrypt with safeStorage (OS-level encryption)
           const encryptedBuffer = safeStorage.encryptString(pinEncrypted)
           return { ...account, cookie: encryptedBuffer.toString('base64') }
         } catch (error) {
@@ -416,12 +434,14 @@ class StorageService {
   } {
     const hash = this.getPinHash()
 
+    // No PIN hash means no PIN is set
     if (!hash) {
       return { success: false, locked: false, remainingAttempts: 5 }
     }
 
     const result = pinService.verifyPin(pin, hash)
 
+    // Update stored hash with new lockout state if changed
     if (result.updatedEncryptedData) {
       if (!this.data.settings) {
         this.data.settings = {}
@@ -487,10 +507,12 @@ class StorageService {
       nextSettings.showSidebarProfileCard = !!settings.showSidebarProfileCard
     }
 
+    // Handle PIN separately through setPin method
     if ('pinCode' in settings) {
       this.setPin(settings.pinCode ?? null)
     }
 
+    // Update other settings (excluding pinCode which is handled above)
     const { pinCode: _, ...settingsWithoutPin } = nextSettings
     this.data.settings = {
       ...this.data.settings,
@@ -547,6 +569,7 @@ class StorageService {
 
   public addCustomFont(font: { family: string; url: string }): void {
     const fonts = this.data.customFonts || []
+    // Don't add duplicate fonts
     if (!fonts.some((f) => f.family === font.family)) {
       this.data.customFonts = [...fonts, font]
       this.save()
@@ -556,6 +579,7 @@ class StorageService {
   public removeCustomFont(family: string): void {
     const fonts = this.data.customFonts || []
     this.data.customFonts = fonts.filter((f) => f.family !== family)
+    // If the active font was removed, reset to default
     if (this.data.activeFont === family) {
       this.data.activeFont = null
     }

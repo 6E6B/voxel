@@ -1,18 +1,9 @@
 import { Time } from 'lightweight-charts'
+import { ChartDataPoint } from './predictionAlgorithm'
 
 // ============================================================================
 // Types
 // ============================================================================
-
-/**
- * Chart data point representing a single price/value entry
- */
-export interface ChartDataPoint {
-  value: number
-  time: Time
-  dateStr: string
-  volume?: number
-}
 
 export type DateRange = '7d' | '30d' | '90d' | '180d' | '1y' | 'all' | 'custom'
 
@@ -143,53 +134,6 @@ export const parseRapHistory = (
   }
 
   return points.sort((a, b) => (a.time as number) - (b.time as number))
-}
-
-// ============================================================================
-// Statistics and Moving Average Utilities
-// ============================================================================
-
-/**
- * Calculate basic statistics for a dataset
- */
-export const calculateStatistics = (data: ChartDataPoint[]) => {
-  if (data.length === 0) return null
-
-  const values = data.map((p) => p.value)
-  const min = Math.min(...values)
-  const max = Math.max(...values)
-  const avg = values.reduce((a, b) => a + b, 0) / values.length
-  const first = values[0]
-  const last = values[values.length - 1]
-  const change = first !== 0 ? ((last - first) / first) * 100 : 0
-
-  const variance = values.reduce((sum, val) => sum + Math.pow(val - avg, 2), 0) / values.length
-  const volatility = Math.sqrt(variance)
-  const volatilityPercent = avg !== 0 ? (volatility / avg) * 100 : 0
-
-  return { min, max, avg, first, last, change, volatility: volatilityPercent }
-}
-
-/**
- * Calculate Moving Average data points
- */
-export const calculateMovingAverage = (
-  data: ChartDataPoint[],
-  period: number
-): ChartDataPoint[] => {
-  if (data.length < period) return []
-
-  const result: ChartDataPoint[] = []
-  for (let i = period - 1; i < data.length; i++) {
-    const slice = data.slice(i - period + 1, i + 1)
-    const avg = slice.reduce((sum, p) => sum + p.value, 0) / period
-    result.push({
-      value: avg,
-      time: data[i].time,
-      dateStr: data[i].dateStr
-    })
-  }
-  return result
 }
 
 // ============================================================================

@@ -44,13 +44,13 @@ import {
 import { useQueryClient } from '@tanstack/react-query'
 import { queryKeys } from '../../shared/queryKeys'
 import { useCommandPaletteStore } from './features/command-palette/stores/useCommandPaletteStore'
-import { initCatalogSearchIndex } from './features/command-palette/hooks'
 import { useFriendPresenceNotifications } from './hooks/useFriendPresenceNotifications'
 import {
   useNotificationTrayStore,
   useNotifyServerLocation
 } from './features/system/stores/useNotificationTrayStore'
 
+// UI Store selectors
 import {
   useActiveTab,
   useModals,
@@ -72,6 +72,7 @@ import {
   useSetAppUnlocked
 } from './stores/useUIStore'
 
+// Selection Store selectors
 import { useSelectedIds, useSetSelectedIds } from './stores/useSelectionStore'
 
 interface JoinConfig {
@@ -83,26 +84,29 @@ const App: React.FC = () => {
   const { showNotification } = useNotification()
   const queryClient = useQueryClient()
 
-  useEffect(() => {
-    initCatalogSearchIndex()
-  }, [])
-
+  // Onboarding state
   const hasCompletedOnboarding = useHasCompletedOnboarding()
 
+  // App lock state
   const isAppUnlocked = useAppUnlocked()
   const setAppUnlocked = useSetAppUnlocked()
 
+  // Handle PIN unlock - invalidate accounts to refetch with cookies
   const handlePinUnlock = useCallback(() => {
     setAppUnlocked(true)
+    // Invalidate accounts query to refetch with decrypted cookies
     queryClient.invalidateQueries({ queryKey: queryKeys.accounts.list() })
   }, [queryClient, setAppUnlocked])
 
+  // Notification tray for server location notifications
   const notifyServerLocation = useNotifyServerLocation()
   const addTrayNotification = useNotificationTrayStore((state) => state.addNotification)
 
+  // Command Palette
   const openCommandPalette = useCommandPaletteStore((s) => s.open)
   const isCommandPaletteOpen = useCommandPaletteStore((s) => s.isOpen)
 
+  // UI Store - using individual selectors for optimized re-renders
   const activeTab = useActiveTab()
   const modals = useModals()
   const openModal = useOpenModal()
@@ -120,16 +124,21 @@ const App: React.FC = () => {
   const availableInstallations = useAvailableInstallations()
   const setAvailableInstallations = useSetAvailableInstallations()
 
+  // Selection Store - using individual selectors
   const selectedIds = useSelectedIds()
   const setSelectedIds = useSetSelectedIds()
 
+  // React Query hooks for accounts and settings (single source of truth)
   const { accounts, isLoading: isLoadingAccounts, setAccounts, addAccount } = useAccountsManager()
   const { settings, isLoading: isLoadingSettings, updateSettings } = useSettingsManager()
 
+  // Auto-refresh account statuses
   useAccountStatusPolling()
 
+  // Track if initial selection has been applied
   const initialSelectionApplied = useRef(false)
 
+  // Apply primary account selection on initial load
   useEffect(() => {
     if (!isLoadingAccounts && !isLoadingSettings && !initialSelectionApplied.current) {
       if (settings.primaryAccountId && accounts.some((a) => a.id === settings.primaryAccountId)) {
@@ -139,13 +148,17 @@ const App: React.FC = () => {
     }
   }, [isLoadingAccounts, isLoadingSettings, accounts, settings.primaryAccountId, setSelectedIds])
 
+  // Sidebar Resize
   const sidebarRef = useRef<HTMLElement>(null)
   const { sidebarWidth, isResizing, setIsResizing } = useSidebarResize()
 
+  // Filter State
   const filterRef = useRef<HTMLDivElement>(null)
 
+  // Close filter dropdown when clicking outside
   useClickOutside(filterRef, () => {})
 
+  // Close menu when clicking outside or scrolling
   useEffect(() => {
     if (!activeMenu) return
 
@@ -167,6 +180,7 @@ const App: React.FC = () => {
     }
   }, [activeMenu])
 
+  // Command Palette keyboard shortcut (Ctrl+K / Cmd+K)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
@@ -181,6 +195,7 @@ const App: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [openCommandPalette, isCommandPaletteOpen])
 
+  // Derived state for friends
   const selectedAccountId = useMemo(() => {
     return selectedIds.size === 1 ? Array.from(selectedIds)[0] : null
   }, [selectedIds])
@@ -189,20 +204,25 @@ const App: React.FC = () => {
     return accounts.find((a) => a.id === selectedAccountId) || null
   }, [accounts, selectedAccountId])
 
+  // Friends data for presence notifications
   const { data: friendsData = [] } = useFriends(selectedAccount)
 
+  // Track friend status changes and send notifications
   useFriendPresenceNotifications(friendsData, !!selectedAccount, selectedAccount?.id)
 
+  // Command Palette profile viewing state (for viewing by userId without an account object)
   const [commandPaletteProfileUserId, setCommandPaletteProfileUserId] = useState<string | null>(
     null
   )
 
+  // Command Palette accessory viewing state
   const [commandPaletteAccessory, setCommandPaletteAccessory] = useState<{
     id: number
     name: string
     imageUrl?: string
   } | null>(null)
 
+  // Command Palette handlers
   const handleCommandPaletteViewProfile = useCallback((userId: string) => {
     setCommandPaletteProfileUserId(userId)
   }, [])
@@ -214,6 +234,7 @@ const App: React.FC = () => {
     []
   )
 
+  // Handlers
   const performLaunch = async (config: JoinConfig, installPath?: string) => {
     closeModal('join')
 
@@ -223,6 +244,7 @@ const App: React.FC = () => {
       return
     }
 
+    // Multi-instance check
     if (accountsToLaunch.length > 1 && !settings.allowMultipleInstances) {
       showNotification('Multi-instance launching is disabled in Settings.', 'warning')
       return
@@ -286,6 +308,7 @@ const App: React.FC = () => {
         if (!account.cookie) continue
 
         try {
+          // Get logs before launch to compare later
           const logsBeforeLaunch = notifyServerLocation ? await window.api.getLogs() : []
           const logTimestampBefore =
             logsBeforeLaunch.length > 0 ? logsBeforeLaunch[0].lastModified : 0
@@ -299,7 +322,9 @@ const App: React.FC = () => {
           )
           showNotification(`Launched successfully for ${account.displayName}`, 'success')
 
+          // Fetch server location from Roblox logs if enabled
           if (notifyServerLocation) {
+            // Poll for new log with server IP (Roblox writes to logs after connecting)
             const pollForServerLocation = async () => {
               const maxAttempts = 15 // Poll for up to 30 seconds
               const pollInterval = 2000 // 2 seconds between polls
@@ -309,6 +334,7 @@ const App: React.FC = () => {
 
                 try {
                   const currentLogs = await window.api.getLogs()
+                  // Find a log that was created/modified after launch and has server IP
                   const newLog = currentLogs.find(
                     (log) =>
                       log.lastModified > logTimestampBefore &&
@@ -319,6 +345,7 @@ const App: React.FC = () => {
                   if (newLog?.serverIp) {
                     const region = await window.api.getRegionFromAddress(newLog.serverIp)
                     if (region && region !== 'Unknown' && region !== 'Failed') {
+                      // Add to notification tray
                       addTrayNotification({
                         type: 'info',
                         title: 'Server Location',
@@ -329,6 +356,7 @@ const App: React.FC = () => {
                         }
                       })
 
+                      // Send desktop push notification
                       if ('Notification' in window) {
                         if (Notification.permission === 'granted') {
                           new Notification('Server Location', {
@@ -347,7 +375,7 @@ const App: React.FC = () => {
                         }
                       }
                     }
-                    return
+                    return // Success, stop polling
                   }
                 } catch (pollError) {
                   console.warn('Error polling for server location:', pollError)
@@ -356,6 +384,7 @@ const App: React.FC = () => {
               console.warn('Timed out waiting for server location from logs')
             }
 
+            // Start polling in background (don't await to avoid blocking next account launch)
             pollForServerLocation()
           }
 
@@ -371,6 +400,7 @@ const App: React.FC = () => {
     }
   }
 
+  // Get installations from Zustand store
   const installations = useInstallations()
 
   const handleLaunch = (config: JoinConfig) => {
@@ -384,11 +414,14 @@ const App: React.FC = () => {
       return
     }
 
+    // Use installations from Zustand store
     if (installations.length > 0) {
+      // Auto-select if only 1 installation
       if (installations.length === 1) {
         performLaunch(config, installations[0].path)
         return
       }
+      // Show modal if 2+ installations
       setAvailableInstallations(installations)
       setPendingLaunchConfig(config)
       closeModal('join')
@@ -529,6 +562,7 @@ const App: React.FC = () => {
     }
   }
 
+  // Show loading state while initial data loads
   if (isLoadingAccounts || isLoadingSettings) {
     return (
       <div className="flex h-screen w-full bg-black text-neutral-300 font-sans">

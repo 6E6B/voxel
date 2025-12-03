@@ -29,12 +29,14 @@ export class RobloxAssetService {
     const catalogData = catalogDetails.status === 'fulfilled' ? catalogDetails.value : {}
     const economyData = economyDetails.status === 'fulfilled' ? economyDetails.value : {}
 
+    // Extract collectible lowest resale price from economy data
     const collectibleLowestResalePrice =
       economyData.CollectiblesItemDetails?.CollectibleLowestResalePrice ?? null
 
     return {
       ...catalogData,
       ...economyData,
+      // Prioritize Catalog V1 for these if available, but Economy has some too
       name: catalogData.name || economyData.Name,
       description: catalogData.description || economyData.Description,
       price: catalogData.price ?? economyData.PriceInRobux,
@@ -43,7 +45,7 @@ export class RobloxAssetService {
       creatorHasVerifiedBadge:
         catalogData.creatorHasVerifiedBadge || economyData.Creator?.HasVerifiedBadge,
       created: catalogData.itemCreatedUtc || economyData.Created,
-      updated: economyData.Updated || catalogData.itemUpdatedUtc,
+      updated: economyData.Updated || catalogData.itemUpdatedUtc, // Economy V2 has the correct Updated field
       isLimited:
         catalogData.isLimited ||
         economyData.IsLimited ||
@@ -56,15 +58,19 @@ export class RobloxAssetService {
 
   static async getAssetHierarchy(assetId: number) {
     try {
+      // Fetch raw binary content
       const buffer = await safeFetchBuffer(
         `https://assetdelivery.roblox.com/v1/asset?id=${assetId}`
       )
 
       let dataModel: Instance
 
+      // Check if the content is binary (RBXM) or XML
       if (isBinaryRobloxFile(buffer)) {
+        // Parse binary RBXM/RBXL format
         dataModel = parseBinaryRobloxFile(buffer)
       } else {
+        // Parse XML format
         const content = buffer.toString('utf-8')
         const parser = new RobloxXMLParser()
         try {
@@ -75,6 +81,7 @@ export class RobloxAssetService {
         dataModel = parser.dataModel
       }
 
+      // Helper to serialize Instance for IPC
       const serialize = (inst: Instance): any => ({
         class: inst.class,
         referent: inst.referent,
@@ -86,6 +93,7 @@ export class RobloxAssetService {
     } catch (error: any) {
       console.error('[RobloxAssetService] Failed to fetch/parse asset hierarchy:', error)
 
+      // Check if it's a 401 authentication error
       if (error.statusCode === 401) {
         throw new Error('This asset must be created by Roblox or yourself to view its hierarchy')
       }
@@ -139,6 +147,7 @@ export class RobloxAssetService {
         }
       } catch (error) {
         console.error('[RobloxAssetService] Failed to fetch batch asset details for chunk:', error)
+        // Continue with other chunks even if one fails
       }
     }
 
@@ -147,10 +156,12 @@ export class RobloxAssetService {
 
   static async getAssetRecommendations(cookie: string, assetId: number) {
     try {
+      // Fetch asset details first to get the AssetTypeId
       const details = await RobloxAssetService.getAssetDetails(cookie, assetId)
-      const assetTypeId = details.AssetTypeId || details.assetType || 8
+      const assetTypeId = details.AssetTypeId || details.assetType || 8 // Default to Hat (8) if unknown
 
       return await request(recommendationsSchema, {
+        // Updated to V2 endpoint as per user example
         url: `https://catalog.roblox.com/v2/recommendations/assets?assetId=${assetId}&assetTypeId=${assetTypeId}&details=false&numItems=10`,
         cookie
       })
@@ -208,6 +219,7 @@ export class RobloxAssetService {
         url += `&cursor=${cursor}`
       }
 
+      // Use a more lenient schema to avoid validation failures
       const lenientOwnerSchema = z
         .object({
           id: z.number(),
@@ -232,12 +244,14 @@ export class RobloxAssetService {
         previousPageCursor: z.string().nullable().optional()
       })
 
+      // Fetch with authentication - this is required to see owner details
       const rawData = await safeRequest<any>({
         url,
         method: 'GET',
         cookie
       })
 
+      // Parse with schema
       const result = lenientResponseSchema.parse(rawData)
 
       return result as AssetOwnersResponse
@@ -267,6 +281,7 @@ export class RobloxAssetService {
     sellerId: number,
     productId: string
   ) {
+    // Schema for purchase response
     const purchaseResponseSchema = z
       .object({
         purchased: z.boolean().optional(),
@@ -288,7 +303,7 @@ export class RobloxAssetService {
         'Content-Type': 'application/json'
       },
       body: {
-        expectedCurrency: 1,
+        expectedCurrency: 1, // 1 = Robux
         expectedPrice,
         expectedSellerId: sellerId,
         userAssetId: collectibleItemInstanceId

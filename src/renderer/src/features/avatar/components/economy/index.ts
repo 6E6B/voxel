@@ -1,7 +1,30 @@
-// Prediction algorithm removed - no longer exporting prediction-related functions
+export {
+  // Types
+  type ChartDataPoint,
+  type PredictionConfig,
+  type PredictionConfidence,
 
-// Export ChartDataPoint type from chartUtils since it's used by other components
-export type { ChartDataPoint } from './chartUtils'
+  // Constants
+  DEMAND_DRIFT_ADJUSTMENT,
+  TREND_DRIFT_ADJUSTMENT,
+
+  // Statistical utilities
+  calculateEMA,
+  calculateMomentum,
+  calculateVolatility,
+  calculateStatistics,
+  calculateMovingAverage,
+  calculateTimeNormalizedReturns,
+
+  // Forecasting methods
+  holtWinters,
+  findSupportResistance,
+
+  // Main prediction functions
+  generatePredictions,
+  calculatePredictionConfidence,
+  getMarketStatsFromData
+} from './predictionAlgorithm'
 
 export {
   // Types
@@ -18,10 +41,6 @@ export {
   // Data parsing
   parseValueChanges,
   parseRapHistory,
-
-  // Statistics and calculations
-  calculateStatistics,
-  calculateMovingAverage,
 
   // Export utilities
   exportChartAsCSV,

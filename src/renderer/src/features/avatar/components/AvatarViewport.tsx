@@ -1,14 +1,10 @@
 import React from 'react'
 import { AvatarControls } from './AvatarControls'
-import { AvatarTypeSwitch } from './AvatarTypeSwitch'
 import { Model3DViewer } from '@renderer/components/Avatar/Avatar3DThumbnail'
-import { Account } from '@renderer/types'
 
 interface AvatarViewportProps {
   userId?: string
   cookie?: string
-  account?: Account | null
-  currentAvatarType?: 'R6' | 'R15' | null
   isRendering: boolean
   renderText: string
   onRefresh: () => void
@@ -27,8 +23,6 @@ interface AvatarViewportProps {
 export const AvatarViewport: React.FC<AvatarViewportProps> = ({
   userId,
   cookie,
-  account,
-  currentAvatarType,
   isRendering,
   onRefresh,
   onReset,
@@ -44,18 +38,14 @@ export const AvatarViewport: React.FC<AvatarViewportProps> = ({
   return (
     <div
       ref={containerRef}
-      className="w-full h-full bg-neutral-900 border-b lg:border-b-0 lg:border-r border-neutral-800 relative flex flex-col shrink-0"
+      className="w-full lg:h-full bg-neutral-900 border-b lg:border-b-0 lg:border-r border-neutral-800 relative flex flex-col shrink-0"
       style={{
+        width: isLargeScreen ? `${avatarRenderWidth}px` : '100%',
         height: isLargeScreen ? '100%' : '40vh'
       }}
     >
       {/* Viewport Controls (Overlay) */}
       <AvatarControls onRefresh={onRefresh} onReset={onReset} isRendering={isRendering} />
-
-      {/* R15/R6 Switch - Top Left */}
-      <div className="absolute top-4 left-4 z-10">
-        <AvatarTypeSwitch account={account} currentAvatarType={currentAvatarType || null} />
-      </div>
 
       {/* 3D Viewport with React Three Fiber */}
       <div className="flex-1 relative overflow-hidden flex items-center justify-center bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-neutral-800 via-neutral-900 to-neutral-950">
@@ -76,7 +66,6 @@ export const AvatarViewport: React.FC<AvatarViewportProps> = ({
           cookie={cookie}
           enableRotate={true}
           enableZoom={true}
-          enablePan={true}
           autoRotateSpeed={0}
           onLoadStart={onRenderStart}
           onLoad={onRenderComplete}
@@ -84,7 +73,20 @@ export const AvatarViewport: React.FC<AvatarViewportProps> = ({
         />
       </div>
 
-      {/* Resize Handle - Disabled for fixed 50/50 split */}
+      {/* Resize Handle */}
+      {isLargeScreen && (
+        <div
+          onMouseDown={onResizeStart}
+          className="absolute top-0 right-0 h-full cursor-col-resize transition-all z-40"
+          style={{
+            background: isResizing ? 'rgb(115, 115, 115)' : 'transparent',
+            right: '-2px',
+            width: '4px'
+          }}
+        >
+          <div className="absolute inset-0 hover:bg-neutral-600/50 transition-colors" />
+        </div>
+      )}
     </div>
   )
 }

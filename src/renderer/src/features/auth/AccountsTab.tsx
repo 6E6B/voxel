@@ -25,9 +25,10 @@ const AccountsTab = memo(
     const openModal = useOpenModal()
 
     const [searchQuery, setSearchQuery] = useState('')
-    const [viewMode, setViewMode] = useState<ViewMode>('grid')
+    const [viewMode, setViewMode] = useState<ViewMode>('list')
     const [statusFilter, setStatusFilter] = useState<AccountStatus | 'All'>('All')
 
+    // Load view mode
     React.useEffect(() => {
       const loadViewMode = async () => {
         try {

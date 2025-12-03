@@ -34,6 +34,7 @@ export const registerRobloxHandlers = (): void => {
       const targetPath =
         installPath || path.join(app.getPath('userData'), 'Versions', `${binaryType}-${version}`)
 
+      // Since we can't pass a callback through IPC directly, we'll emit events
       const success = await RobloxInstallService.downloadAndInstall(
         binaryType,
         version,
@@ -71,6 +72,7 @@ export const registerRobloxHandlers = (): void => {
     z.tuple([z.string(), z.string(), z.string()]),
     async (event, binaryType, version, installPath) => {
       const webContents = event.sender
+      // Reinstall over existing path to verify/fix files
       const success = await RobloxInstallService.downloadAndInstall(
         binaryType,
         version,
@@ -91,6 +93,7 @@ export const registerRobloxHandlers = (): void => {
       const userData = await RobloxUserService.getAuthenticatedUser(cookie)
       return userData
     } catch (error) {
+      // Preserve original error messages where possible for compatibility
       throw error
     }
   })
@@ -107,6 +110,7 @@ export const registerRobloxHandlers = (): void => {
         userIds,
         size || '420x420'
       )
+      // Convert Map to object for IPC serialization
       const resultObj: Record<number, string | null> = {}
       for (const [userId, url] of resultMap.entries()) {
         resultObj[userId] = url
@@ -121,18 +125,25 @@ export const registerRobloxHandlers = (): void => {
 
   handle('fetch-account-stats', z.tuple([z.string()]), async (_, cookieRaw) => {
     const cookie = RobloxAuthService.extractCookie(cookieRaw)
+    // Step 1: Get User ID
     const authData = await RobloxUserService.getAuthenticatedUser(cookie)
+
+    // Step 2: Get Stats
     return RobloxUserService.getAccountStats(cookie, authData.id)
   })
 
   handle('get-account-status', z.tuple([z.string()]), async (_, cookieRaw) => {
     const cookie = RobloxAuthService.extractCookie(cookieRaw)
+    // Step 1: Get User ID
     const authData = await RobloxUserService.getAuthenticatedUser(cookie)
+
+    // Step 2: Get Presence
     return RobloxUserService.getPresence(cookie, authData.id)
   })
 
   handle('get-batch-account-statuses', z.tuple([z.array(z.string())]), async (_, cookieRaws) => {
-    const cookieMap = new Map<string, string>()
+    // Extract cookies for the service, but keep original cookies for the result keys
+    const cookieMap = new Map<string, string>() // original -> extracted
     const extractedCookies: string[] = []
 
     for (const cookieRaw of cookieRaws) {
@@ -143,6 +154,7 @@ export const registerRobloxHandlers = (): void => {
 
     const results = await RobloxUserService.getBatchAccountStatuses(extractedCookies)
 
+    // Convert Map to object for IPC serialization, using original cookies as keys
     const resultObj: Record<string, { userId: number; presence: any } | null> = {}
     for (const [originalCookie] of cookieMap.entries()) {
       const extractedCookie = cookieMap.get(originalCookie)!
@@ -171,6 +183,7 @@ export const registerRobloxHandlers = (): void => {
     z.tuple([z.string(), z.number().optional(), z.boolean().optional()]),
     async (_, cookieRaw, targetUserId, forceRefresh) => {
       const cookie = RobloxAuthService.extractCookie(cookieRaw)
+      // If targetUserId is provided, use it. Otherwise, use the authenticated user's ID.
       const userId = targetUserId || (await RobloxUserService.getAuthenticatedUser(cookie)).id
       return RobloxFriendService.getFriends(cookie, userId, forceRefresh || false)
     }
@@ -205,6 +218,7 @@ export const registerRobloxHandlers = (): void => {
 
   handle('fetch-friend-stats', z.tuple([z.string(), z.number()]), async (_, cookieRaw, userId) => {
     const cookie = RobloxAuthService.extractCookie(cookieRaw)
+    // userId is passed explicitly for the friend we want to check
     return RobloxFriendService.getFriendStats(cookie, userId)
   })
 
@@ -223,6 +237,7 @@ export const registerRobloxHandlers = (): void => {
 
   handle('get-friend-requests', z.tuple([z.string()]), async (_, cookieRaw) => {
     const cookie = RobloxAuthService.extractCookie(cookieRaw)
+    // getFriendRequests doesn't need userId - the endpoint uses the authenticated user from the cookie
     return RobloxFriendService.getFriendRequests(cookie)
   })
 
@@ -254,6 +269,9 @@ export const registerRobloxHandlers = (): void => {
   })
 
   handle('get-game-sorts', z.tuple([z.string().optional()]), async (_, sessionId) => {
+    // z.string().optional() in tuple usually requires explicit undefined if missing.
+    // However, args will have undefined if missing in JS, which Zod handles if configured correctly or if undefined is passed.
+    // ipcRenderer passing undefined usually works.
     return RobloxGameService.getGameSorts(sessionId)
   })
 
@@ -262,6 +280,7 @@ export const registerRobloxHandlers = (): void => {
   })
 
   handle('get-games-by-place-ids', z.tuple([z.array(z.string())]), async (_, placeIds) => {
+    // Try to find a valid cookie from stored accounts
     const accounts = storageService.getAccounts()
     const accountWithCookie = accounts.find((acc) => acc.cookie && acc.cookie.length > 0)
     const cookie = accountWithCookie ? accountWithCookie.cookie : undefined
@@ -280,11 +299,11 @@ export const registerRobloxHandlers = (): void => {
   handle(
     'launch-game',
     z.tuple([
-      z.string(),
-      z.union([z.string(), z.number()]),
-      z.string().optional(),
-      z.union([z.string(), z.number()]).optional(),
-      z.string().optional()
+      z.string(), // cookie
+      z.union([z.string(), z.number()]), // placeId
+      z.string().optional(), // jobId
+      z.union([z.string(), z.number()]).optional(), // friendId
+      z.string().optional() // installPath
     ]),
     async (_, cookieRaw, placeId, jobId, friendId, installPath) => {
       const cookie = RobloxAuthService.extractCookie(cookieRaw)
@@ -315,13 +334,14 @@ export const registerRobloxHandlers = (): void => {
   handle(
     'get-game-servers',
     z.tuple([
-      z.union([z.string(), z.number()]),
-      z.string().optional(),
-      z.number().optional(),
-      z.enum(['Asc', 'Desc']).optional(),
-      z.boolean().optional()
+      z.union([z.string(), z.number()]), // placeId
+      z.string().optional(), // cursor
+      z.number().optional(), // limit
+      z.enum(['Asc', 'Desc']).optional(), // sortOrder
+      z.boolean().optional() // excludeFullGames
     ]),
     async (_, placeId, cursor, limit, sortOrder, excludeFullGames) => {
+      // Try to find a valid cookie from stored accounts
       const accounts = storageService.getAccounts()
       const accountWithCookie = accounts.find((acc) => acc.cookie && acc.cookie.length > 0)
       const cookie = accountWithCookie ? accountWithCookie.cookie : undefined
@@ -419,6 +439,7 @@ export const registerRobloxHandlers = (): void => {
 
   handle('get-batch-user-details', z.tuple([z.array(z.number())]), async (_, userIds) => {
     const resultMap = await RobloxUserService.getBatchUserDetails(userIds)
+    // Convert Map to object for IPC serialization
     const resultObj: Record<number, { id: number; name: string; displayName: string } | null> = {}
     for (const [userId, details] of resultMap.entries()) {
       resultObj[userId] = details
@@ -426,6 +447,7 @@ export const registerRobloxHandlers = (): void => {
     return resultObj
   })
 
+  // V2 API - accepts full asset objects with assetType and currentVersionId
   const assetObjectSchema = z.object({
     id: z.number(),
     name: z.string(),
@@ -673,6 +695,7 @@ export const registerRobloxHandlers = (): void => {
     }
   )
 
+  // Helper function to compute CDN server from hash
   const hashToServer = (hash: string): number => {
     let i = 31
     for (const c of hash) {
@@ -681,6 +704,7 @@ export const registerRobloxHandlers = (): void => {
     return i % 8
   }
 
+  // Helper function to download a file from URL
   const downloadFileToPath = (url: string, dest: string): Promise<void> => {
     return new Promise((resolve, reject) => {
       const dir = path.dirname(dest)
@@ -720,6 +744,7 @@ export const registerRobloxHandlers = (): void => {
     return RobloxAssetService.getResaleData(assetId)
   })
 
+  // Rolimons API - fetch all limited item data
   handle('get-rolimons-item-details', z.tuple([]), async () => {
     const response = await net.fetch('https://api.rolimons.com/items/v2/itemdetails', {
       method: 'GET',
@@ -745,6 +770,7 @@ export const registerRobloxHandlers = (): void => {
     return data
   })
 
+  // Rolimons API - fetch player data (value, rap, badges, etc.)
   handle('get-rolimons-player', z.tuple([z.number()]), async (_, userId) => {
     const response = await net.fetch(`https://api.rolimons.com/players/v1/playerinfo/${userId}`, {
       method: 'GET',
@@ -769,6 +795,7 @@ export const registerRobloxHandlers = (): void => {
     'download-asset-3d',
     z.tuple([z.number(), z.enum(['obj', 'texture']), z.string()]),
     async (event, assetId, type, assetName) => {
+      // Fetch the 3D thumbnail manifest
       const thumbResponse = await net.fetch(
         `https://thumbnails.roblox.com/v1/assets-thumbnail-3d?assetId=${assetId}`
       )
@@ -780,6 +807,7 @@ export const registerRobloxHandlers = (): void => {
         throw new Error('3D data not available for this asset')
       }
 
+      // Fetch the manifest
       const manifestResponse = await net.fetch(thumbData.imageUrl)
       if (!manifestResponse.ok)
         throw new Error(`Failed to fetch manifest: ${manifestResponse.status}`)
@@ -789,9 +817,11 @@ export const registerRobloxHandlers = (): void => {
       const objHash = manifest.obj
       if (!mtlHash || !objHash) throw new Error('MTL or OBJ hash missing in manifest')
 
+      // Get the parent window for the dialog
       const win = BrowserWindow.fromWebContents(event.sender)
 
       if (type === 'obj') {
+        // Download OBJ file
         const objUrl = `https://t${hashToServer(objHash)}.rbxcdn.com/${objHash}`
         const safeName = assetName.replace(/[^a-zA-Z0-9_-]/g, '_')
 
@@ -806,11 +836,13 @@ export const registerRobloxHandlers = (): void => {
         await downloadFileToPath(objUrl, result.filePath)
         return { success: true, path: result.filePath }
       } else {
+        // Download texture - need to parse MTL to find texture hash
         const mtlUrl = `https://t${hashToServer(mtlHash)}.rbxcdn.com/${mtlHash}`
         const mtlResponse = await net.fetch(mtlUrl)
         if (!mtlResponse.ok) throw new Error(`Failed to fetch MTL: ${mtlResponse.status}`)
         const mtlText = await mtlResponse.text()
 
+        // Parse MTL to find texture hash (map_Kd line)
         const lines = mtlText.split(/\r?\n/)
         let textureHash: string | null = null
         for (const line of lines) {
