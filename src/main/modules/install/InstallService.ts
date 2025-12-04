@@ -16,7 +16,7 @@ const streamPipeline = promisify(pipeline)
 export interface DetectedInstallation {
   path: string
   version: string
-  binaryType: 'WindowsPlayer' | 'WindowsStudio'
+  binaryType: 'WindowsPlayer' | 'WindowsStudio' | 'MacPlayer' | 'MacStudio'
   exePath: string
 }
 
@@ -103,6 +103,37 @@ const ALIAS_TO_TYPE: Record<string, string> = {}
 for (const [typ, obj] of Object.entries(BINARY_TYPES)) {
   for (const alias of obj.aliases) {
     ALIAS_TO_TYPE[alias] = typ
+  }
+}
+
+const getClientSettingsPaths = (installPath: string): { dir: string; file: string } => {
+  if (process.platform === 'darwin') {
+    const dir = path.join(
+      os.homedir(),
+      'Library',
+      'Application Support',
+      'Roblox',
+      'ClientSettings'
+    )
+    return { dir, file: path.join(dir, 'ClientAppSettings.json') }
+  }
+
+  const dir = path.join(installPath, 'ClientSettings')
+  return { dir, file: path.join(dir, 'ClientAppSettings.json') }
+}
+
+const readMacBundleVersion = (bundlePath: string): string | null => {
+  try {
+    const infoPlistPath = path.join(bundlePath, 'Contents', 'Info.plist')
+    if (!fs.existsSync(infoPlistPath)) return null
+    const plist = fs.readFileSync(infoPlistPath, 'utf8')
+    const match = plist.match(
+      /<key>CFBundleShortVersionString<\/key>\s*<string>(?<ver>[^<]+)<\/string>/i
+    )
+    return match?.groups?.ver?.trim() || null
+  } catch (e) {
+    console.warn('[RobloxInstallService] Failed to read mac bundle version:', e)
+    return null
   }
 }
 
@@ -364,7 +395,7 @@ export class RobloxInstallService {
   }
 
   static async getFFlags(installPath: string): Promise<Record<string, any>> {
-    const clientSettingsPath = path.join(installPath, 'ClientSettings', 'ClientAppSettings.json')
+    const { file: clientSettingsPath } = getClientSettingsPaths(installPath)
     try {
       if (!fs.existsSync(clientSettingsPath)) {
         return {}
@@ -381,8 +412,7 @@ export class RobloxInstallService {
   static async setFFlags(installPath: string, flags: Record<string, any>): Promise<void> {
     fflagsSchema.parse(flags)
 
-    const clientSettingsDir = path.join(installPath, 'ClientSettings')
-    const clientSettingsPath = path.join(clientSettingsDir, 'ClientAppSettings.json')
+    const { dir: clientSettingsDir, file: clientSettingsPath } = getClientSettingsPaths(installPath)
     try {
       if (!fs.existsSync(clientSettingsDir)) {
         await fs.promises.mkdir(clientSettingsDir, { recursive: true })
@@ -540,7 +570,21 @@ export class RobloxInstallService {
 
   static async launchWithProtocol(installPath: string, protocolUrl: string): Promise<void> {
     if (process.platform === 'darwin') {
-      const child = spawn('open', [protocolUrl], {
+      const openArgs: string[] = []
+
+      // If a specific app path is provided, attempt to target it
+      if (installPath && fs.existsSync(installPath)) {
+        const appPath = installPath.endsWith('.app')
+          ? installPath
+          : path.join(installPath, 'Roblox.app')
+        if (fs.existsSync(appPath)) {
+          openArgs.push('-a', appPath)
+        }
+      }
+
+      openArgs.push(protocolUrl)
+
+      const child = spawn('open', openArgs, {
         detached: true,
         stdio: 'ignore'
       })
@@ -722,11 +766,13 @@ export class RobloxInstallService {
 
         for (const robloxAppPath of possiblePaths) {
           if (fs.existsSync(robloxAppPath)) {
+            const version = readMacBundleVersion(robloxAppPath) || 'system'
+            const execPath = path.join(robloxAppPath, 'Contents', 'MacOS', 'RobloxPlayer')
             detected.push({
               path: robloxAppPath,
-              version: 'system',
-              binaryType: 'WindowsPlayer',
-              exePath: robloxAppPath
+              version,
+              binaryType: 'MacPlayer',
+              exePath: execPath
             })
             break
           }

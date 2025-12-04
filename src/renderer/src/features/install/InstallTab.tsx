@@ -43,7 +43,7 @@ import type { DetectedInstallation } from '@shared/ipc-schemas/system'
 interface UnifiedInstallation {
   id: string
   name: string
-  binaryType: 'WindowsPlayer' | 'WindowsStudio'
+  binaryType: BinaryType
   version: string
   channel: string
   path: string
@@ -52,6 +52,8 @@ interface UnifiedInstallation {
   original: RobloxInstallation | null
   detected: DetectedInstallation | null
 }
+
+const isMac = window.platform?.isMac ?? false
 
 const InstallTab: React.FC = () => {
   const { showNotification } = useNotification()
@@ -69,7 +71,9 @@ const InstallTab: React.FC = () => {
   }>({ position: null, install: null })
 
   const [newName, setNewName] = useState('')
-  const [newType, setNewType] = useState<BinaryType>(BinaryType.WindowsPlayer)
+  const [newType, setNewType] = useState<BinaryType>(
+    isMac ? BinaryType.MacPlayer : BinaryType.WindowsPlayer
+  )
   const [newVersion, setNewVersion] = useState('')
   const [newChannel, setNewChannel] = useState('live')
   const [isInstalling, setIsInstalling] = useState(false)
@@ -129,8 +133,7 @@ const InstallTab: React.FC = () => {
     const userInstalls: UnifiedInstallation[] = installations.map((install) => ({
       id: install.id,
       name: install.name,
-      binaryType:
-        install.binaryType === BinaryType.WindowsStudio ? 'WindowsStudio' : 'WindowsPlayer',
+      binaryType: install.binaryType,
       version: install.version,
       channel: install.channel,
       path: install.path,
@@ -143,7 +146,11 @@ const InstallTab: React.FC = () => {
     const detectedInstalls: UnifiedInstallation[] = filteredDetectedInstallations.map(
       (detected) => ({
         id: `detected-${detected.path}`,
-        name: detected.binaryType === 'WindowsStudio' ? 'Roblox Studio' : 'Roblox Player',
+        name:
+          detected.binaryType === BinaryType.WindowsStudio ||
+          detected.binaryType === BinaryType.MacStudio
+            ? 'Roblox Studio'
+            : 'Roblox Player',
         binaryType: detected.binaryType,
         version: detected.version,
         channel: 'Default',
@@ -207,8 +214,17 @@ const InstallTab: React.FC = () => {
 
   const availableVersions = history[getApiType(newType)] || []
 
+  const binaryTypeOptions = isMac
+    ? [BinaryType.MacPlayer, BinaryType.MacStudio]
+    : [BinaryType.WindowsPlayer, BinaryType.WindowsStudio]
+
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (isMac) {
+      showNotification('Creating new installations is disabled on macOS for now.', 'warning')
+      return
+    }
 
     const versionToInstall = newVersion || availableVersions[0]
 
@@ -309,9 +325,7 @@ const InstallTab: React.FC = () => {
   }
 
   const handleVerify = (install: UnifiedInstallation) => {
-    const binaryType =
-      install.original?.binaryType ??
-      (install.binaryType === 'WindowsStudio' ? BinaryType.WindowsStudio : BinaryType.WindowsPlayer)
+    const binaryType = install.original?.binaryType ?? install.binaryType
 
     setConfirmModal({
       isOpen: true,
@@ -397,7 +411,12 @@ const InstallTab: React.FC = () => {
               </TooltipTrigger>
               <TooltipContent>Refresh version history and installations</TooltipContent>
             </Tooltip>
-            <Button variant="default" onClick={() => setShowNewModal(true)} className="gap-2.5">
+            <Button
+              variant="default"
+              onClick={() => !isMac && setShowNewModal(true)}
+              className="gap-2.5"
+              disabled={isMac}
+            >
               <Plus size={18} />
               <span>New Installation</span>
             </Button>
@@ -418,7 +437,9 @@ const InstallTab: React.FC = () => {
           ) : (
             <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-4">
               {allInstallations.map((install, index) => {
-                const isStudio = install.binaryType === 'WindowsStudio'
+                const isStudio =
+                  install.binaryType === BinaryType.WindowsStudio ||
+                  install.binaryType === BinaryType.MacStudio
                 const isThisVerifying = isVerifying === install.id
 
                 return (
@@ -567,30 +588,31 @@ const InstallTab: React.FC = () => {
               <div className="space-y-2">
                 <label className="text-sm font-medium text-neutral-300 pb-1 block">Type</label>
                 <div className="grid grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setNewType(BinaryType.WindowsPlayer)}
-                    className={`pressable flex items-center gap-3 p-3 rounded-lg border transition-all ${
-                      newType === BinaryType.WindowsPlayer
-                        ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400'
-                        : 'bg-neutral-950 border-neutral-800 text-neutral-400 hover:bg-neutral-800'
-                    }`}
-                  >
-                    <Laptop size={20} />
-                    <span className="text-sm font-medium">Player</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setNewType(BinaryType.WindowsStudio)}
-                    className={`pressable flex items-center gap-3 p-3 rounded-lg border transition-all ${
-                      newType === BinaryType.WindowsStudio
-                        ? 'bg-blue-500/10 border-blue-500/50 text-blue-400'
-                        : 'bg-neutral-950 border-neutral-800 text-neutral-400 hover:bg-neutral-800'
-                    }`}
-                  >
-                    <Box size={20} />
-                    <span className="text-sm font-medium">Studio</span>
-                  </button>
+                  {binaryTypeOptions.map((type) => {
+                    const isStudio =
+                      type === BinaryType.WindowsStudio || type === BinaryType.MacStudio
+                    const isSelected = newType === type
+                    const selectedClasses = isStudio
+                      ? 'bg-blue-500/10 border-blue-500/50 text-blue-400'
+                      : 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400'
+                    return (
+                      <button
+                        key={type}
+                        type="button"
+                        onClick={() => setNewType(type)}
+                        className={`pressable flex items-center gap-3 p-3 rounded-lg border transition-all ${
+                          isSelected
+                            ? selectedClasses
+                            : 'bg-neutral-950 border-neutral-800 text-neutral-400 hover:bg-neutral-800'
+                        }`}
+                      >
+                        {isStudio ? <Box size={20} /> : <Laptop size={20} />}
+                        <span className="text-sm font-medium">
+                          {isStudio ? 'Studio' : 'Player'}
+                        </span>
+                      </button>
+                    )
+                  })}
                 </div>
               </div>
 

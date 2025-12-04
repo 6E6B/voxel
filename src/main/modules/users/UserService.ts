@@ -6,7 +6,9 @@ import {
   robloxBadgeSchema,
   playerBadgeSchema,
   usernameHistorySchema,
-  userPresenceResponseSchema
+  userPresenceResponseSchema,
+  userProfileResponseSchema,
+  type UserProfileResponse
 } from '@shared/ipc-schemas/user'
 import { avatarHeadshotSchema } from '@shared/ipc-schemas/avatar'
 
@@ -550,5 +552,46 @@ export class RobloxUserService {
     await Promise.all(chunks.map((chunk) => fetchChunkWithRetry(chunk)))
 
     return resultMap
+  }
+
+  /**
+   * Fetch comprehensive user profile data using the profile platform API.
+   * This consolidates multiple API calls into a single request, providing:
+   * - User header info (premium, verified, admin status, counts)
+   * - About info (description, name history, join date, social links)
+   * - Currently wearing assets
+   * - Favorite experiences
+   * - Collections
+   * - Roblox badges (with full metadata)
+   * - Player badges
+   * - Statistics
+   */
+  static async getUserProfile(cookie: string, userId: number): Promise<UserProfileResponse> {
+    const requestBody = {
+      profileId: String(userId),
+      profileType: 'User',
+      components: [
+        { component: 'UserProfileHeader' },
+        { component: 'About' },
+        { component: 'CurrentlyWearing' },
+        { component: 'FavoriteExperiences' },
+        { component: 'Friends' },
+        { component: 'Collections' },
+        { component: 'RobloxBadges' },
+        { component: 'PlayerBadges' },
+        { component: 'Statistics' }
+      ],
+      includeComponentOrdering: true
+    }
+
+    return await request(userProfileResponseSchema, {
+      method: 'POST',
+      url: 'https://apis.roblox.com/profile-platform-api/v1/profiles/get',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: requestBody,
+      cookie
+    })
   }
 }

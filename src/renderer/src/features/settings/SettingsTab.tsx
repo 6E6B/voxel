@@ -63,6 +63,8 @@ interface SettingsTabProps {
   onUpdateSettings: (newSettings: Partial<Settings>) => void
 }
 
+const isMac = window.platform?.isMac ?? false
+
 const SettingsTab: React.FC<SettingsTabProps> = ({ accounts, settings, onUpdateSettings }) => {
   const [activeTab, setActiveTab] = useState<
     'general' | 'appearance' | 'notifications' | 'security' | 'about'
@@ -188,6 +190,7 @@ const SettingsTab: React.FC<SettingsTabProps> = ({ accounts, settings, onUpdateS
   }
 
   const handleMultiInstanceChange = () => {
+    if (isMac) return
     onUpdateSettings({ allowMultipleInstances: !settings.allowMultipleInstances })
   }
 
@@ -426,22 +429,23 @@ const SettingsTab: React.FC<SettingsTabProps> = ({ accounts, settings, onUpdateS
 
                   {/* Multi-Instance Setting */}
                   <div className="flex items-start space-x-3 p-4 bg-neutral-900/30 rounded-lg border border-neutral-800/50 hover:border-neutral-700/50 transition-colors">
-                    <div className="mt-1">
-                      <CustomCheckbox
-                        checked={settings.allowMultipleInstances}
-                        onChange={handleMultiInstanceChange}
-                      />
+                    <div className="mt-1 opacity-50 pointer-events-none">
+                      <CustomCheckbox checked={false} onChange={() => {}} />
                     </div>
                     <div>
                       <label className="text-sm font-medium text-neutral-300 block mb-1">
                         Allow Multiple Instances
                       </label>
                       <p className="text-xs text-neutral-500 leading-relaxed">
-                        Enable launching multiple Roblox clients simultaneously.
-                        <span className="block mt-1 text-yellow-600/80">
-                          Note: This feature is considered to be against the Roblox Terms of
-                          Service. Use at your own risk.
-                        </span>
+                        {isMac
+                          ? 'Disabled on macOS.'
+                          : 'Enable launching multiple Roblox clients simultaneously.'}
+                        {!isMac && (
+                          <span className="block mt-1 text-yellow-600/80">
+                            Note: This feature is considered to be against the Roblox Terms of
+                            Service. Use at your own risk.
+                          </span>
+                        )}
                       </p>
                     </div>
                   </div>

@@ -43,7 +43,7 @@ export type RobloxInstallation = RobloxInstallationType
 export const detectedInstallationSchema = z.object({
   path: z.string(),
   version: z.string(),
-  binaryType: z.enum(['WindowsPlayer', 'WindowsStudio']),
+  binaryType: z.enum(['WindowsPlayer', 'WindowsStudio', 'MacPlayer', 'MacStudio']),
   exePath: z.string()
 })
 

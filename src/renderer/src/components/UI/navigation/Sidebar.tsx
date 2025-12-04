@@ -30,6 +30,7 @@ import {
   useToggleSidebarCollapsed
 } from '../../../stores/useUIStore'
 import { RobuxIcon } from '@renderer/components/UI/icons/RobuxIcon'
+import { SlidingNumber } from '@renderer/components/UI/specialized/SlidingNumber'
 import { formatNumber } from '@renderer/utils/numberUtils'
 import { useClickOutside } from '../../../hooks/useClickOutside'
 import { useAccountsManager, useAccountStats } from '../../../features/auth/api/useAccounts'
@@ -153,9 +154,11 @@ const ProfileCard = ({
                       </div>
                       <div className="mt-2 flex items-center gap-1.5 text-sm">
                         <RobuxIcon className="w-3.5 h-3.5 text-emerald-400" />
-                        <span className="font-semibold text-white">
-                          {formatNumber(robuxBalance)}
-                        </span>
+                        <SlidingNumber
+                          number={robuxBalance}
+                          formatter={formatNumber}
+                          className="font-semibold text-white"
+                        />
                       </div>
                     </div>
                     <div className="p-1.5">
@@ -251,9 +254,11 @@ const ProfileCard = ({
                 </div>
                 <div className="flex items-center gap-1 flex-shrink-0">
                   <RobuxIcon className="w-3.5 h-3.5 text-emerald-400" />
-                  <span className="text-sm font-semibold text-white">
-                    {formatNumber(robuxBalance)}
-                  </span>
+                  <SlidingNumber
+                    number={robuxBalance}
+                    formatter={formatNumber}
+                    className="text-sm font-semibold text-white"
+                  />
                 </div>
               </div>
             </div>

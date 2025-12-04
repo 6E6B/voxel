@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { handle } from '../core/utils/handle'
 import { RobloxAuthService } from '../auth/RobloxAuthService'
 import { RobloxUserService } from './UserService'
+import { userProfileResponseSchema } from '@shared/ipc-schemas/user'
 
 /**
  * Registers user-related IPC handlers
@@ -128,5 +129,10 @@ export const registerUserHandlers = (): void => {
   handle('block-user', z.tuple([z.string(), z.number()]), async (_, cookieRaw, targetUserId) => {
     const cookie = RobloxAuthService.extractCookie(cookieRaw)
     return RobloxUserService.blockUser(cookie, targetUserId)
+  })
+
+  handle('get-user-profile', z.tuple([z.string(), z.number()]), async (_, cookieRaw, userId) => {
+    const cookie = RobloxAuthService.extractCookie(cookieRaw)
+    return RobloxUserService.getUserProfile(cookie, userId)
   })
 }

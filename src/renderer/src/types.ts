@@ -142,7 +142,9 @@ export interface CatalogItem {
 
 export enum BinaryType {
   WindowsPlayer = 'WindowsPlayer',
-  WindowsStudio = 'WindowsStudio'
+  WindowsStudio = 'WindowsStudio',
+  MacPlayer = 'MacPlayer',
+  MacStudio = 'MacStudio'
 }
 
 export interface RobloxInstallation {

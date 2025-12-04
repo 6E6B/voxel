@@ -1,10 +1,15 @@
 import koffi from 'koffi'
 
+// Multi-instance is a Windows-only feature. Bail out quietly on other platforms.
+const isWindows = process.platform === 'win32'
+
 let kernel32: any
-try {
-  kernel32 = koffi.load('kernel32.dll')
-} catch (e) {
-  console.error('Failed to load kernel32.dll:', e)
+if (isWindows) {
+  try {
+    kernel32 = koffi.load('kernel32.dll')
+  } catch (e) {
+    console.error('Failed to load kernel32.dll:', e)
+  }
 }
 
 let CreateMutexW: any
@@ -19,7 +24,7 @@ export namespace MultiInstance {
   let g_mutex: any = null
 
   export function Enable(): void {
-    if (!kernel32) return
+    if (!isWindows || !kernel32) return
 
     if (!g_mutex) {
       try {
@@ -36,7 +41,7 @@ export namespace MultiInstance {
   }
 
   export function Disable(): void {
-    if (!kernel32) return
+    if (!isWindows || !kernel32) return
 
     if (g_mutex) {
       try {

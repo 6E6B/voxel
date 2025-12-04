@@ -62,7 +62,7 @@ export const RolimonsBadges: React.FC<RolimonsBadgesProps> = ({ userId }) => {
 
   return (
     <div className={`relative z-10 px-6 pb-4 ${topPadding}`}>
-      <div className="flex flex-wrap items-center gap-2 max-w-[50%]">
+      <div className="flex flex-wrap items-center gap-2">
         {sortedRolimonsBadges.map(({ badgeKey, acquiredTime }) => {
           const badgeMeta = ROLIMONS_BADGES[badgeKey]
           if (!badgeMeta) return null

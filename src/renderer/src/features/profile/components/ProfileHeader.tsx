@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useLayoutEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { Shield, X, ChevronRight, Gamepad2 } from 'lucide-react'
 import Avatar3DThumbnail from '@renderer/components/Avatar/Avatar3DThumbnail'
@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@renderer/components/UI/dis
 import { SlidingNumber } from '@renderer/components/UI/specialized/SlidingNumber'
 import { getStatusColor } from '@renderer/utils/statusUtils'
 import RobloxPremiumIcon from '@assets/svg/Premium.svg'
+import VerifiedIcon from '@assets/svg/Verified.svg'
 import { ProfileData } from '../hooks/useProfileData'
 import { formatNumber } from '@renderer/utils/numberUtils'
 import { RolimonsBadges } from './RolimonsBadges'
@@ -37,6 +38,10 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   const [isAvatarHovered, setIsAvatarHovered] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
   const dragStartPos = React.useRef<{ x: number; y: number } | null>(null)
+  const infoSectionRef = useRef<HTMLDivElement>(null)
+  const [infoHeight, setInfoHeight] = useState(0)
+  const badgesRef = useRef<HTMLDivElement>(null)
+  const [badgesHeight, setBadgesHeight] = useState(0)
 
   // Fetch rolimons data to know if badges exist
   const { data: rolimonsPlayer } = useRolimonsPlayer(userId, true)
@@ -51,22 +56,62 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     return Object.keys(rolimonsPlayer.rolibadges).filter((key) => ROLIMONS_BADGES[key]).length
   }, [rolimonsPlayer?.rolibadges])
 
-  // Calculate minimum height based on content
+  // Calculate estimated badge rows
+  const badgeRows = useMemo(() => {
+    return Math.ceil(badgeCount / 4)
+  }, [badgeCount])
+
+  // Measure the info block so we can keep a tight gap before badges
+  useLayoutEffect(() => {
+    const updateHeight = () => {
+      if (infoSectionRef.current) {
+        setInfoHeight(infoSectionRef.current.getBoundingClientRect().height)
+      }
+    }
+
+    updateHeight()
+    window.addEventListener('resize', updateHeight)
+    return () => window.removeEventListener('resize', updateHeight)
+  }, [
+    profile.displayName,
+    profile.username,
+    profile.gameActivity,
+    hasRawDescription,
+    rawDescription,
+    badgeCount,
+    hasBadges
+  ])
+
+  // Measure the badges to avoid vertical drift when many badges wrap
+  useLayoutEffect(() => {
+    const updateBadgeHeight = () => {
+      if (badgesRef.current) {
+        setBadgesHeight(badgesRef.current.getBoundingClientRect().height)
+      } else {
+        setBadgesHeight(0)
+      }
+    }
+
+    updateBadgeHeight()
+    window.addEventListener('resize', updateBadgeHeight)
+    return () => window.removeEventListener('resize', updateBadgeHeight)
+  }, [badgeCount])
+
+  const infoGapPx = 15
+  const fallbackInfoHeight = profile.gameActivity ? 220 : 200
+  const effectiveInfoHeight = infoHeight || fallbackInfoHeight
+  const spacerHeightPx = hasBadges ? effectiveInfoHeight + infoGapPx : 5
+
+  // Container min height ensures the overlay + spacing + badges all fit without overflow
   const minHeightPx = useMemo(() => {
-    let baseHeight = 240
-
-    // Add height for badges
-    if (hasBadges) {
-      baseHeight += 40
+    if (!hasBadges) {
+      return Math.max(effectiveInfoHeight + 40, 240)
     }
 
-    // Add height for game activity (only add extra space when in game)
-    if (profile.gameActivity) {
-      baseHeight += 36
-    }
-
-    return baseHeight
-  }, [hasBadges, profile.gameActivity])
+    // Ensure a sensible minimum even before measurement kicks in
+    const safeBadgesHeight = badgesHeight || Math.max(32 * badgeRows + 24, 48)
+    return spacerHeightPx + safeBadgesHeight
+  }, [hasBadges, spacerHeightPx, badgesHeight, badgeRows, effectiveInfoHeight])
 
   return (
     <motion.div
@@ -169,6 +214,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
 
       {/* Profile Info Overlay */}
       <div
+        ref={infoSectionRef}
         className={`absolute left-0 right-0 p-6 flex flex-col md:flex-row items-center gap-6 z-10 pointer-events-none ${hasBadges ? 'top-0' : 'top-1/2 -translate-y-1/2'}`}
       >
         {/* Profile Picture */}
@@ -193,14 +239,22 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           <div className="flex flex-col gap-3">
             <div className="flex flex-wrap items-center gap-3">
               <h1 className="text-3xl md:text-4xl font-bold text-white flex items-center gap-3 drop-shadow-lg mb-0">
-                <span className="truncate max-w-[400px]">{profile.displayName}</span>
+                <span className="break-words">{profile.displayName}</span>
               </h1>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-2">
+                {profile.isVerified && (
+                  <img
+                    src={VerifiedIcon}
+                    alt="Verified"
+                    className="w-5 h-5 md:w-6 md:h-6 object-contain drop-shadow-sm select-none"
+                    draggable={false}
+                  />
+                )}
                 {profile.isPremium && (
                   <img
                     src={RobloxPremiumIcon}
                     alt="Roblox Premium"
-                    className="w-5 h-5 object-contain drop-shadow-sm select-none"
+                    className="w-5 h-5 object-contain drop-shadow-sm select-none brightness-400"
                     draggable={false}
                   />
                 )}
@@ -210,7 +264,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
               </div>
             </div>
 
-            <p className="text-base md:text-lg text-neutral-400 drop-shadow-md leading-none">
+            <p className="text-base md:text-lg text-neutral-400 drop-shadow-md leading-none break-words">
               @{profile.username}
             </p>
 
@@ -225,7 +279,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                 <SlidingNumber
                   number={profile.friendCount}
                   formatter={formatNumber}
-                  className="text-white font-bold font-mono text-lg transition-colors"
+                  className="text-white font-bold text-lg transition-colors"
                 />
                 <span className="text-neutral-400 text-sm font-medium tracking-wide group-hover/stat:text-neutral-300 group-hover/stat:underline underline-offset-2 transition-colors">
                   Friends
@@ -244,7 +298,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                 <SlidingNumber
                   number={profile.followerCount}
                   formatter={formatNumber}
-                  className="text-white font-bold font-mono text-lg transition-colors"
+                  className="text-white font-bold text-lg transition-colors"
                 />
                 <span className="text-neutral-400 text-sm font-medium tracking-wide group-hover/stat:text-neutral-300 group-hover/stat:underline underline-offset-2 transition-colors">
                   Followers
@@ -263,7 +317,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                 <SlidingNumber
                   number={profile.followingCount}
                   formatter={formatNumber}
-                  className="text-white font-bold font-mono text-lg transition-colors"
+                  className="text-white font-bold text-lg transition-colors"
                 />
                 <span className="text-neutral-400 text-sm font-medium tracking-wide group-hover/stat:text-neutral-300 group-hover/stat:underline underline-offset-2 transition-colors">
                   Following
@@ -298,17 +352,12 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
       </div>
 
       {/* Dynamic spacer to push badges to bottom */}
-      <div
-        className="flex-1"
-        style={{
-          minHeight: !hasBadges
-            ? '5px'
-            : `${160 + (profile.gameActivity ? 36 : 0) + Math.min(badgeCount, 8) * 2}px`
-        }}
-      />
+      <div className="flex-none" style={{ height: `${spacerHeightPx}px` }} aria-hidden="true" />
 
       {/* Rolimons Badges */}
-      <RolimonsBadges userId={userId} />
+      <div ref={badgesRef}>
+        <RolimonsBadges userId={userId} />
+      </div>
     </motion.div>
   )
 }

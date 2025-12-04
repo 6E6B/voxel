@@ -104,14 +104,29 @@ const getNotificationStyle = (type: NotificationType) => {
   }
 }
 
+interface NotificationTrayProps {
+  onOpenUserProfile?: (userId: string) => void
+}
+
 interface NotificationItemProps {
   notification: TrayNotification
   onRemove: (id: string) => void
+  onOpenProfile?: (userId: string) => void
 }
 
-const NotificationItem: React.FC<NotificationItemProps> = ({ notification, onRemove }) => {
+const NotificationItem: React.FC<NotificationItemProps> = ({
+  notification,
+  onRemove,
+  onOpenProfile
+}) => {
   const style = getNotificationStyle(notification.type)
   const Icon = style.icon
+  const isUserNotification = Boolean(notification.userId && onOpenProfile)
+
+  const handleOpenProfile = () => {
+    if (!notification.userId || !onOpenProfile) return
+    onOpenProfile(notification.userId)
+  }
 
   // Color code based on notification type
   const getTitleColor = () => {
@@ -129,14 +144,36 @@ const NotificationItem: React.FC<NotificationItemProps> = ({ notification, onRem
 
   return (
     <motion.div
+      role={isUserNotification ? 'button' : undefined}
+      tabIndex={isUserNotification ? 0 : undefined}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0, height: 0, marginBottom: 0 }}
       transition={{ duration: 0.2 }}
       className={`
         relative p-3 rounded-lg border transition-all group
-        ${notification.read ? 'bg-neutral-900/30 border-neutral-800/30 opacity-60' : 'bg-neutral-800/50 border-neutral-700/50'}
+        ${
+          notification.read
+            ? 'bg-neutral-900/30 border-neutral-800/30 opacity-60'
+            : 'bg-neutral-800/50 border-neutral-700/50'
+        }
+        ${
+          isUserNotification
+            ? 'cursor-pointer hover:border-neutral-600 focus:outline-none focus:ring-2 focus:ring-neutral-700'
+            : ''
+        }
       `}
+      onClick={isUserNotification ? handleOpenProfile : undefined}
+      onKeyDown={
+        isUserNotification
+          ? (e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                handleOpenProfile()
+              }
+            }
+          : undefined
+      }
     >
       <div className="flex gap-3">
         {/* Avatar or Icon */}
@@ -193,7 +230,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({ notification, onRem
   )
 }
 
-const NotificationTray: React.FC = () => {
+const NotificationTray: React.FC<NotificationTrayProps> = ({ onOpenUserProfile }) => {
   const notifications = useNotifications()
   const unreadCount = useUnreadCount()
   const isOpen = useIsTrayOpen()
@@ -232,6 +269,13 @@ const NotificationTray: React.FC = () => {
     document.addEventListener('keydown', handleEscape)
     return () => document.removeEventListener('keydown', handleEscape)
   }, [isOpen, setIsOpen])
+
+  const handleOpenProfile = onOpenUserProfile
+    ? (userId: string) => {
+        onOpenUserProfile(userId)
+        setIsOpen(false)
+      }
+    : undefined
 
   return (
     <div className="relative z-50">
@@ -315,6 +359,7 @@ const NotificationTray: React.FC = () => {
                       key={notification.id}
                       notification={notification}
                       onRemove={removeNotification}
+                      onOpenProfile={handleOpenProfile}
                     />
                   ))
                 ) : (

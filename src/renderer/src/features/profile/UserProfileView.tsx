@@ -1,6 +1,18 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react'
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Shirt, Package, History, Copy, Box, ArrowLeft, Loader2 } from 'lucide-react'
+import {
+  Shirt,
+  Package,
+  Copy,
+  Box,
+  ArrowLeft,
+  Loader2,
+  Sparkles,
+  TrendingUp,
+  Flame,
+  Star,
+  Music
+} from 'lucide-react'
 import { createPortal } from 'react-dom'
 import { Account } from '@renderer/types'
 import UserListModal from '@renderer/components/Modals/UserListModal'
@@ -14,16 +26,16 @@ import {
   DialogClose,
   DialogBody
 } from '@renderer/components/UI/dialogs/Dialog'
-import Skeleton from '@renderer/components/UI/display/Skeleton'
 import { SkeletonSquareGrid } from '@renderer/components/UI/display/SkeletonGrid'
 import { EmptyState } from '@renderer/components/UI/feedback/EmptyState'
+import { Tooltip, TooltipTrigger, TooltipContent } from '@renderer/components/UI/display/Tooltip'
 import {
   useUserGroups,
   useUserCollections,
-  useUserRobloxBadges as useRobloxBadges,
   useUserExperienceBadges as useExperienceBadges,
   useUserWearing as useUserWearingItems,
-  usePastUsernames
+  useUserProfilePlatform,
+  useUserRobloxBadges
 } from '@renderer/hooks/queries'
 import { useUserProfileOutfits } from './hooks/useUserProfileOutfits'
 import { useProfileData } from './hooks/useProfileData'
@@ -38,6 +50,82 @@ import { BadgesSection } from './components/BadgesSection'
 import { ExpandedAvatarModal } from './components/ExpandedAvatarModal'
 import { TruncatedTextWithTooltip } from './components/TruncatedTextWithTooltip'
 import { QuickActionsBar } from './components/QuickActionsBar'
+import { useRolimonsItem } from '@renderer/hooks/queries'
+
+const SOUND_HAT_IDS = [24114402, 305888394, 24112667, 33070696]
+
+const ItemTagBadges: React.FC<{ assetId: number }> = ({ assetId }) => {
+  const rolimonsItem = useRolimonsItem(assetId)
+  const isLimited = !!rolimonsItem
+  const isSoundHat = SOUND_HAT_IDS.includes(assetId)
+
+  if (!isLimited && !isSoundHat) return null
+
+  return (
+    <div className="absolute flex flex-col gap-1.5 z-20 top-2 left-2">
+      {isLimited && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="flex items-center justify-center w-7 h-7 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 backdrop-blur-md transition-all hover:scale-105 shadow-sm cursor-default">
+              <Sparkles size={13} strokeWidth={2.5} className="shrink-0" />
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="right" className="font-bold text-xs">
+            Limited
+          </TooltipContent>
+        </Tooltip>
+      )}
+      {rolimonsItem?.isProjected && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="flex items-center justify-center w-7 h-7 rounded-full bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 backdrop-blur-md transition-all hover:scale-105 shadow-sm cursor-default">
+              <TrendingUp size={13} strokeWidth={2.5} className="shrink-0" />
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="right" className="font-bold text-xs">
+            Projected
+          </TooltipContent>
+        </Tooltip>
+      )}
+      {rolimonsItem?.isHyped && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="flex items-center justify-center w-7 h-7 rounded-full bg-orange-500/10 text-orange-400 border border-orange-500/20 hover:bg-orange-500/20 backdrop-blur-md transition-all hover:scale-105 shadow-sm cursor-default">
+              <Flame size={13} strokeWidth={2.5} className="shrink-0" />
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="right" className="font-bold text-xs">
+            Hyped
+          </TooltipContent>
+        </Tooltip>
+      )}
+      {rolimonsItem?.isRare && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="flex items-center justify-center w-7 h-7 rounded-full bg-pink-500/10 text-pink-400 border border-pink-500/20 hover:bg-pink-500/20 backdrop-blur-md transition-all hover:scale-105 shadow-sm cursor-default">
+              <Star size={13} strokeWidth={2.5} className="shrink-0" />
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="right" className="font-bold text-xs">
+            Rare
+          </TooltipContent>
+        </Tooltip>
+      )}
+      {isSoundHat && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="flex items-center justify-center w-7 h-7 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 hover:bg-cyan-500/20 backdrop-blur-md transition-all hover:scale-105 shadow-sm cursor-default">
+              <Music size={13} strokeWidth={2.5} className="shrink-0" />
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="right" className="font-bold text-xs">
+            Sound Hat
+          </TooltipContent>
+        </Tooltip>
+      )}
+    </div>
+  )
+}
 
 export interface ProfileViewProps {
   userId: string | number
@@ -78,7 +166,6 @@ const UserProfileView: React.FC<ProfileViewProps> = ({
 }) => {
   const [isWearingOpen, setIsWearingOpen] = useState(false)
   const [isOutfitsOpen, setIsOutfitsOpen] = useState(false)
-  const [isPastNamesOpen, setIsPastNamesOpen] = useState(false)
   const [selectedAccessory, setSelectedAccessory] = useState<{
     id: number
     name: string
@@ -111,14 +198,18 @@ const UserProfileView: React.FC<ProfileViewProps> = ({
   const userIdNum = typeof userId === 'string' ? parseInt(userId) : userId
 
   const { profile } = useProfileData({ userId: userIdNum, requestCookie, initialData })
-  const { sortedFriends, friendCount } = useFriendStatuses(userIdNum, requestCookie)
+  const { sortedFriends } = useFriendStatuses(userIdNum, requestCookie)
+  const { data: profilePlatform, isLoading: isLoadingProfilePlatform } = useUserProfilePlatform(
+    userIdNum,
+    requestCookie
+  )
 
   const { data: groups = [], isLoading: isLoadingGroups } = useUserGroups(userIdNum)
   const { data: collections = [], isLoading: isLoadingCollections } = useUserCollections(
     userIdNum,
     requestCookie
   )
-  const { data: robloxBadges = [], isLoading: isLoadingRobloxBadges } = useRobloxBadges(
+  const { data: robloxBadges = [], isLoading: isLoadingRobloxBadges } = useUserRobloxBadges(
     userIdNum,
     requestCookie
   )
@@ -136,10 +227,14 @@ const UserProfileView: React.FC<ProfileViewProps> = ({
     requestCookie,
     isOutfitsOpen
   )
-  const { data: pastUsernames = [], isLoading: pastNamesLoading } = usePastUsernames(
-    userIdNum,
-    requestCookie,
-    isPastNamesOpen
+
+  const pastUsernames = profilePlatform?.nameHistory ?? []
+  const profileWithGroupCount = useMemo(
+    () => ({
+      ...profile,
+      groupMemberCount: groups.length || profile.groupMemberCount || 0
+    }),
+    [profile, groups.length]
   )
 
   const loading =
@@ -187,7 +282,7 @@ const UserProfileView: React.FC<ProfileViewProps> = ({
         <div className="max-w-[1400px] mx-auto space-y-6">
           <ProfileHeader
             userId={userIdNum}
-            profile={profile}
+            profile={profileWithGroupCount}
             cookie={requestCookie}
             showCloseButton={showCloseButton}
             onClose={onClose}
@@ -210,9 +305,9 @@ const UserProfileView: React.FC<ProfileViewProps> = ({
               />
 
               <ProfileStats
-                profile={profile}
+                profile={profileWithGroupCount}
                 userId={userIdNum}
-                onPastNamesClick={() => setIsPastNamesOpen(true)}
+                pastUsernames={pastUsernames}
               />
             </div>
 
@@ -220,7 +315,7 @@ const UserProfileView: React.FC<ProfileViewProps> = ({
               <FriendsSection
                 friends={sortedFriends as any}
                 isLoading={loading}
-                friendCount={friendCount}
+                friendCount={profile.friendCount ?? sortedFriends.length}
                 onViewAll={() =>
                   setUserListModal({ isOpen: true, type: 'friends', title: 'Friends' })
                 }
@@ -230,7 +325,7 @@ const UserProfileView: React.FC<ProfileViewProps> = ({
               <GroupsSection
                 groups={groups}
                 isLoading={isLoadingGroups}
-                groupMemberCount={profile.groupMemberCount}
+                groupMemberCount={profileWithGroupCount.groupMemberCount}
                 onSelectGroup={(groupId) => setSelectedGroupId(groupId)}
               />
 
@@ -301,6 +396,7 @@ const UserProfileView: React.FC<ProfileViewProps> = ({
                         })
                       }
                     >
+                      <ItemTagBadges assetId={item.id} />
                       <div className="w-full h-full p-3 flex items-center justify-center">
                         <img
                           src={item.imageUrl}
@@ -522,6 +618,7 @@ const UserProfileView: React.FC<ProfileViewProps> = ({
                         })
                       }
                     >
+                      <ItemTagBadges assetId={item.id} />
                       <div className="w-full h-full p-3 flex items-center justify-center">
                         <img
                           src={item.imageUrl}
@@ -555,44 +652,6 @@ const UserProfileView: React.FC<ProfileViewProps> = ({
                 />
               )}
             </AnimatePresence>
-          </DialogBody>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog isOpen={isPastNamesOpen} onClose={() => setIsPastNamesOpen(false)}>
-        <DialogContent className="max-w-md bg-neutral-950/95 backdrop-blur-xl border-neutral-800">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-3 pl-0">
-              <div className="p-2 bg-neutral-900 rounded-lg">
-                <History size={20} className="text-neutral-300" />
-              </div>
-              Past Usernames
-            </DialogTitle>
-            <DialogClose />
-          </DialogHeader>
-          <DialogBody>
-            <div className="p-1">
-              {pastNamesLoading ? (
-                <div className="space-y-2">
-                  <Skeleton className="h-8 w-full rounded-md" />
-                  <Skeleton className="h-8 w-3/4 rounded-md" />
-                  <Skeleton className="h-8 w-1/2 rounded-md" />
-                </div>
-              ) : pastUsernames.length > 0 ? (
-                <div className="flex flex-wrap gap-2">
-                  {pastUsernames.map((name, i) => (
-                    <div
-                      key={i}
-                      className="px-3 py-1.5 bg-neutral-900 border border-neutral-800 rounded-lg text-sm text-neutral-300 font-medium hover:border-neutral-700 hover:text-white transition-colors cursor-default"
-                    >
-                      {name}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center text-neutral-500 py-8">No past usernames found.</div>
-              )}
-            </div>
           </DialogBody>
         </DialogContent>
       </Dialog>

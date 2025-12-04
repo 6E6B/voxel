@@ -69,6 +69,7 @@ export const queryKeys = {
   // User Profile (for viewing other users' profiles)
   userProfile: {
     all: ['userProfile'] as const,
+    platform: (userId: number) => [...queryKeys.userProfile.all, 'platform', userId] as const,
     details: (userId: number, cookie: string) =>
       [...queryKeys.userProfile.all, 'details', userId, cookie] as const,
     extended: (userId: number, cookie: string) =>

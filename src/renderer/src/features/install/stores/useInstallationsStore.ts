@@ -174,5 +174,11 @@ export const useSetDeployHistory = () => useInstallationsStore((state) => state.
 // Utility: Get API type from BinaryType
 // ============================================================================
 
-export const getApiType = (t: BinaryType): 'WindowsStudio64' | 'WindowsPlayer' =>
-  t === BinaryType.WindowsStudio ? 'WindowsStudio64' : 'WindowsPlayer'
+export const getApiType = (
+  t: BinaryType
+): 'WindowsStudio64' | 'WindowsPlayer' | 'MacPlayer' | 'MacStudio' => {
+  if (t === BinaryType.WindowsStudio) return 'WindowsStudio64'
+  if (t === BinaryType.MacPlayer) return 'MacPlayer'
+  if (t === BinaryType.MacStudio) return 'MacStudio'
+  return 'WindowsPlayer'
+}

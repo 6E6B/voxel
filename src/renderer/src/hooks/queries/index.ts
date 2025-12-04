@@ -166,3 +166,14 @@ export {
   usePastUsernames,
   useUserPresence
 } from '@renderer/features/users/api/useUserProfile'
+
+// Re-export profile platform hooks (consolidated API)
+export {
+  useUserProfilePlatform,
+  useUserProfileHeader,
+  useUserProfileAbout,
+  useUserProfileRobloxBadges,
+  useUserProfileCollections,
+  useUserProfileCurrentlyWearing,
+  type ProfilePlatformData
+} from '@renderer/features/users/api/useUserProfilePlatform'

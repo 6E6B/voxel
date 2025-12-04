@@ -159,6 +159,10 @@ const categoryOrder = [
   'catalog'
 ]
 
+const SELECTED_BG = 'rgba(255,255,255,0.04)'
+// Use rgba(…,0) instead of transparent so framer-motion can interpolate.
+const UNSELECTED_BG = 'rgba(255,255,255,0)'
+
 interface CatalogResultItemForAccessory {
   id: number
   itemType: string
@@ -184,7 +188,7 @@ const UniversalLimitedRow = memo(
     return (
       <motion.button
         initial={false}
-        animate={{ backgroundColor: isSelected ? 'rgba(255,255,255,0.04)' : 'transparent' }}
+        animate={{ backgroundColor: isSelected ? SELECTED_BG : UNSELECTED_BG }}
         transition={{ duration: 0.1 }}
         data-selected={isSelected}
         data-index={idx}
@@ -266,7 +270,7 @@ const UniversalCatalogRow = memo(
     return (
       <motion.button
         initial={false}
-        animate={{ backgroundColor: isSelected ? 'rgba(255,255,255,0.04)' : 'transparent' }}
+        animate={{ backgroundColor: isSelected ? SELECTED_BG : UNSELECTED_BG }}
         transition={{ duration: 0.1 }}
         data-selected={isSelected}
         data-index={idx}
@@ -353,7 +357,7 @@ const UniversalCommandRow = memo(
     return (
       <motion.button
         initial={false}
-        animate={{ backgroundColor: isSelected ? 'rgba(255,255,255,0.04)' : 'transparent' }}
+        animate={{ backgroundColor: isSelected ? SELECTED_BG : UNSELECTED_BG }}
         transition={{ duration: 0.1 }}
         data-selected={isSelected}
         data-index={idx}
@@ -431,7 +435,7 @@ const UniversalPlayerRow = memo(
     return (
       <motion.button
         initial={false}
-        animate={{ backgroundColor: isSelected ? 'rgba(255,255,255,0.04)' : 'transparent' }}
+        animate={{ backgroundColor: isSelected ? SELECTED_BG : UNSELECTED_BG }}
         transition={{ duration: 0.1 }}
         data-selected={isSelected}
         data-index={idx}
@@ -1210,9 +1214,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                         <motion.button
                           key={cmd.id}
                           initial={false}
-                          animate={{
-                            backgroundColor: isSelected ? 'rgba(255,255,255,0.04)' : 'transparent'
-                          }}
+                          animate={{ backgroundColor: isSelected ? SELECTED_BG : UNSELECTED_BG }}
                           transition={{ duration: 0.1 }}
                           data-selected={isSelected}
                           onClick={() => selectCommand(cmd)}
@@ -1377,9 +1379,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                         <motion.button
                           key={cmd.id}
                           initial={false}
-                          animate={{
-                            backgroundColor: isSelected ? 'rgba(255,255,255,0.04)' : 'transparent'
-                          }}
+                          animate={{ backgroundColor: isSelected ? SELECTED_BG : UNSELECTED_BG }}
                           transition={{ duration: 0.1 }}
                           data-selected={isSelected}
                           onClick={() => selectCommand(cmd)}
@@ -1459,9 +1459,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                     <motion.button
                       key={friend.id}
                       initial={false}
-                      animate={{
-                        backgroundColor: isSelected ? 'rgba(255,255,255,0.04)' : 'transparent'
-                      }}
+                      animate={{ backgroundColor: isSelected ? SELECTED_BG : UNSELECTED_BG }}
                       transition={{ duration: 0.1 }}
                       data-suggestion-selected={isSelected}
                       onClick={() => {
@@ -1581,9 +1579,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                       <motion.button
                         key={`${item.itemType}-${item.id}`}
                         initial={false}
-                        animate={{
-                          backgroundColor: isSelected ? 'rgba(255,255,255,0.04)' : 'transparent'
-                        }}
+                        animate={{ backgroundColor: isSelected ? SELECTED_BG : UNSELECTED_BG }}
                         transition={{ duration: 0.1 }}
                         data-result-selected={isSelected}
                         data-index={idx}

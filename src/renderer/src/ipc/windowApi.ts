@@ -39,7 +39,8 @@ import type {
   TransactionsResponse,
   TransactionTypeEnum,
   UpdateState,
-  UpdateActionResult
+  UpdateActionResult,
+  UserProfileResponse
 } from '../../../shared/ipc-schemas/index'
 
 export interface AccountApi {
@@ -273,6 +274,7 @@ export interface InventoryApi {
   getPlayerBadges: (cookie: string, userId: number) => Promise<any>
   getCollectibles: (cookie: string, userId: number) => Promise<any>
   getPastUsernames: (cookie: string, userId: number) => Promise<UsernameHistory>
+  getUserProfile: (cookie: string, userId: number) => Promise<UserProfileResponse>
   checkAssetOwnership: (
     cookie: string,
     userId: number,

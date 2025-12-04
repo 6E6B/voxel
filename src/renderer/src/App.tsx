@@ -196,9 +196,7 @@ const App: React.FC = () => {
 
   useFriendPresenceNotifications(friendsData, !!selectedAccount, selectedAccount?.id)
 
-  const [commandPaletteProfileUserId, setCommandPaletteProfileUserId] = useState<string | null>(
-    null
-  )
+  const [quickProfileUserId, setQuickProfileUserId] = useState<string | null>(null)
 
   const [commandPaletteAccessory, setCommandPaletteAccessory] = useState<{
     id: number
@@ -207,7 +205,7 @@ const App: React.FC = () => {
   } | null>(null)
 
   const handleCommandPaletteViewProfile = useCallback((userId: string) => {
-    setCommandPaletteProfileUserId(userId)
+    setQuickProfileUserId(userId)
   }, [])
 
   const handleCommandPaletteViewAccessory = useCallback(
@@ -216,6 +214,8 @@ const App: React.FC = () => {
     },
     []
   )
+
+  const multiInstanceAllowed = !isMac && settings.allowMultipleInstances
 
   const performLaunch = async (config: JoinConfig, installPath?: string) => {
     closeModal('join')
@@ -226,8 +226,13 @@ const App: React.FC = () => {
       return
     }
 
-    if (accountsToLaunch.length > 1 && !settings.allowMultipleInstances) {
-      showNotification('Multi-instance launching is disabled in Settings.', 'warning')
+    if (accountsToLaunch.length > 1 && !multiInstanceAllowed) {
+      showNotification(
+        isMac
+          ? 'Multi-instance is disabled on macOS.'
+          : 'Multi-instance launching is disabled in Settings.',
+        'warning'
+      )
       return
     }
 
@@ -586,7 +591,7 @@ const App: React.FC = () => {
             >
               <Search className="h-4 w-4" />
             </button>
-            <NotificationTray />
+            <NotificationTray onOpenUserProfile={handleCommandPaletteViewProfile} />
             {!isMac && <div className="w-px h-5 bg-neutral-700 mx-2" />}
           </div>
         </div>
@@ -596,7 +601,7 @@ const App: React.FC = () => {
             <AccountsTab
               accounts={accounts}
               onAccountsChange={setAccounts}
-              allowMultipleInstances={settings.allowMultipleInstances}
+              allowMultipleInstances={multiInstanceAllowed}
             />
           )}
 
@@ -620,7 +625,7 @@ const App: React.FC = () => {
           {activeTab === 'Catalog' && (
             <CatalogTab
               onItemSelect={handleCommandPaletteViewAccessory}
-              onCreatorSelect={(creatorId) => setCommandPaletteProfileUserId(String(creatorId))}
+              onCreatorSelect={(creatorId) => setQuickProfileUserId(String(creatorId))}
               cookie={accounts.find((a) => a.cookie)?.cookie}
             />
           )}
@@ -697,9 +702,9 @@ const App: React.FC = () => {
       />
 
       <UniversalProfileModal
-        isOpen={!!commandPaletteProfileUserId}
-        onClose={() => setCommandPaletteProfileUserId(null)}
-        userId={commandPaletteProfileUserId}
+        isOpen={!!quickProfileUserId}
+        onClose={() => setQuickProfileUserId(null)}
+        userId={quickProfileUserId}
         selectedAccount={accounts.find((a) => a.cookie) || null}
         initialData={{}}
       />

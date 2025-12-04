@@ -246,3 +246,174 @@ export const followersResponseSchema = z.object({
 
 export type Friend = z.infer<typeof friendSchema>
 export type FriendRequest = z.infer<typeof friendRequestSchema>
+
+// ============================================================================
+// PROFILE PLATFORM API SCHEMAS
+// ============================================================================
+
+export const profileHeaderCountsSchema = z.object({
+  friendsCount: z.number().optional(),
+  followersCount: z.number().optional(),
+  followingsCount: z.number().optional(),
+  mutualFriendsCount: z.number().optional(),
+  isFriendsCountEnabled: z.boolean().optional(),
+  isFollowersCountEnabled: z.boolean().optional(),
+  isFollowingsCountEnabled: z.boolean().optional(),
+  isMutualFriendsCountEnabled: z.boolean().optional()
+})
+
+export const profileHeaderNamesSchema = z.object({
+  primaryName: z.string().optional(),
+  username: z.string().optional(),
+  displayName: z.string().optional()
+})
+
+export const profileHeaderSchema = z.object({
+  userId: z.number(),
+  isPremium: z.boolean().optional(),
+  isVerified: z.boolean().optional(),
+  isRobloxAdmin: z.boolean().optional(),
+  counts: profileHeaderCountsSchema.optional(),
+  names: profileHeaderNamesSchema.optional(),
+  contextualInformation: z
+    .object({
+      context: z.string().optional()
+    })
+    .nullable()
+    .optional(),
+  editName: z
+    .object({
+      field: z.string().optional(),
+      value: z.string().nullable().optional(),
+      isEdited: z.boolean().optional()
+    })
+    .nullable()
+    .optional()
+})
+
+export const profileAboutSchema = z.object({
+  name: z.string().optional(),
+  description: z.string().nullable().optional(),
+  socialLinks: z
+    .array(
+      z.object({
+        type: z.string().optional(),
+        url: z.string().optional(),
+        title: z.string().optional()
+      })
+    )
+    .nullable()
+    .optional(),
+  nameHistory: z.array(z.string()).nullable().optional(),
+  joinDateTime: z.string().optional()
+})
+
+export const profileWearingAssetSchema = z.object({
+  assetId: z.number(),
+  itemType: z.string().optional()
+})
+
+export const profileCurrentlyWearingSchema = z.object({
+  assets: z.array(profileWearingAssetSchema).optional()
+})
+
+export const profileFavoriteExperienceSchema = z.object({
+  universeId: z.number()
+})
+
+export const profileFavoriteExperiencesSchema = z.object({
+  experiences: z.array(profileFavoriteExperienceSchema).optional()
+})
+
+export const profileFriendsSchema = z.object({
+  friends: z
+    .array(
+      z.object({
+        userId: z.number().optional(),
+        id: z.number().optional()
+      })
+    )
+    .optional()
+})
+
+export const profileCollectionAssetSchema = z.object({
+  assetId: z.number(),
+  itemType: z.string().optional()
+})
+
+export const profileCollectionsSchema = z.object({
+  assets: z.array(profileCollectionAssetSchema).optional()
+})
+
+export const profileRobloxBadgeTypeSchema = z.object({
+  id: z.number(),
+  value: z.string().optional(),
+  description: z.string().optional(),
+  imageName: z.string().optional()
+})
+
+export const profileRobloxBadgeSchema = z.object({
+  id: z.number(),
+  type: profileRobloxBadgeTypeSchema.optional(),
+  userId: z.number().optional(),
+  createdTime: z
+    .object({
+      seconds: z.number().optional(),
+      nanos: z.number().optional()
+    })
+    .optional()
+})
+
+export const profileRobloxBadgesSchema = z.object({
+  robloxBadgeList: z.array(profileRobloxBadgeSchema).optional()
+})
+
+export const profilePlayerBadgesSchema = z.object({
+  badges: z.array(z.number()).optional()
+})
+
+export const profileStatisticsSchema = z.object({
+  userJoinedDate: z.string().optional(),
+  numberOfVisits: z.number().optional()
+})
+
+export const profileActionsSchema = z.object({
+  buttons: z
+    .array(
+      z.object({
+        type: z.string().optional()
+      })
+    )
+    .optional(),
+  contextual: z.array(z.string()).optional()
+})
+
+export const profileComponentsSchema = z.object({
+  UserProfileHeader: profileHeaderSchema.optional(),
+  About: profileAboutSchema.optional(),
+  CurrentlyWearing: profileCurrentlyWearingSchema.optional(),
+  FavoriteExperiences: profileFavoriteExperiencesSchema.optional(),
+  Friends: profileFriendsSchema.optional(),
+  Collections: profileCollectionsSchema.optional(),
+  RobloxBadges: profileRobloxBadgesSchema.optional(),
+  PlayerBadges: profilePlayerBadgesSchema.optional(),
+  Statistics: profileStatisticsSchema.optional(),
+  Actions: profileActionsSchema.optional()
+})
+
+export const userProfileResponseSchema = z.object({
+  profileType: z.string().optional(),
+  profileId: z.string().optional(),
+  componentOrdering: z.array(z.string()).optional(),
+  components: profileComponentsSchema.optional(),
+  onlyEssentialComponents: z.any().nullable().optional(),
+  gracefulDegradationEnabled: z.boolean().optional()
+})
+
+export type UserProfileResponse = z.infer<typeof userProfileResponseSchema>
+export type ProfileHeader = z.infer<typeof profileHeaderSchema>
+export type ProfileAbout = z.infer<typeof profileAboutSchema>
+export type ProfileCurrentlyWearing = z.infer<typeof profileCurrentlyWearingSchema>
+export type ProfileCollections = z.infer<typeof profileCollectionsSchema>
+export type ProfileRobloxBadges = z.infer<typeof profileRobloxBadgesSchema>
+export type ProfileStatistics = z.infer<typeof profileStatisticsSchema>

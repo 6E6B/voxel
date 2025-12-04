@@ -87,6 +87,13 @@ class StorageService {
         this.data = {}
       }
 
+      // Disable multi-instance on non-Windows to avoid no-op / confusion
+      if (process.platform !== 'win32') {
+        if (this.data.settings) {
+          this.data.settings.allowMultipleInstances = false
+        }
+      }
+
       if (this.data.settings?.allowMultipleInstances) {
         MultiInstance.Enable()
       } else {
@@ -471,8 +478,12 @@ class StorageService {
       nextSettings.primaryAccountId = settings.primaryAccountId ?? null
     }
 
-    if ('allowMultipleInstances' in settings) {
-      nextSettings.allowMultipleInstances = !!settings.allowMultipleInstances
+    if (process.platform === 'win32') {
+      if ('allowMultipleInstances' in settings) {
+        nextSettings.allowMultipleInstances = !!settings.allowMultipleInstances
+      }
+    } else {
+      nextSettings.allowMultipleInstances = false
     }
 
     if ('defaultInstallationPath' in settings) {

@@ -94,7 +94,7 @@ export class RobloxLauncherService {
 
       const initialCount = await this.getRobloxProcessCount()
 
-      if (installPath && process.platform !== 'darwin') {
+      if (installPath) {
         await RobloxInstallService.launchWithProtocol(installPath, protocolLaunchCommand)
       } else {
         await shell.openExternal(protocolLaunchCommand)

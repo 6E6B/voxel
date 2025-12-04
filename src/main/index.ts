@@ -2,7 +2,8 @@
 import { app, shell, BrowserWindow, ipcMain, session } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
-import icon from '../../resources/build/icons/icon.ico?asset'
+import iconIco from '../../resources/build/icons/icon.ico?asset'
+import iconIcns from '../../resources/build/icons/icon.icns?asset'
 
 // Lazy imports - these will be loaded after window is shown
 let registerRobloxHandlers: typeof import('./modules/core/RobloxHandler').registerRobloxHandlers
@@ -31,7 +32,7 @@ function createWindow(): BrowserWindow {
     height: defaultHeight,
     show: false,
     autoHideMenuBar: true,
-    icon,
+    icon: process.platform === 'darwin' ? iconIcns : iconIco,
     backgroundColor: '#111111',
     titleBarStyle: 'hidden',
     ...(process.platform === 'darwin'

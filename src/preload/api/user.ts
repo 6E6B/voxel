@@ -44,7 +44,9 @@ export const usersApi = {
   getPlayerBadges: (cookie: string, userId: number) =>
     invoke('get-player-badges', z.any(), cookie, userId),
   getPastUsernames: (cookie: string, userId: number) =>
-    invoke('get-past-usernames', S.usernameHistorySchema, cookie, userId)
+    invoke('get-past-usernames', S.usernameHistorySchema, cookie, userId),
+  getUserProfile: (cookie: string, userId: number) =>
+    invoke('get-user-profile', S.userProfileResponseSchema, cookie, userId)
 }
 
 // ============================================================================

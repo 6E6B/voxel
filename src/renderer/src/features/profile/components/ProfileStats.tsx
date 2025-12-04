@@ -22,19 +22,27 @@ import { RobuxIcon } from '@renderer/components/UI/icons/RobuxIcon'
 interface ProfileStatsProps {
   profile: ProfileData
   userId: number
-  onPastNamesClick: () => void
+  pastUsernames?: string[]
 }
 
 export const ProfileStats: React.FC<ProfileStatsProps> = ({
   profile,
   userId,
-  onPastNamesClick
+  pastUsernames = []
 }) => {
   const [showRelativeJoinDate, setShowRelativeJoinDate] = useState(false)
   const { data: rolimonsPlayer } = useRolimonsPlayer(userId, true)
   const lastOnlineDate = rolimonsPlayer?.last_online
     ? new Date(rolimonsPlayer.last_online * 1000)
     : null
+  const filteredPastUsernames = pastUsernames.filter((name) => !/^#+$/.test(name.trim()))
+  const hasValueStats =
+    (rolimonsPlayer?.value !== undefined && rolimonsPlayer.value !== null) ||
+    (rolimonsPlayer?.rap !== undefined && rolimonsPlayer.rap !== null)
+  const hasActivityStats =
+    profile.placeVisits !== undefined ||
+    profile.totalFavorites !== undefined ||
+    profile.concurrentPlayers !== undefined
 
   return (
     <motion.div
@@ -75,7 +83,7 @@ export const ProfileStats: React.FC<ProfileStatsProps> = ({
             <SlidingNumber
               number={profile.groupMemberCount}
               formatter={formatNumber}
-              className="font-mono text-sm text-white font-semibold"
+              className="text-sm text-white font-semibold"
             />
           }
         />
@@ -84,29 +92,80 @@ export const ProfileStats: React.FC<ProfileStatsProps> = ({
             icon={Clock}
             label="Last Online"
             value={
-              <span className="font-mono text-sm text-white font-semibold">
+              <span className="text-sm text-white font-semibold">
                 {formatRelativeDate(lastOnlineDate)}
               </span>
             }
             title={formatDateTime(lastOnlineDate)}
           />
         )}
-        <StatRow
-          icon={History}
-          label="Past Usernames"
-          value={
-            <span className="text-xs text-neutral-400 font-medium bg-neutral-800 px-2 py-1 rounded-md hover:bg-neutral-700 hover:text-white transition-colors">
-              View
-            </span>
-          }
-          onClick={onPastNamesClick}
-        />
+        {filteredPastUsernames.length > 0 && (
+          <div className="py-1.5">
+            <div className="flex items-center gap-2 text-neutral-400 mb-2">
+              <History size={14} className="shrink-0" />
+              <span className="text-sm font-medium">Past Usernames</span>
+            </div>
+            <div className="flex flex-wrap gap-1.5 pl-[22px]">
+              {filteredPastUsernames.slice(0, 8).map((name, i) => (
+                <span
+                  key={i}
+                  className="text-xs text-neutral-300 bg-neutral-800 px-2 py-1 rounded-md"
+                >
+                  {name}
+                </span>
+              ))}
+              {filteredPastUsernames.length > 8 && (
+                <span className="text-xs text-neutral-500 px-1 py-1">
+                  +{filteredPastUsernames.length - 8} more
+                </span>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
+      {/* Value Stats */}
+      {hasValueStats && (
+        <>
+          {/* Separator */}
+          <div className="h-px bg-neutral-800 my-3 -mx-4" />
+
+          <div>
+            <div className="text-[11px] font-semibold text-neutral-500 uppercase tracking-wider pb-1">
+              Value
+            </div>
+            {rolimonsPlayer?.value !== undefined && rolimonsPlayer.value !== null && (
+              <StatRow
+                icon={Coins}
+                label="Value"
+                value={
+                  <span className="flex items-center gap-1.5 text-sm text-white font-semibold">
+                    {formatNumber(rolimonsPlayer.value)}
+                    <RobuxIcon className="w-3.5 h-3.5" />
+                  </span>
+                }
+                title="Rolimons Value"
+              />
+            )}
+            {rolimonsPlayer?.rap !== undefined && rolimonsPlayer.rap !== null && (
+              <StatRow
+                icon={TrendingUp}
+                label="RAP"
+                value={
+                  <span className="flex items-center gap-1.5 text-sm text-white font-semibold">
+                    {formatNumber(rolimonsPlayer.rap)}
+                    <RobuxIcon className="w-3.5 h-3.5" />
+                  </span>
+                }
+                title="Recent Average Price"
+              />
+            )}
+          </div>
+        </>
+      )}
+
       {/* Activity Stats */}
-      {(profile.placeVisits !== undefined ||
-        profile.totalFavorites !== undefined ||
-        profile.concurrentPlayers !== undefined) && (
+      {hasActivityStats && (
         <>
           {/* Separator */}
           <div className="h-px bg-neutral-800 my-3 -mx-4" />
@@ -123,7 +182,7 @@ export const ProfileStats: React.FC<ProfileStatsProps> = ({
                   <SlidingNumber
                     number={profile.placeVisits}
                     formatter={formatNumber}
-                    className="font-mono text-sm text-white font-semibold"
+                    className="text-sm text-white font-semibold"
                   />
                 }
               />
@@ -136,7 +195,7 @@ export const ProfileStats: React.FC<ProfileStatsProps> = ({
                   <SlidingNumber
                     number={profile.totalFavorites}
                     formatter={formatNumber}
-                    className="font-mono text-sm text-white font-semibold"
+                    className="text-sm text-white font-semibold"
                   />
                 }
               />
@@ -149,50 +208,9 @@ export const ProfileStats: React.FC<ProfileStatsProps> = ({
                   <SlidingNumber
                     number={profile.concurrentPlayers}
                     formatter={formatNumber}
-                    className="font-mono text-sm text-white font-semibold"
+                    className="text-sm text-white font-semibold"
                   />
                 }
-              />
-            )}
-          </div>
-        </>
-      )}
-
-      {/* Value Stats */}
-      {((rolimonsPlayer?.value !== undefined && rolimonsPlayer.value !== null) ||
-        (rolimonsPlayer?.rap !== undefined && rolimonsPlayer.rap !== null)) && (
-        <>
-          {/* Separator */}
-          <div className="h-px bg-neutral-800 my-3 -mx-4" />
-
-          <div>
-            <div className="text-[11px] font-semibold text-neutral-500 uppercase tracking-wider pb-1">
-              Value
-            </div>
-            {rolimonsPlayer?.value !== undefined && rolimonsPlayer.value !== null && (
-              <StatRow
-                icon={Coins}
-                label="Value"
-                value={
-                  <span className="flex items-center gap-1.5 font-mono text-sm text-white font-semibold">
-                    {formatNumber(rolimonsPlayer.value)}
-                    <RobuxIcon className="w-3.5 h-3.5" />
-                  </span>
-                }
-                title="Rolimons Value"
-              />
-            )}
-            {rolimonsPlayer?.rap !== undefined && rolimonsPlayer.rap !== null && (
-              <StatRow
-                icon={TrendingUp}
-                label="RAP"
-                value={
-                  <span className="flex items-center gap-1.5 font-mono text-sm text-white font-semibold">
-                    {formatNumber(rolimonsPlayer.rap)}
-                    <RobuxIcon className="w-3.5 h-3.5" />
-                  </span>
-                }
-                title="Recent Average Price"
               />
             )}
           </div>
