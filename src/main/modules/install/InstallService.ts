@@ -288,24 +288,51 @@ export class RobloxInstallService {
   }
 
   static async launch(installPath: string): Promise<void> {
-    const playerExe = path.join(installPath, 'RobloxPlayerBeta.exe')
-    const studioExe = path.join(installPath, 'RobloxStudioBeta.exe')
+    if (process.platform === 'darwin') {
+      let appPath = ''
 
-    let exePath = ''
-    if (fs.existsSync(playerExe)) {
-      exePath = playerExe
-    } else if (fs.existsSync(studioExe)) {
-      exePath = studioExe
+      if (installPath.endsWith('.app') && fs.existsSync(installPath)) {
+        appPath = installPath
+      } else {
+        const playerApp = path.join(installPath, 'RobloxPlayer.app')
+        const studioApp = path.join(installPath, 'RobloxStudio.app')
+
+        if (fs.existsSync(playerApp)) {
+          appPath = playerApp
+        } else if (fs.existsSync(studioApp)) {
+          appPath = studioApp
+        }
+      }
+
+      if (!appPath) {
+        throw new Error('Could not find Roblox app bundle in ' + installPath)
+      }
+
+      const child = spawn('open', [appPath], {
+        detached: true,
+        stdio: 'ignore'
+      })
+      child.unref()
     } else {
-      throw new Error('Could not find executable in ' + installPath)
-    }
+      const playerExe = path.join(installPath, 'RobloxPlayerBeta.exe')
+      const studioExe = path.join(installPath, 'RobloxStudioBeta.exe')
 
-    const child = spawn(exePath, [], {
-      detached: true,
-      cwd: installPath,
-      stdio: 'ignore'
-    })
-    child.unref()
+      let exePath = ''
+      if (fs.existsSync(playerExe)) {
+        exePath = playerExe
+      } else if (fs.existsSync(studioExe)) {
+        exePath = studioExe
+      } else {
+        throw new Error('Could not find executable in ' + installPath)
+      }
+
+      const child = spawn(exePath, [], {
+        detached: true,
+        cwd: installPath,
+        stdio: 'ignore'
+      })
+      child.unref()
+    }
   }
 
   static async uninstall(installPath: string): Promise<void> {
@@ -368,6 +395,13 @@ export class RobloxInstallService {
   }
 
   static async setActive(installPath: string): Promise<void> {
+    if (process.platform === 'darwin') {
+      console.log(
+        '[RobloxInstallService] setActive is not supported on macOS - using system Roblox'
+      )
+      return
+    }
+
     const playerExe = path.join(installPath, 'RobloxPlayerBeta.exe')
     if (!fs.existsSync(playerExe)) {
       throw new Error('RobloxPlayerBeta.exe not found in ' + installPath)
@@ -439,6 +473,10 @@ export class RobloxInstallService {
   }
 
   static async removeActive(): Promise<void> {
+    if (process.platform === 'darwin') {
+      return
+    }
+
     const keyPath = 'HKCU\\Software\\Classes\\roblox-player'
 
     return new Promise<void>((resolve) => {
@@ -451,12 +489,16 @@ export class RobloxInstallService {
       })
       child.on('error', (err) => {
         console.error('Failed to delete registry key', err)
-        resolve() // Don't crash
+        resolve()
       })
     })
   }
 
   static async getActiveInstallPath(): Promise<string | null> {
+    if (process.platform === 'darwin') {
+      return null
+    }
+
     return new Promise((resolve) => {
       const child = spawn(
         'reg',
@@ -497,17 +539,25 @@ export class RobloxInstallService {
   }
 
   static async launchWithProtocol(installPath: string, protocolUrl: string): Promise<void> {
-    const playerExe = path.join(installPath, 'RobloxPlayerBeta.exe')
-    if (!fs.existsSync(playerExe)) {
-      throw new Error('RobloxPlayerBeta.exe not found in ' + installPath)
-    }
+    if (process.platform === 'darwin') {
+      const child = spawn('open', [protocolUrl], {
+        detached: true,
+        stdio: 'ignore'
+      })
+      child.unref()
+    } else {
+      const playerExe = path.join(installPath, 'RobloxPlayerBeta.exe')
+      if (!fs.existsSync(playerExe)) {
+        throw new Error('RobloxPlayerBeta.exe not found in ' + installPath)
+      }
 
-    const child = spawn(playerExe, [protocolUrl], {
-      detached: true,
-      cwd: installPath,
-      stdio: 'ignore'
-    })
-    child.unref()
+      const child = spawn(playerExe, [protocolUrl], {
+        detached: true,
+        cwd: installPath,
+        stdio: 'ignore'
+      })
+      child.unref()
+    }
   }
 
   private static downloadFile(url: string, dest: string): Promise<void> {
@@ -657,12 +707,33 @@ export class RobloxInstallService {
 
   /**
    * Detects default Roblox installations from the standard Roblox Versions directory
-   * (C:\Users\<user>\AppData\Local\Roblox\Versions\)
+   * Windows: C:\Users\<user>\AppData\Local\Roblox\Versions\
+   * macOS: /Applications/Roblox.app or ~/Applications/Roblox.app
    */
   static async detectDefaultInstallations(): Promise<DetectedInstallation[]> {
     const detected: DetectedInstallation[] = []
 
     try {
+      if (process.platform === 'darwin') {
+        const possiblePaths = [
+          '/Applications/Roblox.app',
+          path.join(os.homedir(), 'Applications', 'Roblox.app')
+        ]
+
+        for (const robloxAppPath of possiblePaths) {
+          if (fs.existsSync(robloxAppPath)) {
+            detected.push({
+              path: robloxAppPath,
+              version: 'system',
+              binaryType: 'WindowsPlayer',
+              exePath: robloxAppPath
+            })
+            break
+          }
+        }
+        return detected
+      }
+
       const robloxVersionsPath = path.join(os.homedir(), 'AppData', 'Local', 'Roblox', 'Versions')
 
       if (!fs.existsSync(robloxVersionsPath)) {
