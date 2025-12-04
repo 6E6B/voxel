@@ -14,6 +14,8 @@ interface Model3DViewerProps {
   userId?: string
   /** Asset ID for asset loading */
   assetId?: number | null
+  /** Asset type ID - if provided, avoids API calls for unsupported types like faces */
+  assetTypeId?: number | null
   /** Direct manifest URL (bypasses userId/assetId lookup) */
   manifestUrl?: string
   /** Explicit object type */
@@ -52,6 +54,7 @@ interface Model3DViewerProps {
 interface Avatar3DThumbnailProps {
   userId?: string
   assetId?: number | null
+  assetTypeId?: number | null
   manifestUrl?: string
   type?: ObjectType
   cookie?: string
@@ -307,6 +310,7 @@ const SceneLighting: React.FC<{ objectType: ObjectType }> = ({ objectType }) => 
 export const Model3DViewer: React.FC<Model3DViewerProps> = ({
   userId,
   assetId,
+  assetTypeId,
   manifestUrl,
   type: explicitType,
   cookie,
@@ -350,7 +354,8 @@ export const Model3DViewer: React.FC<Model3DViewerProps> = ({
   )
   const { data: assetManifestUrl, error: assetError } = useAsset3DManifest(
     !manifestUrl && objectType === 'asset' && assetId ? assetId : undefined,
-    cookie
+    cookie,
+    { assetTypeId }
   )
 
   const effectiveManifestUrl = manifestUrl || avatarManifestUrl || assetManifestUrl
@@ -490,6 +495,7 @@ export const Model3DViewer: React.FC<Model3DViewerProps> = ({
 const Avatar3DThumbnail: React.FC<Avatar3DThumbnailProps> = ({
   userId,
   assetId,
+  assetTypeId,
   manifestUrl,
   type,
   cookie,
@@ -508,6 +514,7 @@ const Avatar3DThumbnail: React.FC<Avatar3DThumbnailProps> = ({
     <Model3DViewer
       userId={userId}
       assetId={assetId}
+      assetTypeId={assetTypeId}
       manifestUrl={manifestUrl}
       type={type}
       cookie={cookie}

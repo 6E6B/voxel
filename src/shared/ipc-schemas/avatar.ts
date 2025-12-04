@@ -526,3 +526,44 @@ export const templateDownloadResultSchema = z.object({
 
 export type DownloadResult = z.infer<typeof downloadResultSchema>
 export type TemplateDownloadResult = z.infer<typeof templateDownloadResultSchema>
+
+// ============================================================================
+// CATALOG DATABASE SCHEMAS
+// ============================================================================
+
+export const catalogDbItemSchema = z.object({
+  AssetId: z.number(),
+  ProductId: z.number().nullable(),
+  Name: z.string(),
+  Description: z.string().nullable(),
+  ProductType: z.string().nullable(),
+  AssetTypeId: z.number().nullable(),
+  Created: z.string().nullable(),
+  Updated: z.string().nullable(),
+  PriceInRobux: z.number().nullable(),
+  Sales: z.number(),
+  IsForSale: z.boolean(),
+  IsLimited: z.boolean(),
+  IsLimitedUnique: z.boolean(),
+  CollectiblesItemDetails: z.string().nullable()
+})
+
+export const catalogDbSearchResultSchema = z.object({
+  AssetId: z.number(),
+  Name: z.string(),
+  Description: z.string(),
+  AssetTypeId: z.number(),
+  IsLimited: z.boolean(),
+  IsLimitedUnique: z.boolean(),
+  PriceInRobux: z.number(),
+  IsForSale: z.boolean(),
+  Sales: z.number()
+})
+
+export const salesDataSchema = z.object({
+  id: z.number(),
+  sales: z.number()
+})
+
+export type CatalogDbItem = z.infer<typeof catalogDbItemSchema>
+export type CatalogDbSearchResult = z.infer<typeof catalogDbSearchResultSchema>

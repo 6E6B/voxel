@@ -11,6 +11,7 @@ import { LoadingSpinnerInline } from '../UI/feedback/LoadingSpinner'
 interface Avatar3DCanvasProps {
   userId?: string
   assetId?: number | null
+  assetTypeId?: number | null
   manifestUrl?: string
   type?: ObjectType
   cookie?: string
@@ -268,6 +269,7 @@ const SceneLighting: React.FC<{ objectType: ObjectType }> = ({ objectType }) => 
 const Avatar3DCanvas: React.FC<Avatar3DCanvasProps> = ({
   userId,
   assetId,
+  assetTypeId,
   manifestUrl,
   type: explicitType,
   cookie,
@@ -300,7 +302,9 @@ const Avatar3DCanvas: React.FC<Avatar3DCanvasProps> = ({
     data: assetManifestUrl,
     error: assetError,
     isLoading: assetLoading
-  } = useAsset3DManifest(!manifestUrl && objectType === 'asset' ? assetId : undefined, cookie)
+  } = useAsset3DManifest(!manifestUrl && objectType === 'asset' ? assetId : undefined, cookie, {
+    assetTypeId
+  })
 
   // Determine the effective manifest URL from props or query
   const effectiveManifestUrl = manifestUrl || avatarManifestUrl || assetManifestUrl

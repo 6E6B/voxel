@@ -1,6 +1,6 @@
 /**
  * Web Worker for FlexSearch indexing and searching
- * Handles heavy lifting of indexing items.json and rolimons data off the main thread
+ * Handles heavy lifting of indexing catalog database and rolimons data off the main thread
  * Supports importing/exporting indexes for persistence
  */
 
@@ -17,6 +17,7 @@ interface CatalogItem {
   IsLimitedUnique: boolean
   PriceInRobux: number
   IsForSale: boolean
+  Sales: number
 }
 
 interface RolimonsItem {

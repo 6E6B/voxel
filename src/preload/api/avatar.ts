@@ -182,3 +182,22 @@ export const catalogApi = {
   downloadCatalogTemplate: (assetId: number, assetName: string, cookie?: string) =>
     invoke('download-catalog-template', S.templateDownloadResultSchema, assetId, assetName, cookie)
 }
+
+// ============================================================================
+// CATALOG DATABASE API
+// ============================================================================
+
+export const catalogDatabaseApi = {
+  getAllCatalogItems: () => invoke('get-all-catalog-items', z.array(S.catalogDbSearchResultSchema)),
+  searchCatalogDb: (query: string, limit?: number) =>
+    invoke('search-catalog-db', z.array(S.catalogDbSearchResultSchema), query, limit),
+  getCatalogItemById: (assetId: number) =>
+    invoke('get-catalog-item-by-id', S.catalogDbItemSchema.nullable(), assetId),
+  getSalesData: (assetId: number) =>
+    invoke('get-sales-data', S.salesDataSchema.nullable(), assetId),
+  getBatchSalesData: (assetIds: number[]) =>
+    invoke('get-batch-sales-data', z.record(z.string(), z.number()), assetIds),
+  getCatalogItemCount: () => invoke('get-catalog-item-count', z.number()),
+  getCatalogDbStatus: () => invoke('get-catalog-db-status', S.catalogDbStatusSchema),
+  downloadCatalogDb: () => invoke('download-catalog-db', S.catalogDbDownloadResultSchema)
+}

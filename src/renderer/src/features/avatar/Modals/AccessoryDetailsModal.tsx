@@ -27,6 +27,7 @@ import { AssetInfoTab } from '../components/AssetInfoTab'
 import { AssetEconomyTab } from '../components/AssetEconomyTab'
 import { PurchaseSuccessDialog, PurchaseErrorDialog } from '../components/AssetPricing'
 import { AssetHierarchyModal } from './AssetHierarchyModal'
+import { ASSET_TYPES_WITH_3D_MODELS } from '../hooks/useAvatar3DManifest'
 
 interface AccessoryDetailsModalProps {
   isOpen: boolean
@@ -131,7 +132,7 @@ const AccessoryDetailsModal: React.FC<AccessoryDetailsModalProps> = ({
     if (isOpen && assetId && account?.cookie) {
       setCurrentAssetId(assetId)
       setCurrentImageUrl(initialData?.imageUrl || null)
-      setSalesData(getSalesData(assetId))
+      getSalesData(assetId).then(setSalesData)
       setHas3DView(true)
       setViewMode('3d')
     }
@@ -139,6 +140,17 @@ const AccessoryDetailsModal: React.FC<AccessoryDetailsModalProps> = ({
 
   // TanStack Query handles fetching automatically when currentAssetId changes
   // No need for manual useEffect to trigger fetch
+
+  // Update 3D view support based on asset type when details load
+  useEffect(() => {
+    if (details?.AssetTypeId != null) {
+      const supports3D = ASSET_TYPES_WITH_3D_MODELS.has(details.AssetTypeId)
+      setHas3DView(supports3D)
+      if (!supports3D && viewMode === '3d') {
+        setViewMode('2d')
+      }
+    }
+  }, [details?.AssetTypeId, viewMode])
 
   // Ensure view mode is 2D if 3D is not available
   useEffect(() => {
@@ -237,7 +249,7 @@ const AccessoryDetailsModal: React.FC<AccessoryDetailsModalProps> = ({
     if (!item.id || !account?.cookie) return
 
     // Reset state for new item
-    setSalesData(getSalesData(item.id))
+    getSalesData(item.id).then(setSalesData)
     setActiveTab('info')
     // Note: resaleData is managed by TanStack Query and will refetch automatically
     setHas3DView(true)
@@ -323,6 +335,7 @@ const AccessoryDetailsModal: React.FC<AccessoryDetailsModalProps> = ({
                   viewMode={viewMode}
                   has3DView={has3DView}
                   currentAssetId={currentAssetId}
+                  assetTypeId={details.AssetTypeId}
                   imageUrl={getImageUrl()}
                   assetName={details.name || 'Unknown Asset'}
                   isTryingOn={isTryingOn}

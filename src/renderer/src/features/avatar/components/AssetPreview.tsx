@@ -8,6 +8,7 @@ interface AssetPreviewProps {
   viewMode: '2d' | '3d'
   has3DView: boolean
   currentAssetId: number | null
+  assetTypeId?: number | null
   imageUrl: string
   assetName: string
   isTryingOn: boolean
@@ -25,6 +26,7 @@ export const AssetPreview: React.FC<AssetPreviewProps> = ({
   viewMode,
   has3DView,
   currentAssetId,
+  assetTypeId,
   imageUrl,
   assetName,
   isTryingOn,
@@ -75,6 +77,7 @@ export const AssetPreview: React.FC<AssetPreviewProps> = ({
         ) : (
           <Avatar3DThumbnail
             assetId={currentAssetId}
+            assetTypeId={assetTypeId}
             cookie={cookie}
             className="w-full h-full"
             autoRotateSpeed={0.005}

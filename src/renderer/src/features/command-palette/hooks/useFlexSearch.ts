@@ -61,14 +61,8 @@ export function initCatalogSearchIndex(): void {
 
   const initCatalog = async () => {
     try {
-      const response = await fetch(
-        new URL('../../../../../../assets/lists/items.json', import.meta.url)
-      )
-      if (!response.ok) {
-        console.error('[CatalogSearch] Failed to load catalog items:', response.statusText)
-        return
-      }
-      const items = (await response.json()) as CatalogItem[]
+      // Fetch catalog items from the SQLite database via IPC
+      const items = await window.api.getAllCatalogItems()
       const currentHash = computeItemsHash(items)
 
       const persistedIndex = loadPersistedIndex()

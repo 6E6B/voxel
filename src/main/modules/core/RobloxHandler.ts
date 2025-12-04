@@ -5,6 +5,7 @@ import { registerGameHandlers } from '../games/GameController'
 import { registerAvatarHandlers } from '../avatar/AvatarController'
 import { registerInstallHandlers } from '../install/InstallController'
 import { registerCatalogHandlers } from '../catalog/CatalogController'
+import { registerCatalogDatabaseHandlers } from '../catalog/CatalogDatabaseController'
 import { registerGroupHandlers } from '../groups/GroupController'
 import { registerTransactionHandlers } from '../transactions/TransactionController'
 
@@ -20,6 +21,7 @@ export const registerRobloxHandlers = (): void => {
   registerAvatarHandlers()
   registerInstallHandlers()
   registerCatalogHandlers()
+  registerCatalogDatabaseHandlers()
   registerGroupHandlers()
   registerTransactionHandlers()
 }

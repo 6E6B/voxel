@@ -14,6 +14,7 @@ export interface CatalogItem {
   IsLimitedUnique: boolean
   PriceInRobux: number
   IsForSale: boolean
+  Sales: number
 }
 
 export interface RolimonsSearchResult {

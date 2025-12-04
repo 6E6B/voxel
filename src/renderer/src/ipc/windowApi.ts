@@ -657,6 +657,64 @@ export interface UpdaterApi {
   onUpdaterStatus: (callback: (state: UpdateState) => void) => () => void
 }
 
+// Catalog Database API types
+export interface CatalogDbSearchResult {
+  AssetId: number
+  Name: string
+  Description: string
+  AssetTypeId: number
+  IsLimited: boolean
+  IsLimitedUnique: boolean
+  PriceInRobux: number
+  IsForSale: boolean
+  Sales: number
+}
+
+export interface CatalogDbItem {
+  AssetId: number
+  ProductId: number | null
+  Name: string
+  Description: string | null
+  ProductType: string | null
+  AssetTypeId: number | null
+  Created: string | null
+  Updated: string | null
+  PriceInRobux: number | null
+  Sales: number
+  IsForSale: boolean
+  IsLimited: boolean
+  IsLimitedUnique: boolean
+  CollectiblesItemDetails: string | null
+}
+
+export interface SalesData {
+  id: number
+  sales: number
+}
+
+export interface CatalogDatabaseApi {
+  getAllCatalogItems: () => Promise<CatalogDbSearchResult[]>
+  searchCatalogDb: (query: string, limit?: number) => Promise<CatalogDbSearchResult[]>
+  getCatalogItemById: (assetId: number) => Promise<CatalogDbItem | null>
+  getSalesData: (assetId: number) => Promise<SalesData | null>
+  getBatchSalesData: (assetIds: number[]) => Promise<Record<number, number>>
+  getCatalogItemCount: () => Promise<number>
+  getCatalogDbStatus: () => Promise<CatalogDbStatus>
+  downloadCatalogDb: () => Promise<CatalogDbDownloadResult>
+}
+
+export interface CatalogDbStatus {
+  exists: boolean
+  downloading: boolean
+  error: string | null
+  path: string
+}
+
+export interface CatalogDbDownloadResult {
+  success: boolean
+  error?: string
+}
+
 export type WindowApi = AccountApi &
   FavoritesApi &
   SettingsApi &
@@ -673,4 +731,5 @@ export type WindowApi = AccountApi &
   CatalogApi &
   GroupsApi &
   TransactionsApi &
-  UpdaterApi
+  UpdaterApi &
+  CatalogDatabaseApi

@@ -160,3 +160,22 @@ export const pinLockoutStatusSchema = z.object({
 export type PinVerifyResult = z.infer<typeof pinVerifyResultSchema>
 export type PinSetResult = z.infer<typeof pinSetResultSchema>
 export type PinLockoutStatus = z.infer<typeof pinLockoutStatusSchema>
+
+// ============================================================================
+// CATALOG DATABASE SCHEMAS
+// ============================================================================
+
+export const catalogDbStatusSchema = z.object({
+  exists: z.boolean(),
+  downloading: z.boolean(),
+  error: z.string().nullable(),
+  path: z.string()
+})
+
+export const catalogDbDownloadResultSchema = z.object({
+  success: z.boolean(),
+  error: z.string().optional()
+})
+
+export type CatalogDbStatus = z.infer<typeof catalogDbStatusSchema>
+export type CatalogDbDownloadResult = z.infer<typeof catalogDbDownloadResultSchema>

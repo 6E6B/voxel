@@ -601,6 +601,7 @@ const FriendRequestsModal: React.FC<FriendRequestsModalProps> = ({
                 </div>
               )}
               components={{
+                Header: () => <div className="h-4" />,
                 Footer: () => <div className="h-4" />
               }}
             />

@@ -179,9 +179,13 @@ const UniversalLimitedRow = memo(
               <span className="text-neutral-500">{result.rap.toLocaleString()} RAP</span>
             )}
             <span>·</span>
-            <span className={DEMAND_COLORS[result.demand]}>{result.demandLabel}</span>
+            <span className={DEMAND_COLORS[result.demand]}>
+              <span className="text-neutral-500">Demand:</span> {result.demandLabel}
+            </span>
             <span>·</span>
-            <span className={TREND_COLORS[result.trend]}>{result.trendLabel}</span>
+            <span className={TREND_COLORS[result.trend]}>
+              <span className="text-neutral-500">Trend:</span> {result.trendLabel}
+            </span>
           </div>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">

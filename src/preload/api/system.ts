@@ -109,3 +109,12 @@ export const netlogApi = {
   stopNetLog: () => invoke('net-log:stop', S.netLogStopResponseSchema),
   startNetLog: () => invoke('net-log:start', S.netLogStartResponseSchema)
 }
+
+// ============================================================================
+// CATALOG DATABASE API
+// ============================================================================
+
+export const catalogDbApi = {
+  getStatus: () => invoke('get-catalog-db-status', S.catalogDbStatusSchema),
+  download: () => invoke('download-catalog-db', S.catalogDbDownloadResultSchema)
+}

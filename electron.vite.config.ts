@@ -25,7 +25,7 @@ export default defineConfig({
     ],
     build: {
       rollupOptions: {
-        external: ['koffi']
+        external: ['koffi', 'better-sqlite3']
       }
     }
   },
