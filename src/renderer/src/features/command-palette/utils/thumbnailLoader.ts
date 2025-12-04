@@ -2,11 +2,6 @@
 
 type ThumbnailCallback = (url: string | null) => void
 
-interface PendingRequest {
-  assetId: number
-  callback: ThumbnailCallback
-}
-
 class ThumbnailBatchLoader {
   private cache = new Map<number, string>()
   private pending = new Map<number, ThumbnailCallback[]>()

@@ -279,11 +279,37 @@ export type ColorPickerSelectionProps = HTMLAttributes<HTMLDivElement>
 export const ColorPickerSelection = memo(({ className, ...props }: ColorPickerSelectionProps) => {
   const containerRef = useRef<HTMLDivElement>(null)
   const [isDragging, setIsDragging] = useState(false)
-  const { hue, setSaturation, setLightness } = useColorPicker()
+  const { hue, saturation, lightness, setSaturation, setLightness } = useColorPicker()
+  const isUserInteractingRef = useRef(false)
 
-  // Simple Approximation for initial position
-  const [positionX, setPositionX] = useState(0.5)
-  const [positionY, setPositionY] = useState(0.5)
+  const calculatePositionFromColor = useCallback((sat: number, light: number) => {
+    const x = sat / 100
+    const topLightness = x < 0.01 ? 100 : 50 + 50 * (1 - x)
+    const y = topLightness > 0 ? 1 - light / topLightness : 0
+    return {
+      x: Math.max(0, Math.min(1, x)),
+      y: Math.max(0, Math.min(1, y))
+    }
+  }, [])
+
+  const initialPos = calculatePositionFromColor(saturation, lightness)
+  const [positionX, setPositionX] = useState(initialPos.x)
+  const [positionY, setPositionY] = useState(initialPos.y)
+
+  const prevSatRef = useRef(saturation)
+  const prevLightRef = useRef(lightness)
+
+  useEffect(() => {
+    if (isUserInteractingRef.current) return
+    if (prevSatRef.current === saturation && prevLightRef.current === lightness) return
+
+    prevSatRef.current = saturation
+    prevLightRef.current = lightness
+
+    const pos = calculatePositionFromColor(saturation, lightness)
+    setPositionX(pos.x)
+    setPositionY(pos.y)
+  }, [saturation, lightness, calculatePositionFromColor])
 
   const backgroundGradient = useMemo(() => {
     return `linear-gradient(0deg, rgba(0,0,0,1), rgba(0,0,0,0)),
@@ -301,11 +327,14 @@ export const ColorPickerSelection = memo(({ className, ...props }: ColorPickerSe
       setPositionX(x)
       setPositionY(y)
 
-      // Logic from provided code
-      setSaturation(x * 100)
-      // This math mimics a Saturation/Value picker behavior but outputs to HSL Lightness
+      const newSaturation = x * 100
       const topLightness = x < 0.01 ? 100 : 50 + 50 * (1 - x)
       const newLightness = topLightness * (1 - y)
+
+      prevSatRef.current = newSaturation
+      prevLightRef.current = newLightness
+
+      setSaturation(newSaturation)
       setLightness(newLightness)
     },
     [setSaturation, setLightness]
@@ -315,7 +344,10 @@ export const ColorPickerSelection = memo(({ className, ...props }: ColorPickerSe
     const handlePointerMove = (e: PointerEvent) => {
       if (isDragging) handleMove(e)
     }
-    const handlePointerUp = () => setIsDragging(false)
+    const handlePointerUp = () => {
+      setIsDragging(false)
+      isUserInteractingRef.current = false
+    }
 
     if (isDragging) {
       window.addEventListener('pointermove', handlePointerMove)
@@ -332,6 +364,7 @@ export const ColorPickerSelection = memo(({ className, ...props }: ColorPickerSe
       className={cn('relative size-full cursor-crosshair rounded-md', className)}
       onPointerDown={(e) => {
         e.preventDefault()
+        isUserInteractingRef.current = true
         setIsDragging(true)
         handleMove(e)
       }}

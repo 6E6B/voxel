@@ -300,7 +300,9 @@ const AvatarTab: React.FC<AvatarTabProps> = ({ account }) => {
           userId={account?.userId}
           cookie={account?.cookie}
           account={account}
-          currentAvatarType={currentAvatarType}
+          currentAvatarType={
+            currentAvatarType === 'R6' || currentAvatarType === 'R15' ? currentAvatarType : null
+          }
           isRendering={isRendering}
           renderText={renderText}
           onRefresh={handleRefreshAvatar}

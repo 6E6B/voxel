@@ -87,7 +87,6 @@ interface PendingSearch<T> {
 
 class SearchService {
   private worker: Worker | null = null
-  private isInitialized = false
   private pendingCatalogSearches: PendingSearch<CatalogItem>[] = []
   private pendingRolimonsSearches: PendingSearch<RolimonsSearchResult>[] = []
   private statusCallbacks: StatusCallback[] = []
@@ -116,8 +115,6 @@ class SearchService {
     this.worker.onerror = (error) => {
       console.error('[SearchService] Worker error:', error)
     }
-
-    this.isInitialized = true
   }
 
   /**
@@ -367,7 +364,6 @@ class SearchService {
     if (this.worker) {
       this.worker.terminate()
       this.worker = null
-      this.isInitialized = false
       this.status = {
         catalogReady: false,
         rolimonsReady: false,

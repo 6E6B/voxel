@@ -88,7 +88,6 @@ export const InventoryGrid: React.FC<InventoryGridProps> = ({
   account,
   filteredItems,
   isLoading,
-  isUpdatingAvatar,
   loadingItemId,
   equippedIds,
   favoriteIds,

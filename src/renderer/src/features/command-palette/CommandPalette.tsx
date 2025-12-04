@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useMemo, useState, useCallback, memo } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { Virtuoso, VirtuosoHandle } from 'react-virtuoso'
+import { motion } from 'framer-motion'
+import { Virtuoso } from 'react-virtuoso'
 import {
   Search,
   User,
@@ -1206,7 +1206,6 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                     </div>
                     {filteredCmds.slice(0, 15).map((cmd, idx) => {
                       const isSelected = idx === selectedIndex
-                      const badge = resultTypeBadges.command
                       return (
                         <motion.button
                           key={cmd.id}
@@ -1286,7 +1285,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                 <Virtuoso
                   data={universalSearchResults}
                   overscan={20}
-                  computeItemKey={(idx, item) =>
+                  computeItemKey={(_idx, item) =>
                     item.type === 'command' ? `cmd-${item.command.id}` : `${item.type}-${item.id}`
                   }
                   style={{ height: listMaxHeight - 16 }}
@@ -1575,7 +1574,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                 <Virtuoso
                   data={searchResults}
                   overscan={20}
-                  computeItemKey={(idx, item) => `${item.itemType}-${item.id}`}
+                  computeItemKey={(_idx, item) => `${item.itemType}-${item.id}`}
                   itemContent={(idx, item) => {
                     const isSelected = idx === resultSelectedIndex
                     return (

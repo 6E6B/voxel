@@ -35,6 +35,9 @@ export const useMentionProfiles = (mentionSourceText: string) => {
       const promise = (async () => {
         try {
           const summary = await window.api.getUserByUsername(trimmed)
+          if (!summary) {
+            return null
+          }
           let avatarUrl: string | undefined
           try {
             avatarUrl = await window.api.getAvatarUrl(summary.id.toString())

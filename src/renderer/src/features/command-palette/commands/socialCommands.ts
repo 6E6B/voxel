@@ -19,6 +19,10 @@ export const createSocialCommands: CommandFactory = (callbacks) => [
       }
       try {
         const user = await window.api.getUserByUsername(username)
+        if (!user) {
+          callbacks.showNotification(`User "${username}" not found`, 'error')
+          return
+        }
         await window.api.sendFriendRequest(account.cookie, user.id)
         callbacks.showNotification(`Friend request sent to ${user.displayName}`, 'success')
       } catch (e: any) {
@@ -44,6 +48,10 @@ export const createSocialCommands: CommandFactory = (callbacks) => [
       }
       try {
         const user = await window.api.getUserByUsername(username)
+        if (!user) {
+          callbacks.showNotification(`User "${username}" not found`, 'error')
+          return
+        }
         await window.api.unfriend(account.cookie, user.id)
         callbacks.showNotification(`Unfriended ${user.displayName}`, 'success')
       } catch (e: any) {
@@ -69,6 +77,10 @@ export const createSocialCommands: CommandFactory = (callbacks) => [
       }
       try {
         const user = await window.api.getUserByUsername(username)
+        if (!user) {
+          callbacks.showNotification(`User "${username}" not found`, 'error')
+          return
+        }
         await window.api.blockUser(account.cookie, user.id)
         callbacks.showNotification(`Blocked ${user.displayName}`, 'success')
       } catch (e: any) {

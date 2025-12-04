@@ -36,9 +36,6 @@ export const AvatarViewport: React.FC<AvatarViewportProps> = ({
   onRenderComplete,
   onRenderError,
   isLargeScreen,
-  isResizing,
-  onResizeStart,
-  avatarRenderWidth,
   containerRef
 }) => {
   return (
@@ -54,7 +51,7 @@ export const AvatarViewport: React.FC<AvatarViewportProps> = ({
 
       {/* R15/R6 Switch - Top Left */}
       <div className="absolute top-4 left-4 z-10">
-        <AvatarTypeSwitch account={account} currentAvatarType={currentAvatarType || null} />
+        <AvatarTypeSwitch account={account ?? null} currentAvatarType={currentAvatarType || null} />
       </div>
 
       {/* 3D Viewport with React Three Fiber */}

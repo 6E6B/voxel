@@ -244,6 +244,10 @@ const App: React.FC = () => {
         }
       } else if (config.method === JoinMethod.Username) {
         const targetUser = await window.api.getUserByUsername(config.target)
+        if (!targetUser) {
+          showNotification(`User "${config.target}" not found`, 'error')
+          return
+        }
         const cookie = accountsToLaunch[0].cookie
         if (!cookie) {
           showNotification('First selected account needs a valid cookie to check presence', 'error')

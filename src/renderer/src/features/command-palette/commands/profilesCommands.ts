@@ -14,6 +14,10 @@ export const createProfilesCommands: CommandFactory = (callbacks) => [
     onInputSubmit: async (username) => {
       try {
         const user = await window.api.getUserByUsername(username)
+        if (!user) {
+          callbacks.showNotification(`User "${username}" not found`, 'error')
+          return
+        }
         callbacks.onViewProfile(user.id.toString())
         callbacks.showNotification(`Found user: ${user.displayName}`, 'success')
       } catch (e) {

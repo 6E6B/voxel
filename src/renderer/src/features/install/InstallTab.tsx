@@ -155,7 +155,7 @@ const InstallTab: React.FC = () => {
       })
     )
 
-    return [...userInstalls, ...detectedInstallations]
+    return [...userInstalls, ...detectedInstalls]
   }, [installations, filteredDetectedInstallations])
 
   useEffect(() => {

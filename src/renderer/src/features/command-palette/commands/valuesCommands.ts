@@ -15,6 +15,10 @@ export const createValuesCommands: CommandFactory = (callbacks) => [
     onInputSubmit: async (username) => {
       try {
         const user = await window.api.getUserByUsername(username)
+        if (!user) {
+          callbacks.showNotification(`User "${username}" not found`, 'error')
+          return
+        }
         const rolimonsData = await window.api.getRolimonsPlayer(user.id)
 
         if (rolimonsData.value === null || rolimonsData.value === undefined) {
@@ -54,6 +58,10 @@ export const createValuesCommands: CommandFactory = (callbacks) => [
     onInputSubmit: async (username) => {
       try {
         const user = await window.api.getUserByUsername(username)
+        if (!user) {
+          callbacks.showNotification(`User "${username}" not found`, 'error')
+          return
+        }
         const rolimonsData = await window.api.getRolimonsPlayer(user.id)
 
         if (rolimonsData.rap === null || rolimonsData.rap === undefined) {
