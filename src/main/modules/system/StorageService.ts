@@ -1,17 +1,24 @@
 import { app, safeStorage } from 'electron'
 import { join } from 'path'
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs'
-import { Account, DEFAULT_ACCENT_COLOR } from '../../../renderer/src/types'
+import { Account, DEFAULT_ACCENT_COLOR, TabId } from '../../../renderer/src/types'
 import { MultiInstance } from '@main/lib/MultiInstance'
 import { z } from 'zod'
 import { accountSchema } from '../../../shared/ipc-schemas/user'
 import { favoriteItemSchema } from '../../../shared/ipc-schemas/avatar'
 import { pinService } from './PinService'
+import {
+  sanitizeSidebarHidden,
+  sanitizeSidebarOrder,
+  SIDEBAR_TAB_IDS
+} from '../../../shared/navigation'
 
 const customFontSchema = z.object({
   family: z.string(),
   url: z.string()
 })
+
+const sidebarTabIdEnum = z.enum(SIDEBAR_TAB_IDS)
 
 const storeDataSchema = z.object({
   sidebarWidth: z.number().optional(),
@@ -33,6 +40,8 @@ const storeDataSchema = z.object({
       defaultInstallationPath: z.string().nullable().optional(),
       accentColor: z.string().optional(),
       showSidebarProfileCard: z.boolean().optional(),
+      sidebarTabOrder: z.array(sidebarTabIdEnum).optional(),
+      sidebarHiddenTabs: z.array(sidebarTabIdEnum).optional(),
       // pinCodeHash stores the encrypted, hashed PIN (not plain text)
       pinCodeHash: z.string().nullable().optional()
     })
@@ -278,12 +287,17 @@ class StorageService {
   }
 
   public getSettings() {
+    const sidebarTabOrder = sanitizeSidebarOrder(this.data.settings?.sidebarTabOrder)
+    const sidebarHiddenTabs = sanitizeSidebarHidden(this.data.settings?.sidebarHiddenTabs)
+
     return {
       primaryAccountId: this.data.settings?.primaryAccountId ?? null,
       allowMultipleInstances: this.data.settings?.allowMultipleInstances ?? false,
       defaultInstallationPath: this.data.settings?.defaultInstallationPath ?? null,
       accentColor: this.data.settings?.accentColor ?? DEFAULT_ACCENT_COLOR,
       showSidebarProfileCard: this.data.settings?.showSidebarProfileCard ?? true,
+      sidebarTabOrder,
+      sidebarHiddenTabs,
       pinCode: this.data.settings?.pinCodeHash ? 'SET' : null
     }
   }
@@ -470,6 +484,8 @@ class StorageService {
     defaultInstallationPath?: string | null
     accentColor?: string
     showSidebarProfileCard?: boolean
+    sidebarTabOrder?: TabId[]
+    sidebarHiddenTabs?: TabId[]
     pinCode?: string | null
   }): void {
     const nextSettings = { ...this.getSettings() }
@@ -498,9 +514,28 @@ class StorageService {
       nextSettings.showSidebarProfileCard = !!settings.showSidebarProfileCard
     }
 
+    if ('sidebarTabOrder' in settings) {
+      nextSettings.sidebarTabOrder = sanitizeSidebarOrder(
+        Array.isArray(settings.sidebarTabOrder)
+          ? (settings.sidebarTabOrder as TabId[])
+          : nextSettings.sidebarTabOrder
+      )
+    }
+
+    if ('sidebarHiddenTabs' in settings) {
+      nextSettings.sidebarHiddenTabs = sanitizeSidebarHidden(
+        Array.isArray(settings.sidebarHiddenTabs)
+          ? (settings.sidebarHiddenTabs as TabId[])
+          : nextSettings.sidebarHiddenTabs
+      )
+    }
+
     if ('pinCode' in settings) {
       this.setPin(settings.pinCode ?? null)
     }
+
+    nextSettings.sidebarTabOrder = sanitizeSidebarOrder(nextSettings.sidebarTabOrder)
+    nextSettings.sidebarHiddenTabs = sanitizeSidebarHidden(nextSettings.sidebarHiddenTabs)
 
     const { pinCode: _, ...settingsWithoutPin } = nextSettings
     this.data.settings = {

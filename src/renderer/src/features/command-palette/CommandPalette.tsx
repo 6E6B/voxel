@@ -66,7 +66,7 @@ import {
   CatalogSearchResult,
   UniversalSearchResult
 } from './stores/useCommandPaletteStore'
-import { useSetActiveTab, useOpenModal } from '../../stores/useUIStore'
+import { useOpenModal } from '../../stores/useUIStore'
 import { useSelectedIds, useSetSelectedIds } from '../../stores/useSelectionStore'
 import { JoinMethod } from '../../types'
 import { useAccountsManager, useFriends } from '../../hooks/queries/index'
@@ -77,6 +77,7 @@ import type { PlayerSearchResult } from './hooks'
 import { LimitedThumbnail } from './components/LimitedThumbnail'
 import VerifiedIcon from '../../components/UI/icons/VerifiedIcon'
 import { DEMAND_COLORS, TREND_COLORS } from '../avatar/api/useRolimons'
+import { useTabTransition } from '@renderer/hooks/useTabTransition'
 
 const iconMap: Record<string, React.ReactNode> = {
   user: <User size={16} strokeWidth={1.75} />,
@@ -563,7 +564,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   const suggestionsRef = useRef<HTMLDivElement>(null)
   const resultsRef = useRef<HTMLDivElement>(null)
 
-  const setActiveTab = useSetActiveTab()
+  const setActiveTab = useTabTransition()
   const openModal = useOpenModal()
   const { accounts } = useAccountsManager()
   const selectedIds = useSelectedIds()

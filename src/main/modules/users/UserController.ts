@@ -2,7 +2,6 @@ import { z } from 'zod'
 import { handle } from '../core/utils/handle'
 import { RobloxAuthService } from '../auth/RobloxAuthService'
 import { RobloxUserService } from './UserService'
-import { userProfileResponseSchema } from '@shared/ipc-schemas/user'
 
 /**
  * Registers user-related IPC handlers

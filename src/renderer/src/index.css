@@ -152,3 +152,57 @@ pre {
 .animate-profile-swap {
   animation: profile-swap 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+
+/* View Transition API - scoped to tab content to keep snapshots lightweight */
+:root,
+body {
+  view-transition-name: none;
+}
+
+.tab-transition-surface {
+  view-transition-name: tab-surface;
+  view-transition-class: tab-surface;
+  contain: paint;
+  isolation: isolate;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tab-transition-surface {
+    view-transition-name: none;
+  }
+}
+
+::view-transition-group(*.tab-surface) {
+  animation-duration: 0.26s;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+::view-transition-old(tab-surface) {
+  animation: tab-fade-out 0.18s ease forwards;
+}
+
+::view-transition-new(tab-surface) {
+  animation: tab-fade-in 0.24s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes tab-fade-out {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+@keyframes tab-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

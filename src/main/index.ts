@@ -10,6 +10,7 @@ let registerRobloxHandlers: typeof import('./modules/core/RobloxHandler').regist
 let registerStorageHandlers: typeof import('./modules/system/StorageController').registerStorageHandlers
 let registerLogsHandlers: typeof import('./modules/system/LogsController').registerLogsHandlers
 let registerUpdaterHandlers: typeof import('./modules/updater/UpdaterController').registerUpdaterHandlers
+let registerNewsHandlers: typeof import('./modules/news/NewsController').registerNewsHandlers
 let storageService: typeof import('./modules/system/StorageService').storageService
 let pinService: typeof import('./modules/system/PinService').pinService
 
@@ -146,6 +147,7 @@ app.whenReady().then(async () => {
       storageController,
       logsController,
       updaterController,
+      newsController,
       storageModule,
       pinModule
     ] = await Promise.all([
@@ -153,6 +155,7 @@ app.whenReady().then(async () => {
       import('./modules/system/StorageController'),
       import('./modules/system/LogsController'),
       import('./modules/updater/UpdaterController'),
+      import('./modules/news/NewsController'),
       import('./modules/system/StorageService'),
       import('./modules/system/PinService')
     ])
@@ -161,6 +164,7 @@ app.whenReady().then(async () => {
     registerStorageHandlers = storageController.registerStorageHandlers
     registerLogsHandlers = logsController.registerLogsHandlers
     registerUpdaterHandlers = updaterController.registerUpdaterHandlers
+    registerNewsHandlers = newsController.registerNewsHandlers
     storageService = storageModule.storageService
     pinService = pinModule.pinService
 
@@ -169,6 +173,7 @@ app.whenReady().then(async () => {
       registerStorageHandlers,
       registerLogsHandlers,
       registerUpdaterHandlers,
+      registerNewsHandlers,
       pinService
     }
   }
@@ -177,15 +182,16 @@ app.whenReady().then(async () => {
   const mainWindow = createWindow()
 
   // Load modules in parallel while window is loading
-  const modules = await loadModules()
+  const loadedModules = await loadModules()
 
   // Register handlers after modules are loaded
-  modules.registerRobloxHandlers()
-  modules.registerStorageHandlers()
-  modules.registerLogsHandlers()
+  loadedModules.registerRobloxHandlers()
+  loadedModules.registerStorageHandlers()
+  loadedModules.registerLogsHandlers()
+  loadedModules.registerNewsHandlers()
 
   // Initialize PIN service (loads persisted lockout state)
-  modules.pinService.initialize()
+  loadedModules.pinService.initialize()
 
   // Helper for CORS headers
   const UpsertKeyValue = (obj: Record<string, any>, keyToChange: string, value: any) => {

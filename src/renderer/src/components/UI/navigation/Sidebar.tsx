@@ -1,31 +1,20 @@
-import React, { useState, useRef } from 'react'
+import React, { useMemo, useRef, useState } from 'react'
 import {
-  Users,
-  UserCheck,
-  Gamepad2,
   Settings,
   Menu,
   ChevronLeft,
-  ScrollText,
-  Box,
-  HardDrive,
-  ShoppingBag,
-  Package,
   ArrowRightLeft,
   LogOut,
   ChevronUp,
-  User,
-  Heart,
-  UsersRound
+  Heart
 } from 'lucide-react'
-import { Account } from '@renderer/types'
+import { Account, TabId } from '@renderer/types'
 import SidebarItem from './SidebarItem'
 import { Button } from '../buttons/Button'
 import { TooltipProvider, Tooltip, TooltipContent, TooltipTrigger } from '../display/Tooltip'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   useActiveTab,
-  useSetActiveTab,
   useSidebarCollapsed,
   useToggleSidebarCollapsed
 } from '../../../stores/useUIStore'
@@ -35,6 +24,16 @@ import { formatNumber } from '@renderer/utils/numberUtils'
 import { useClickOutside } from '../../../hooks/useClickOutside'
 import { useAccountsManager, useAccountStats } from '../../../features/auth/api/useAccounts'
 import CreditsDialog from '../dialogs/CreditsDialog'
+import { useTabTransition } from '@renderer/hooks/useTabTransition'
+import {
+  getVisibleSidebarTabs,
+  sanitizeSidebarHidden,
+  sanitizeSidebarOrder
+} from '@shared/navigation'
+import {
+  SIDEBAR_TAB_DEFINITION_MAP,
+  SidebarTabDefinition
+} from '@renderer/constants/sidebarTabs'
 
 // Bottom Profile Card Component with dropdown menu
 interface ProfileCardProps {
@@ -284,6 +283,8 @@ interface SidebarProps {
   onResizeStart: () => void
   selectedAccount: Account | null
   showProfileCard: boolean
+  tabOrder: TabId[]
+  hiddenTabs: TabId[]
 }
 
 const isMac = window.platform?.isMac ?? false
@@ -294,13 +295,39 @@ const Sidebar = ({
   sidebarRef,
   onResizeStart,
   selectedAccount,
-  showProfileCard
+  showProfileCard,
+  tabOrder,
+  hiddenTabs
 }: SidebarProps) => {
   // Using individual selectors for optimized re-renders
   const activeTab = useActiveTab()
-  const setActiveTab = useSetActiveTab()
+  const setActiveTab = useTabTransition()
   const isSidebarCollapsed = useSidebarCollapsed()
   const toggleSidebarCollapsed = useToggleSidebarCollapsed()
+
+  const normalizedOrder = useMemo(() => sanitizeSidebarOrder(tabOrder), [tabOrder])
+  const normalizedHiddenTabs = useMemo(
+    () => sanitizeSidebarHidden(hiddenTabs),
+    [hiddenTabs]
+  )
+  const visibleTabs = useMemo(
+    () => getVisibleSidebarTabs(normalizedOrder, normalizedHiddenTabs),
+    [normalizedHiddenTabs, normalizedOrder]
+  )
+  const sidebarTabs = useMemo(
+    () =>
+      visibleTabs
+        .map((tabId) => SIDEBAR_TAB_DEFINITION_MAP[tabId])
+        .filter(Boolean) as SidebarTabDefinition[],
+    [visibleTabs]
+  )
+  const sidebarTabsToRender = useMemo(
+    () =>
+      sidebarTabs.filter(
+        (tab) => !(tab.id === 'Settings' && selectedAccount && showProfileCard)
+      ),
+    [selectedAccount, showProfileCard, sidebarTabs]
+  )
 
   const shouldAnimateLayout = !isResizing
 
@@ -350,121 +377,38 @@ const Sidebar = ({
           layoutScroll={shouldAnimateLayout}
         >
           <nav>
-            <SidebarItem
-              icon={User}
-              label="Profile"
-              isActive={activeTab === 'Profile'}
-              isCollapsed={isSidebarCollapsed}
-              onClick={() => setActiveTab('Profile')}
-              disableLayoutAnimation={isResizing}
-            />
-            <SidebarItem
-              icon={Users}
-              label="Accounts"
-              isActive={activeTab === 'Accounts'}
-              isCollapsed={isSidebarCollapsed}
-              onClick={() => setActiveTab('Accounts')}
-              disableLayoutAnimation={isResizing}
-            />
-            <SidebarItem
-              icon={UserCheck}
-              label="Friends"
-              isActive={activeTab === 'Friends'}
-              isCollapsed={isSidebarCollapsed}
-              onClick={() => setActiveTab('Friends')}
-              disableLayoutAnimation={isResizing}
-            />
-            <SidebarItem
-              icon={UsersRound}
-              label="Groups"
-              isActive={activeTab === 'Groups'}
-              isCollapsed={isSidebarCollapsed}
-              onClick={() => setActiveTab('Groups')}
-              disableLayoutAnimation={isResizing}
-            />
-            <SidebarItem
-              icon={Box}
-              label="Avatar"
-              isActive={activeTab === 'Avatar'}
-              isCollapsed={isSidebarCollapsed}
-              onClick={() => setActiveTab('Avatar')}
-              disableLayoutAnimation={isResizing}
-            />
+            {sidebarTabsToRender.map((tab, index) => {
+              const previous = sidebarTabsToRender[index - 1] as SidebarTabDefinition | undefined
+              const showSeparator = previous && previous.section !== tab.section
 
-            {/* Separator */}
-            <div className="my-2 mx-3 border-t border-neutral-800" />
-
-            <SidebarItem
-              icon={Gamepad2}
-              label="Games"
-              isActive={activeTab === 'Games'}
-              isCollapsed={isSidebarCollapsed}
-              onClick={() => setActiveTab('Games')}
-              disableLayoutAnimation={isResizing}
-            />
-            <SidebarItem
-              icon={ShoppingBag}
-              label="Catalog"
-              isActive={activeTab === 'Catalog'}
-              isCollapsed={isSidebarCollapsed}
-              onClick={() => setActiveTab('Catalog')}
-              disableLayoutAnimation={isResizing}
-            />
-            <SidebarItem
-              icon={Package}
-              label="Inventory"
-              isActive={activeTab === 'Inventory'}
-              isCollapsed={isSidebarCollapsed}
-              onClick={() => setActiveTab('Inventory')}
-              disableLayoutAnimation={isResizing}
-            />
-
-            {/* Separator */}
-            <div className="my-2 mx-3 border-t border-neutral-800" />
-
-            <SidebarItem
-              icon={HardDrive}
-              label="Install"
-              isActive={activeTab === 'Install'}
-              isCollapsed={isSidebarCollapsed}
-              onClick={() => setActiveTab('Install')}
-              disableLayoutAnimation={isResizing}
-            />
-            <SidebarItem
-              icon={ScrollText}
-              label="Logs"
-              isActive={activeTab === 'Logs'}
-              isCollapsed={isSidebarCollapsed}
-              onClick={() => setActiveTab('Logs')}
-              disableLayoutAnimation={isResizing}
-            />
+              return (
+                <React.Fragment key={tab.id}>
+                  {showSeparator && <div className="my-2 mx-3 border-t border-neutral-800" />}
+                  <SidebarItem
+                    icon={tab.icon}
+                    label={tab.label}
+                    isActive={activeTab === tab.id}
+                    isCollapsed={isSidebarCollapsed}
+                    onClick={() => setActiveTab(tab.id)}
+                    disableLayoutAnimation={isResizing}
+                  />
+                </React.Fragment>
+              )
+            })}
           </nav>
         </motion.div>
 
         {/* Bottom Profile Card */}
-        <div className="border-t border-neutral-800 shrink-0 bg-[#111111] relative">
-          {selectedAccount && showProfileCard ? (
+        {selectedAccount && showProfileCard && (
+          <div className="border-t border-neutral-800 shrink-0 bg-[#111111] relative">
             <ProfileCard
               account={selectedAccount}
               isCollapsed={isSidebarCollapsed}
               onSettingsClick={() => setActiveTab('Settings')}
               onTransactionsClick={() => setActiveTab('Transactions')}
             />
-          ) : (
-            <div className="py-3">
-              <nav>
-                <SidebarItem
-                  icon={Settings}
-                  label="Settings"
-                  isActive={activeTab === 'Settings'}
-                  isCollapsed={isSidebarCollapsed}
-                  onClick={() => setActiveTab('Settings')}
-                  disableLayoutAnimation={isResizing}
-                />
-              </nav>
-            </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Resize Handle */}
         {!isSidebarCollapsed && (

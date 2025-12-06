@@ -24,3 +24,6 @@ export { transactionsApi } from './transactions'
 
 // Updater
 export { updaterApi } from './updater'
+
+// News
+export { newsApi } from './news'

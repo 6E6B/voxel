@@ -11,6 +11,7 @@ export type TabId =
   | 'Settings'
   | 'Avatar'
   | 'Install'
+  | 'News'
 
 export enum AccountStatus {
   Online = 'Online',
@@ -117,6 +118,8 @@ export interface Settings {
   defaultInstallationPath?: string | null
   accentColor: string
   showSidebarProfileCard: boolean
+  sidebarTabOrder: TabId[]
+  sidebarHiddenTabs: TabId[]
   pinCode: string | null
 }
 

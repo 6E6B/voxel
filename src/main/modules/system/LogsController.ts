@@ -1,7 +1,8 @@
-import { ipcMain, IpcMainInvokeEvent } from 'electron'
+import { ipcMain, IpcMainInvokeEvent, shell } from 'electron'
 import path from 'path'
 import fs from 'fs/promises'
 import { existsSync } from 'fs'
+import { spawn } from 'child_process'
 import { z } from 'zod'
 
 const LOGS_DIR = path.join(process.env.LOCALAPPDATA || '', 'Roblox', 'logs')
@@ -181,6 +182,39 @@ export const registerLogsHandlers = () => {
       return true
     } catch (error) {
       console.error('Error deleting all logs:', error)
+      return false
+    }
+  })
+
+  handle('open-log-file', z.tuple([logFilenameSchema]), async (_, filename) => {
+    try {
+      const filePath = path.join(LOGS_DIR, filename)
+      if (path.dirname(filePath) !== LOGS_DIR) {
+        throw new Error('Invalid file path')
+      }
+
+      if (process.platform === 'win32') {
+        try {
+          const child = spawn('notepad.exe', [filePath], {
+            detached: true,
+            stdio: 'ignore'
+          })
+          child.unref()
+          return true
+        } catch (err) {
+          console.error('Failed to launch Notepad, falling back to default handler:', err)
+        }
+      }
+
+      const result = await shell.openPath(filePath)
+      if (result) {
+        console.error('shell.openPath returned an error:', result)
+        return false
+      }
+
+      return true
+    } catch (error) {
+      console.error('Error opening log file:', error)
       return false
     }
   })

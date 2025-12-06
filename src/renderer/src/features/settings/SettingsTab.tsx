@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import {
   Users,
   HardDrive,
@@ -11,12 +11,17 @@ import {
   Plus,
   Trash2,
   Check,
-  Info
+  Info,
+  ChevronUp,
+  ChevronDown,
+  Eye,
+  EyeOff,
+  RotateCcw
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import Color from 'color'
 import { useQueryClient, useQuery, useMutation } from '@tanstack/react-query'
-import { Account, Settings } from '../../types'
+import { Account, Settings, TabId } from '../../types'
 import { cn } from '../../lib/utils'
 import CustomCheckbox from '../../components/UI/buttons/CustomCheckbox'
 import CustomDropdown, { DropdownOption } from '../../components/UI/menus/CustomDropdown'
@@ -56,6 +61,16 @@ import {
   isValidGoogleFontFamily
 } from '../../utils/fontUtils'
 import { UpdaterCard } from '../updater'
+import {
+  DEFAULT_SIDEBAR_TAB_ORDER,
+  LOCKED_SIDEBAR_TABS,
+  sanitizeSidebarHidden,
+  sanitizeSidebarOrder
+} from '@shared/navigation'
+import {
+  SIDEBAR_TAB_DEFINITION_MAP,
+  SidebarTabDefinition
+} from '../../constants/sidebarTabs'
 
 interface SettingsTabProps {
   accounts: Account[]
@@ -79,6 +94,26 @@ const SettingsTab: React.FC<SettingsTabProps> = ({ accounts, settings, onUpdateS
 
   // Use shared installations store instead of local state + localStorage
   const installations = useInstallations()
+
+  const sidebarTabOrder = useMemo(
+    () => sanitizeSidebarOrder(settings.sidebarTabOrder),
+    [settings.sidebarTabOrder]
+  )
+  const sidebarHiddenTabs = useMemo(
+    () => sanitizeSidebarHidden(settings.sidebarHiddenTabs),
+    [settings.sidebarHiddenTabs]
+  )
+  const sidebarTabs = useMemo(
+    () =>
+      sidebarTabOrder
+        .map((tabId) => SIDEBAR_TAB_DEFINITION_MAP[tabId])
+        .filter(Boolean) as SidebarTabDefinition[],
+    [sidebarTabOrder]
+  )
+  const hiddenSidebarTabsSet = useMemo(
+    () => new Set(sidebarHiddenTabs),
+    [sidebarHiddenTabs]
+  )
 
   // Custom fonts queries
   const { data: customFonts = [] } = useQuery({
@@ -206,6 +241,36 @@ const SettingsTab: React.FC<SettingsTabProps> = ({ accounts, settings, onUpdateS
 
   const handleProfileCardToggle = () => {
     onUpdateSettings({ showSidebarProfileCard: !settings.showSidebarProfileCard })
+  }
+
+  const handleToggleTabVisibility = (tabId: TabId) => {
+    if (LOCKED_SIDEBAR_TABS.includes(tabId)) return
+
+    const nextHidden = hiddenSidebarTabsSet.has(tabId)
+      ? sidebarHiddenTabs.filter((id) => id !== tabId)
+      : [...sidebarHiddenTabs, tabId]
+
+    onUpdateSettings({ sidebarHiddenTabs: nextHidden })
+  }
+
+  const handleMoveTab = (tabId: TabId, direction: number) => {
+    const currentIndex = sidebarTabOrder.indexOf(tabId)
+    if (currentIndex === -1) return
+
+    const targetIndex = currentIndex + direction
+    if (targetIndex < 0 || targetIndex >= sidebarTabOrder.length) return
+
+    const nextOrder = [...sidebarTabOrder]
+    const [moved] = nextOrder.splice(currentIndex, 1)
+    nextOrder.splice(targetIndex, 0, moved)
+    onUpdateSettings({ sidebarTabOrder: nextOrder })
+  }
+
+  const handleResetNavigation = () => {
+    onUpdateSettings({
+      sidebarTabOrder: DEFAULT_SIDEBAR_TAB_ORDER,
+      sidebarHiddenTabs: []
+    })
   }
 
   const handlePinSave = async (newPin: string | null, currentPin?: string) => {
@@ -466,6 +531,92 @@ const SettingsTab: React.FC<SettingsTabProps> = ({ accounts, settings, onUpdateS
                         Display the selected account's quick profile card to see your profile
                         faster.
                       </p>
+                    </div>
+                  </div>
+
+                  {/* Sidebar Tabs Setting */}
+                  <div className="p-4 bg-neutral-900/30 rounded-lg border border-neutral-800/50 hover:border-neutral-700/50 transition-colors space-y-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <label className="text-sm font-medium text-neutral-300 block mb-1">
+                          Sidebar Tabs
+                        </label>
+                        <p className="text-xs text-neutral-500 leading-relaxed">
+                          Hide tabs you do not use and reorder the sidebar to match your workflow.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleResetNavigation}
+                        className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md border border-neutral-800 text-neutral-300 hover:text-white hover:border-neutral-700 hover:bg-neutral-800/40 transition-colors"
+                      >
+                        <RotateCcw size={14} />
+                        Reset
+                      </button>
+                    </div>
+
+                    <div className="space-y-2">
+                      {sidebarTabs.map((tab, index) => {
+                        const isHidden = hiddenSidebarTabsSet.has(tab.id)
+                        const isLocked = LOCKED_SIDEBAR_TABS.includes(tab.id)
+
+                        return (
+                          <div
+                            key={tab.id}
+                            className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg border border-neutral-800 bg-neutral-900/50"
+                          >
+                            <div className="flex items-center gap-3 min-w-0">
+                              <CustomCheckbox
+                                checked={!isHidden || isLocked}
+                                disabled={isLocked}
+                                onChange={() => handleToggleTabVisibility(tab.id)}
+                              />
+                              <tab.icon size={16} className="text-neutral-400 flex-shrink-0" />
+                              <div className="min-w-0">
+                                <div className="text-sm font-medium text-white">{tab.label}</div>
+                                <div className="flex items-center gap-1 text-xs text-neutral-500">
+                                  {isLocked ? (
+                                    <span className="text-[var(--accent-color)] font-medium">
+                                      Always visible
+                                    </span>
+                                  ) : isHidden ? (
+                                    <>
+                                      <EyeOff size={12} />
+                                      Hidden
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Eye size={12} />
+                                      Visible
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-1 flex-shrink-0">
+                              <button
+                                type="button"
+                                onClick={() => handleMoveTab(tab.id, -1)}
+                                disabled={index === 0}
+                                className="p-2 rounded-md border border-neutral-800 text-neutral-300 hover:text-white hover:border-neutral-700 hover:bg-neutral-800/60 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                aria-label={`Move ${tab.label} up`}
+                              >
+                                <ChevronUp size={14} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleMoveTab(tab.id, 1)}
+                                disabled={index === sidebarTabs.length - 1}
+                                className="p-2 rounded-md border border-neutral-800 text-neutral-300 hover:text-white hover:border-neutral-700 hover:bg-neutral-800/60 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                aria-label={`Move ${tab.label} down`}
+                              >
+                                <ChevronDown size={14} />
+                              </button>
+                            </div>
+                          </div>
+                        )
+                      })}
                     </div>
                   </div>
                 </div>

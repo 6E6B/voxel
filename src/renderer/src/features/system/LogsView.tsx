@@ -18,7 +18,8 @@ import {
   Bug,
   MapPin,
   Trash2,
-  RefreshCw
+  RefreshCw,
+  ExternalLink
 } from 'lucide-react'
 import { Virtuoso } from 'react-virtuoso'
 import { useClickOutside } from '../../hooks/useClickOutside'
@@ -212,6 +213,15 @@ const LogsTab: React.FC = () => {
   const handleRefreshLog = (logId: string) => {
     setContextMenu(null)
     queryClient.invalidateQueries({ queryKey: queryKeys.logs.content(logId) })
+  }
+
+  const handleOpenInNotepad = async (logId: string) => {
+    setContextMenu(null)
+    try {
+      await window.api.openLogFile(logId)
+    } catch (error) {
+      console.error('Failed to open log in Notepad:', error)
+    }
   }
 
   const handleDeleteLog = (logId: string) => {
@@ -665,6 +675,13 @@ const LogsTab: React.FC = () => {
               left: Math.min(contextMenu.x, window.innerWidth - 200)
             }}
           >
+            <button
+              onClick={() => handleOpenInNotepad(contextMenu.logId)}
+              className="pressable w-full text-left px-4 py-2.5 text-sm text-neutral-300 hover:bg-neutral-800 hover:text-white flex items-center gap-2"
+            >
+              <ExternalLink size={16} />
+              <span>Open in Notepad</span>
+            </button>
             <button
               onClick={() => handleRefreshLog(contextMenu.logId)}
               className="pressable w-full text-left px-4 py-2.5 text-sm text-neutral-300 hover:bg-neutral-800 hover:text-white flex items-center gap-2"

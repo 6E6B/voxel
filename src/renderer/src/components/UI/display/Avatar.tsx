@@ -16,13 +16,28 @@ const Avatar = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElem
 Avatar.displayName = 'Avatar'
 
 const AvatarImage = React.forwardRef<HTMLImageElement, React.ImgHTMLAttributes<HTMLImageElement>>(
-  ({ className, ...props }, ref) => {
-    if (!props.src) return null
+  ({ className, src, onLoad, ...props }, ref) => {
+    const [isLoaded, setIsLoaded] = React.useState(false)
+
+    React.useEffect(() => {
+      setIsLoaded(false)
+    }, [src])
+
+    if (!src) return null
 
     return (
       <img
         ref={ref}
-        className={cn('aspect-square h-full w-full object-cover', className)}
+        src={src}
+        onLoad={(event) => {
+          setIsLoaded(true)
+          onLoad?.(event)
+        }}
+        className={cn(
+          'aspect-square h-full w-full object-cover opacity-0 transition-opacity duration-300 ease-in-out',
+          isLoaded && 'opacity-100',
+          className
+        )}
         {...props}
       />
     )

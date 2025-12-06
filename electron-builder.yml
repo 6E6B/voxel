@@ -12,6 +12,8 @@ files:
 extraResources:
   - from: 'assets/lists/roblox_items.db'
     to: 'assets/lists/roblox_items.db'
+  - from: 'resources/app-update.yml'
+    to: 'app-update.yml'
 asarUnpack:
   - resources/**
 win:

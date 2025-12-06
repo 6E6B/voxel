@@ -288,6 +288,7 @@ export interface LogsApi {
   getLogContent: (filename: string) => Promise<string>
   deleteLog: (filename: string) => Promise<boolean>
   deleteAllLogs: () => Promise<boolean>
+  openLogFile: (filename: string) => Promise<boolean>
 }
 
 export interface DeployApi {
@@ -717,6 +718,12 @@ export interface CatalogDbDownloadResult {
   error?: string
 }
 
+export interface NewsApi {
+  news: {
+    getTweets: () => Promise<any[]>
+  }
+}
+
 export type WindowApi = AccountApi &
   FavoritesApi &
   SettingsApi &
@@ -734,4 +741,5 @@ export type WindowApi = AccountApi &
   GroupsApi &
   TransactionsApi &
   UpdaterApi &
-  CatalogDatabaseApi
+  CatalogDatabaseApi &
+  NewsApi

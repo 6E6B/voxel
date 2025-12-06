@@ -1,11 +1,27 @@
 import { autoUpdater, UpdateInfo, ProgressInfo } from 'electron-updater'
-import { BrowserWindow } from 'electron'
+import { BrowserWindow, app } from 'electron'
 import log from 'electron-log'
+import path from 'path'
+import fs from 'fs'
 
 // Configure logging for auto-updater
 autoUpdater.logger = log
 autoUpdater.autoDownload = false
 autoUpdater.autoInstallOnAppQuit = true
+
+function isUpdateConfigured(): boolean {
+  if (!app.isPackaged) {
+    const devConfigPath = path.join(process.cwd(), 'dev-app-update.yml')
+    return fs.existsSync(devConfigPath)
+  }
+
+  const possiblePaths = [
+    path.join(process.resourcesPath, 'app-update.yml'),
+    path.join(process.resourcesPath, 'app.asar.unpacked', 'app-update.yml')
+  ]
+
+  return possiblePaths.some((p) => fs.existsSync(p))
+}
 
 export type UpdateStatus =
   | 'idle'
@@ -79,6 +95,14 @@ class UpdaterService {
   }
 
   async checkForUpdates(): Promise<UpdateState> {
+    if (!isUpdateConfigured()) {
+      this.updateState({
+        status: 'error',
+        error: 'Auto-update is not configured. Please download updates manually from GitHub.'
+      })
+      return this.state
+    }
+
     try {
       await autoUpdater.checkForUpdates()
       return this.state

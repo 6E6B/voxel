@@ -47,6 +47,7 @@ export const systemApi = {
   getLogContent: (filename: string) => invoke('get-log-content', z.string(), filename),
   deleteLog: (filename: string) => invoke('delete-log', z.boolean(), filename),
   deleteAllLogs: () => invoke('delete-all-logs', z.boolean()),
+  openLogFile: (filename: string) => invoke('open-log-file', z.boolean(), filename),
 
   // Updates
   getDeployHistory: () => invoke('get-deploy-history', S.deployHistorySchema),

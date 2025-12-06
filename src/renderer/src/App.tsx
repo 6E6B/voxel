@@ -27,6 +27,7 @@ import LogsTab from './features/system/LogsView'
 import SettingsTab from './features/settings/index'
 import AvatarTab from './features/avatar/index'
 import InstallTab from './features/install/index'
+import NewsTab from './features/news/index'
 import CommandPalette from './features/command-palette/index'
 import PinLockScreen from './components/UI/security/PinLockScreen'
 import { OnboardingScreen, useHasCompletedOnboarding } from './features/onboarding'
@@ -44,6 +45,12 @@ import {
 } from './hooks/queries'
 import { useQueryClient } from '@tanstack/react-query'
 import { queryKeys } from '../../shared/queryKeys'
+import {
+  getVisibleSidebarTabs,
+  sanitizeSidebarHidden,
+  sanitizeSidebarOrder,
+  SIDEBAR_TAB_IDS
+} from '@shared/navigation'
 import { useCommandPaletteStore } from './features/command-palette/stores/useCommandPaletteStore'
 import { initCatalogSearchIndex } from './features/command-palette/hooks'
 import { useFriendPresenceNotifications } from './hooks/useFriendPresenceNotifications'
@@ -54,6 +61,7 @@ import {
 
 import {
   useActiveTab,
+  useSetActiveTab,
   useModals,
   useOpenModal,
   useCloseModal,
@@ -107,6 +115,7 @@ const App: React.FC = () => {
   const isCommandPaletteOpen = useCommandPaletteStore((s) => s.isOpen)
 
   const activeTab = useActiveTab()
+  const setActiveTabState = useSetActiveTab()
   const modals = useModals()
   const openModal = useOpenModal()
   const closeModal = useCloseModal()
@@ -128,6 +137,19 @@ const App: React.FC = () => {
 
   const { accounts, isLoading: isLoadingAccounts, setAccounts, addAccount } = useAccountsManager()
   const { settings, isLoading: isLoadingSettings, updateSettings } = useSettingsManager()
+
+  const sidebarTabOrder = useMemo(
+    () => sanitizeSidebarOrder(settings.sidebarTabOrder),
+    [settings.sidebarTabOrder]
+  )
+  const sidebarHiddenTabs = useMemo(
+    () => sanitizeSidebarHidden(settings.sidebarHiddenTabs),
+    [settings.sidebarHiddenTabs]
+  )
+  const visibleSidebarTabs = useMemo(
+    () => getVisibleSidebarTabs(sidebarTabOrder, sidebarHiddenTabs),
+    [sidebarHiddenTabs, sidebarTabOrder]
+  )
 
   useAccountStatusPolling()
 
@@ -197,6 +219,16 @@ const App: React.FC = () => {
   useFriendPresenceNotifications(friendsData, !!selectedAccount, selectedAccount?.id)
 
   const [quickProfileUserId, setQuickProfileUserId] = useState<string | null>(null)
+
+  useEffect(() => {
+    const isSidebarTab = SIDEBAR_TAB_IDS.includes(activeTab)
+    if (isSidebarTab && !visibleSidebarTabs.includes(activeTab)) {
+      const fallbackTab = visibleSidebarTabs[0]
+      if (fallbackTab) {
+        setActiveTabState(fallbackTab)
+      }
+    }
+  }, [activeTab, setActiveTabState, visibleSidebarTabs])
 
   const [commandPaletteAccessory, setCommandPaletteAccessory] = useState<{
     id: number
@@ -562,6 +594,8 @@ const App: React.FC = () => {
         onResizeStart={() => setIsResizing(true)}
         selectedAccount={selectedAccount}
         showProfileCard={settings.showSidebarProfileCard}
+        tabOrder={sidebarTabOrder}
+        hiddenTabs={sidebarHiddenTabs}
       />
 
       {/* Main Content Wrapper */}
@@ -596,7 +630,7 @@ const App: React.FC = () => {
           </div>
         </div>
         {/* Tab panels - conditional rendering for performance */}
-        <div className="flex-1 flex flex-col h-full min-h-0 w-full relative">
+        <div className="flex-1 flex flex-col h-full min-h-0 w-full relative tab-transition-surface">
           {activeTab === 'Accounts' && (
             <AccountsTab
               accounts={accounts}
@@ -613,6 +647,8 @@ const App: React.FC = () => {
                 <p>Select an account to view profile</p>
               </div>
             ))}
+
+          {activeTab === 'News' && <NewsTab />}
 
           {activeTab === 'Friends' && (
             <FriendsTab selectedAccount={selectedAccount} onFriendJoin={handleFriendJoin} />

@@ -14,6 +14,19 @@ declare global {
     api: WindowApi
     platform: PlatformInfo
   }
+
+  interface ViewTransition {
+    finished: Promise<void>
+    ready: Promise<void>
+    updateCallbackDone: Promise<void>
+    skipTransition: () => void
+    waitUntil?: (callback: () => Promise<unknown> | Promise<unknown>) => void
+    types?: string[]
+  }
+
+  interface Document {
+    startViewTransition?: (updateCallback: () => void | Promise<void>) => ViewTransition
+  }
 }
 
 export {}
