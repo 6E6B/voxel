@@ -9,6 +9,7 @@ import {
   useImperativeHandle
 } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { VirtuosoGrid } from 'react-virtuoso'
 import { Package, Loader2, Grid3X3, Grid2X2 } from 'lucide-react'
 import { SearchInput } from '@renderer/components/UI/inputs/SearchInput'
 import { TooltipProvider } from '@renderer/components/UI/display/Tooltip'
@@ -23,7 +24,7 @@ import {
   useCatalogSearchSuggestions
 } from '@renderer/hooks/queries'
 import { useClickOutside } from '@renderer/hooks/useClickOutside'
-import type { CatalogItemsSearchParams } from '@renderer/ipc/windowApi'
+import type { CatalogItemsSearchParams, CatalogItemsSearchResponse } from '@renderer/ipc/windowApi'
 import {
   useCatalogAppliedSearchQuery,
   useSetCatalogAppliedSearchQuery,
@@ -223,9 +224,6 @@ const CatalogTab = ({ onItemSelect, onCreatorSelect, cookie }: CatalogTabProps) 
   // Clear filters function
   const clearCatalogFilters = useClearCatalogFilters()
 
-  // Intersection observer for infinite scroll
-  const loadMoreRef = useRef<HTMLDivElement>(null)
-
   // Fetch navigation menu
   const { data: categories = [] } = useCatalogNavigation()
 
@@ -289,29 +287,12 @@ const CatalogTab = ({ onItemSelect, onCreatorSelect, cookie }: CatalogTabProps) 
 
   // Flatten pages into single array
   const items = useMemo(() => {
-    return data?.pages.flatMap((page) => page.data) || []
+    if (!data?.pages) return []
+    return (data.pages as CatalogItemsSearchResponse[]).flatMap((page) => page.data)
   }, [data])
 
   // Sync thumbnails using the query hook (replaces manual useEffect)
   useFetchCatalogThumbnails(items)
-
-  // Infinite scroll observer
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
-          fetchNextPage()
-        }
-      },
-      { threshold: 0.1 }
-    )
-
-    if (loadMoreRef.current) {
-      observer.observe(loadMoreRef.current)
-    }
-
-    return () => observer.disconnect()
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage])
 
   // Apply price filter
   const handleApplyPriceFilter = useCallback(() => {
@@ -436,6 +417,11 @@ const CatalogTab = ({ onItemSelect, onCreatorSelect, cookie }: CatalogTabProps) 
         ? 'repeat(auto-fill, minmax(140px, 1fr))'
         : 'repeat(auto-fill, minmax(200px, 1fr))'
   }
+
+  const gridClassName =
+    viewMode === 'compact'
+      ? 'grid gap-4 grid-cols-[repeat(auto-fill,minmax(140px,1fr))]'
+      : 'grid gap-4 grid-cols-[repeat(auto-fill,minmax(200px,1fr))]'
 
   return (
     <TooltipProvider>
@@ -581,31 +567,44 @@ const CatalogTab = ({ onItemSelect, onCreatorSelect, cookie }: CatalogTabProps) 
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ duration: 0.3 }}
+                  className="h-full"
                 >
-                  <div className="grid gap-4" style={gridStyle}>
-                    {items.map((item, index) => (
-                      <CatalogItemCard
-                        key={`${item.id}-${index}`}
-                        item={item}
-                        thumbnailUrl={thumbnails[item.id]}
-                        index={index}
-                        onClick={() => handleItemClick(item)}
-                        onContextMenu={handleContextMenu}
-                        onCreatorClick={onCreatorSelect}
-                        isCompact={viewMode === 'compact'}
-                      />
-                    ))}
-                  </div>
-
-                  {/* Load More Trigger */}
-                  <div ref={loadMoreRef} className="h-20 flex items-center justify-center">
-                    {isFetchingNextPage && (
-                      <div className="flex items-center gap-2 text-neutral-500">
-                        <Loader2 size={20} className="animate-spin" />
-                        <span>Loading more...</span>
-                      </div>
-                    )}
-                  </div>
+                  <VirtuosoGrid
+                    totalCount={items.length}
+                    overscan={200}
+                    listClassName={gridClassName}
+                    itemContent={(index) => {
+                      const item = items[index]
+                      return (
+                        <CatalogItemCard
+                          key={`${item.id}-${index}`}
+                          item={item}
+                          thumbnailUrl={thumbnails[item.id]}
+                          index={index}
+                          onClick={() => handleItemClick(item)}
+                          onContextMenu={handleContextMenu}
+                          onCreatorClick={onCreatorSelect}
+                          isCompact={viewMode === 'compact'}
+                        />
+                      )
+                    }}
+                    endReached={() => {
+                      if (hasNextPage && !isFetchingNextPage) {
+                        fetchNextPage()
+                      }
+                    }}
+                    components={{
+                      Footer: () =>
+                        isFetchingNextPage ? (
+                          <div className="h-20 flex items-center justify-center">
+                            <div className="flex items-center gap-2 text-neutral-500">
+                              <Loader2 size={20} className="animate-spin" />
+                              <span>Loading more...</span>
+                            </div>
+                          </div>
+                        ) : null
+                    }}
+                  />
                 </motion.div>
               )}
             </AnimatePresence>

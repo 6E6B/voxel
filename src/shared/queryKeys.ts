@@ -33,11 +33,11 @@ export const queryKeys = {
   // Games
   games: {
     all: ['games'] as const,
-    sorts: (sessionId?: string) => [...queryKeys.games.all, 'sorts', sessionId] as const,
-    inSort: (sortId: string, sessionId?: string) =>
-      [...queryKeys.games.all, 'inSort', sortId, sessionId] as const,
-    search: (query: string, sessionId?: string) =>
-      [...queryKeys.games.all, 'search', query, sessionId] as const,
+    sorts: (_sessionId?: string) => [...queryKeys.games.all, 'sorts'] as const,
+    inSort: (sortId: string, _sessionId?: string) =>
+      [...queryKeys.games.all, 'inSort', sortId] as const,
+    search: (query: string, _sessionId?: string) =>
+      [...queryKeys.games.all, 'search', query] as const,
     byPlaceIds: (placeIds: string[]) => [...queryKeys.games.all, 'byPlaceIds', placeIds] as const,
     favorites: () => [...queryKeys.games.all, 'favorites'] as const
   },

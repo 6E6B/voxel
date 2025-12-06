@@ -22,14 +22,15 @@ const SidebarItem = ({
   count,
   disableLayoutAnimation = false
 }: SidebarItemProps) => {
-  const layoutProp = disableLayoutAnimation ? false : 'position'
-  const layoutTransition = disableLayoutAnimation ? undefined : { layout: { duration: 0.22 } }
+  const shouldAnimateLayout = !disableLayoutAnimation && !isCollapsed
+  const layoutProp = shouldAnimateLayout ? 'position' : false
+  const layoutTransition = shouldAnimateLayout ? { layout: { duration: 0.18 } } : undefined
 
   const content = (
     <motion.button
       layout={layoutProp}
       transition={layoutTransition}
-      onClick={onClick}
+      onMouseDown={onClick}
       className={cn(
         'w-full flex items-center py-4 mb-1 transition-colors duration-200 relative group',
         isActive

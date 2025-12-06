@@ -20,7 +20,7 @@ export const CategorySelector: React.FC<CategorySelectorProps> = ({
   return (
     <>
       {/* Level 1: Main Categories */}
-      <div className="flex items-center gap-1 p-2 overflow-x-auto border-b border-neutral-800/50">
+      <div className="flex items-center gap-1 p-2 overflow-x-auto scrollbar-hide border-b border-neutral-800/50">
         {(Object.keys(CATEGORIES) as MainCategory[]).map((category) => {
           const Icon = CATEGORY_ICONS[category] as React.FC<LucideProps>
           const isActive = mainCategory === category
@@ -28,7 +28,7 @@ export const CategorySelector: React.FC<CategorySelectorProps> = ({
             <Button
               key={category}
               variant={isActive ? 'default' : 'ghost'}
-              onClick={() => onMainCategoryChange(category)}
+              onMouseDown={() => onMainCategoryChange(category)}
               className={cn(
                 'gap-2',
                 !isActive &&
@@ -43,18 +43,17 @@ export const CategorySelector: React.FC<CategorySelectorProps> = ({
       </div>
 
       {/* Level 2: Sub Categories */}
-      <div className="flex items-center gap-2 px-4 py-3 overflow-x-auto bg-[var(--color-surface-muted)]">
+      <div className="flex items-center gap-2 px-4 py-3 overflow-x-auto scrollbar-hide bg-[var(--color-surface-muted)]">
         {CATEGORIES[mainCategory].map((sub) => (
           <Button
             key={sub}
-            variant="ghost"
+            variant={subCategory === sub ? 'default' : 'ghost'}
             size="sm"
-            onClick={() => onSubCategoryChange(sub)}
+            onMouseDown={() => onSubCategoryChange(sub)}
             className={cn(
-              'text-sm font-medium whitespace-nowrap border transition-colors',
-              subCategory === sub
-                ? 'bg-[var(--color-surface-hover)] text-[var(--color-text-primary)] border-[var(--color-border-strong)] shadow-sm'
-                : 'bg-transparent text-[var(--color-text-muted)] border-transparent hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]'
+              'text-sm font-medium whitespace-nowrap transition-colors',
+              subCategory !== sub &&
+                'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-hover)]'
             )}
           >
             {sub}

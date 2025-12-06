@@ -166,6 +166,7 @@ const UNSELECTED_BG = 'color-mix(in srgb, var(--color-text-primary) 0%, transpar
 const PANEL_BACKDROP = 'color-mix(in srgb, var(--color-app-bg) 82%, transparent)'
 const STRIP_BG = 'var(--color-surface)'
 const TILE_BG = 'color-mix(in srgb, var(--color-surface-muted) 90%, transparent)'
+const PALETTE_SCALE = 1.1
 const ICON_BASE_CLASSES =
   'flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-150'
 const ICON_UNSELECTED_CLASSES =
@@ -1030,20 +1031,26 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         if (e.target === e.currentTarget) close()
       }}
     >
-      <motion.div
-        initial={{ opacity: 0, scale: 0.98, y: -10 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.98, y: -5 }}
-        transition={{ type: 'spring', stiffness: 500, damping: 35 }}
-        className="backdrop-blur-xl rounded-2xl shadow-2xl overflow-hidden border"
+      <div
         style={{
-          width: paletteWidth,
-          backgroundColor: 'var(--color-surface-strong)',
-          borderColor: 'var(--color-border)',
-          boxShadow: 'var(--shadow-lg)'
+          transform: `scale(${PALETTE_SCALE})`,
+          transformOrigin: 'top center'
         }}
-        onClick={(e) => e.stopPropagation()}
       >
+        <motion.div
+          initial={{ opacity: 0, scale: 0.98, y: -10 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.98, y: -5 }}
+          transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+          className="backdrop-blur-xl rounded-2xl shadow-2xl overflow-hidden border"
+          style={{
+            width: paletteWidth,
+            backgroundColor: 'var(--color-surface-strong)',
+            borderColor: 'var(--color-border)',
+            boxShadow: 'var(--shadow-lg)'
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
         {/* Header */}
         <div
           className="flex items-center gap-3 px-4 py-3.5 border-b"
@@ -1806,7 +1813,8 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
             <span className="font-medium">K</span>
           </div>
         </div>
-      </motion.div>
+        </motion.div>
+      </div>
     </motion.div>
   )
 }

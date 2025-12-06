@@ -317,8 +317,6 @@ const Sidebar = ({
     [selectedAccount, showProfileCard, sidebarTabs]
   )
 
-  const shouldAnimateLayout = !isResizing
-
   return (
     <TooltipProvider>
       <motion.aside
@@ -327,7 +325,6 @@ const Sidebar = ({
         className={`flex flex-col border-r border-[var(--color-border)] bg-[var(--color-surface-strong)] z-30 relative ${
           isSidebarCollapsed ? 'min-w-[72px]' : ''
         } ${!isResizing ? 'transition-[width] duration-300 ease-in-out' : ''}`}
-        layout={shouldAnimateLayout}
       >
         {/* Sidebar Header - extra top padding on macOS for traffic lights */}
         <div
@@ -359,11 +356,7 @@ const Sidebar = ({
         </div>
 
         {/* Nav Items */}
-        <motion.div
-          className="flex-1 py-2 overflow-y-auto scrollbar-hide"
-          layout={shouldAnimateLayout}
-          layoutScroll={shouldAnimateLayout}
-        >
+        <div className="flex-1 py-2 overflow-y-auto scrollbar-hide">
           <nav>
             {sidebarTabsToRender.map((tab, index) => {
               const previous = sidebarTabsToRender[index - 1] as SidebarTabDefinition | undefined
@@ -380,13 +373,13 @@ const Sidebar = ({
                     isActive={activeTab === tab.id}
                     isCollapsed={isSidebarCollapsed}
                     onClick={() => setActiveTab(tab.id)}
-                    disableLayoutAnimation={isResizing}
+                    disableLayoutAnimation={isResizing || isSidebarCollapsed}
                   />
                 </React.Fragment>
               )
             })}
           </nav>
-        </motion.div>
+        </div>
 
         {/* Bottom Profile Card */}
         {selectedAccount && showProfileCard && (

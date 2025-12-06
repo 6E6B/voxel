@@ -11,7 +11,9 @@ export function useCatalogNavigation() {
   return useQuery({
     queryKey: queryKeys.catalog.navigation(),
     queryFn: () => window.api.getCatalogNavigation() as Promise<CatalogCategory[]>,
-    staleTime: 60 * 60 * 1000 // Categories don't change often - 1 hour
+    staleTime: 60 * 60 * 1000, // Categories don't change often - 1 hour
+    refetchOnMount: false,
+    refetchOnWindowFocus: false
   })
 }
 
@@ -45,7 +47,11 @@ export function useCatalogSearch(params: CatalogItemsSearchParams, enabled = tru
       // Exponential backoff: 2s, 4s, 8s
       return Math.min(1000 * Math.pow(2, attemptIndex + 1), 8000)
     },
-    staleTime: 30 * 1000 // Consider data stale after 30 seconds
+    staleTime: 2 * 60 * 1000, // Keep data warm for tab switches
+    gcTime: 10 * 60 * 1000, // Drop from cache after 10 minutes unused
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    keepPreviousData: true
   })
 }
 

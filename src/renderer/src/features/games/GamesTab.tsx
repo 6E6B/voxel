@@ -102,6 +102,7 @@ const GameCard = ({
   const rafRef = useRef<number | null>(null)
   const isHoveredRef = useRef(false)
   const [imageLoaded, setImageLoaded] = useState(false)
+  const [hasImageError, setHasImageError] = useState(false)
 
   const targetTransform = useRef({ x: 0, y: 0, scale: 1 })
   const currentTransform = useRef({ x: 0, y: 0, scale: 1 })
@@ -192,6 +193,13 @@ const GameCard = ({
   // Reset image loaded state when game changes
   useEffect(() => {
     setImageLoaded(false)
+    setHasImageError(false)
+
+    // Handle cached images that may already be loaded
+    const img = imageRef.current
+    if (img && img.complete && img.naturalWidth > 0) {
+      setImageLoaded(true)
+    }
   }, [game.thumbnailUrl])
 
   return (
@@ -213,7 +221,7 @@ const GameCard = ({
             </div>
           </div>
         )}
-        {game.thumbnailUrl ? (
+        {game.thumbnailUrl && !hasImageError ? (
           <div ref={mediaRef} className="absolute inset-0 will-change-transform">
             {!imageLoaded && (
               <div className="absolute inset-0 overflow-hidden">
@@ -225,6 +233,10 @@ const GameCard = ({
               src={game.thumbnailUrl}
               alt={game.name}
               onLoad={() => setImageLoaded(true)}
+              onError={() => {
+                setHasImageError(true)
+                setImageLoaded(true)
+              }}
               style={{
                 width: '100%',
                 height: '100%',

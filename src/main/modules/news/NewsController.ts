@@ -4,7 +4,7 @@ import { net } from 'electron'
 export function registerNewsHandlers(): void {
   ipcMain.handle('news:get', async () => {
     try {
-      const response = await net.fetch('http://localhost:3000/feed')
+      const response = await net.fetch('http://feed.usagi.lol/feed')
       if (!response.ok) {
         throw new Error(`Failed to fetch news: ${response.status} ${response.statusText}`)
       }

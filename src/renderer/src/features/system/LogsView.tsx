@@ -613,8 +613,12 @@ const LogsTab: React.FC = () => {
                   </div>
                 ) : (
                   <Virtuoso
+                    style={{ height: '100%' }}
                     data={selectedLog.entries}
                     overscan={200}
+                    computeItemKey={(index, entry) =>
+                      `${selectedLog.id ?? 'log'}-${index}-${entry.timestamp}-${entry.source}`
+                    }
                     itemContent={(idx, entry) => (
                       <div
                         key={idx}

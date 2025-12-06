@@ -22,7 +22,11 @@ export function useGamesInSort(sortId: string | null, sessionId?: string) {
   return useQuery({
     queryKey: queryKeys.games.inSort(sortId || '', sessionId),
     queryFn: () => window.api.getGamesInSort(sortId!, sessionId) as Promise<Game[]>,
-    enabled: !!sortId
+    enabled: !!sortId,
+    staleTime: 2 * 60 * 1000, // keep data for 2 minutes
+    gcTime: 5 * 60 * 1000, // drop from cache after 5 minutes unused
+    refetchOnWindowFocus: false,
+    refetchOnMount: false
   })
 }
 
@@ -31,7 +35,11 @@ export function useSearchGames(query: string, sessionId?: string) {
   return useQuery({
     queryKey: queryKeys.games.search(query, sessionId),
     queryFn: () => window.api.searchGames(query, sessionId) as Promise<Game[]>,
-    enabled: query.trim().length > 0
+    enabled: query.trim().length > 0,
+    staleTime: 2 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false
   })
 }
 
@@ -40,7 +48,11 @@ export function useGamesByPlaceIds(placeIds: string[]) {
   return useQuery({
     queryKey: queryKeys.games.byPlaceIds(placeIds),
     queryFn: () => window.api.getGamesByPlaceIds(placeIds) as Promise<Game[]>,
-    enabled: placeIds.length > 0
+    enabled: placeIds.length > 0,
+    staleTime: 2 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false
   })
 }
 
