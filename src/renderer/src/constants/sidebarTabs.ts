@@ -41,8 +41,10 @@ export const SIDEBAR_TAB_DEFINITIONS: SidebarTabDefinition[] = [
 ]
 
 export const SIDEBAR_TAB_DEFINITION_MAP: Record<TabId, SidebarTabDefinition | undefined> =
-  SIDEBAR_TAB_DEFINITIONS.reduce((acc, tab) => {
-    acc[tab.id] = tab
-    return acc
-  }, {} as Record<TabId, SidebarTabDefinition | undefined>)
-
+  SIDEBAR_TAB_DEFINITIONS.reduce(
+    (acc, tab) => {
+      acc[tab.id] = tab
+      return acc
+    },
+    {} as Record<TabId, SidebarTabDefinition | undefined>
+  )

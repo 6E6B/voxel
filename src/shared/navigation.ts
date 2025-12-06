@@ -76,4 +76,3 @@ export const getVisibleSidebarTabs = (order?: TabId[], hidden?: TabId[]): TabId[
   const normalizedHidden = sanitizeSidebarHidden(hidden)
   return sanitizeSidebarOrder(order).filter((tab) => !normalizedHidden.includes(tab))
 }
-
