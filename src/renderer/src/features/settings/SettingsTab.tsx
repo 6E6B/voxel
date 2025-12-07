@@ -222,11 +222,6 @@ const SettingsTab: React.FC<SettingsTabProps> = ({ accounts, settings, onUpdateS
     onUpdateSettings({ theme: value as ThemePreference })
   }
 
-  const handleMultiInstanceChange = () => {
-    if (isMac) return
-    onUpdateSettings({ allowMultipleInstances: !settings.allowMultipleInstances })
-  }
-
   const handleAccentColorChange = (rgba: [number, number, number, number]) => {
     try {
       const color = Color.rgb(rgba[0], rgba[1], rgba[2], rgba[3])

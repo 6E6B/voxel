@@ -732,6 +732,7 @@ const App: React.FC = () => {
         onClose={() => setSelectedGame(null)}
         onLaunch={handleLaunch}
         game={selectedGame}
+        account={selectedAccount || accounts.find((a) => a.cookie) || null}
       />
 
       <InstanceSelectionModal

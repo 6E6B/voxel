@@ -3,17 +3,25 @@ import { Minus } from 'lucide-react'
 interface CustomCheckboxProps {
   checked: boolean
   indeterminate?: boolean
+  disabled?: boolean
   onChange: () => void
 }
 
-const CustomCheckbox = ({ checked, indeterminate, onChange }: CustomCheckboxProps) => {
+const CustomCheckbox = ({
+  checked,
+  indeterminate,
+  disabled = false,
+  onChange
+}: CustomCheckboxProps) => {
   const isCheckVisible = checked && !indeterminate
 
   return (
     <div
       onClick={(e) => {
         e.stopPropagation()
-        onChange()
+        if (!disabled) {
+          onChange()
+        }
       }}
       className={`
         relative w-5 h-5 rounded border flex items-center justify-center transition-all cursor-pointer flex-shrink-0 overflow-hidden
@@ -22,7 +30,9 @@ const CustomCheckbox = ({ checked, indeterminate, onChange }: CustomCheckboxProp
             ? 'bg-[var(--accent-color)] border-[var(--accent-color)] text-[var(--accent-color-foreground)]'
             : 'bg-transparent border-neutral-600 hover:border-neutral-400'
         }
+        ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
       `}
+      aria-disabled={disabled}
     >
       <svg
         viewBox="0 0 16 16"

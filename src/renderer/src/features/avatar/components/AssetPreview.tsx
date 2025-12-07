@@ -13,6 +13,7 @@ interface AssetPreviewProps {
   assetName: string
   isTryingOn: boolean
   tryOnImageUrl: string | null
+  tryOnManifestUrl?: string | null
   tryOnLoading: boolean
   cookie?: string
   onViewModeChange: (mode: '2d' | '3d') => void
@@ -31,6 +32,7 @@ export const AssetPreview: React.FC<AssetPreviewProps> = ({
   assetName,
   isTryingOn,
   tryOnImageUrl,
+  tryOnManifestUrl,
   tryOnLoading,
   cookie,
   onViewModeChange,
@@ -39,6 +41,9 @@ export const AssetPreview: React.FC<AssetPreviewProps> = ({
   onTryOn,
   onRevertTryOn
 }) => {
+  const shouldShowTryOnModel = isTryingOn && !!tryOnManifestUrl
+  const shouldShowTryOnImage = isTryingOn && !!tryOnImageUrl
+
   return (
     <div className="w-full lg:w-1/2 relative flex flex-col border-b lg:border-b-0 lg:border-r border-neutral-800 bg-neutral-950 overflow-hidden group">
       {/* Background Effects */}
@@ -57,8 +62,21 @@ export const AssetPreview: React.FC<AssetPreviewProps> = ({
         className="relative w-full h-full z-10 cursor-context-menu"
         onContextMenu={onContextMenu}
       >
-        {isTryingOn && tryOnImageUrl ? (
-          // Show 2D rendered preview when trying on (the render API returns a PNG image)
+        {shouldShowTryOnModel ? (
+          <Avatar3DThumbnail
+            manifestUrl={tryOnManifestUrl || undefined}
+            type="avatar"
+            cookie={cookie}
+            className="w-full h-full"
+            autoRotateSpeed={0.005}
+            cameraDistanceFactor={2}
+            manualRotationEnabled={true}
+            manualZoomEnabled={true}
+            manualPanEnabled={false}
+            onError={on3DError}
+          />
+        ) : shouldShowTryOnImage ? (
+          // Show 2D rendered preview when the render API returns a PNG image
           <div className="w-full h-full flex items-center justify-center p-8">
             <img
               src={tryOnImageUrl}

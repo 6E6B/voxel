@@ -135,10 +135,23 @@ const ServersList = ({ placeId, onJoin }: ServersListProps) => {
     })
   }, [servers, regions])
 
-  const sortedServers = React.useMemo(() => {
-    if (!sortKey) return serversWithPreservedRegions
+  const filteredServers = useMemo(() => {
+    if (!excludeFullGames) return serversWithPreservedRegions
 
-    return [...serversWithPreservedRegions].sort((a, b) => {
+    return serversWithPreservedRegions.filter((s) => {
+      const region = s.region
+      const isFullByCount = s.playing >= s.maxPlayers
+      const isFullByRegion = region === 'Full' || region === 'Full/Restricted'
+      const isQueued = region === 'Queued'
+
+      return !(isFullByCount || isFullByRegion || isQueued)
+    })
+  }, [serversWithPreservedRegions, excludeFullGames])
+
+  const sortedServers = React.useMemo(() => {
+    if (!sortKey) return filteredServers
+
+    return [...filteredServers].sort((a, b) => {
       let aValue = a[sortKey]
       let bValue = b[sortKey]
 
@@ -152,7 +165,7 @@ const ServersList = ({ placeId, onJoin }: ServersListProps) => {
       if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1
       return 0
     })
-  }, [serversWithPreservedRegions, sortKey, sortDirection])
+  }, [filteredServers, sortKey, sortDirection])
 
   // Load saved excludeFullGames preference on mount
   useEffect(() => {
@@ -227,12 +240,11 @@ const ServersList = ({ placeId, onJoin }: ServersListProps) => {
 
   // Loop 1: Dispatch Roblox Checks (High Concurrency)
   useEffect(() => {
-    const candidates = serversWithPreservedRegions.filter(
+    const candidates = filteredServers.filter(
       (s) =>
         s.region === 'Unknown' &&
         !checkingRegions[s.id] &&
-        !regions[s.id] && // Don't check if we already have it in store
-        s.playing < s.maxPlayers
+        !regions[s.id] // Don't check if we already have it in store
     )
 
     const currentChecking = Object.keys(checkingRegions).length
@@ -242,7 +254,7 @@ const ServersList = ({ placeId, onJoin }: ServersListProps) => {
       const toCheck = candidates.slice(0, availableSlots)
       toCheck.forEach((s) => checkRobloxStatus(s))
     }
-  }, [serversWithPreservedRegions, checkingRegions, checkRobloxStatus, regions])
+  }, [filteredServers, checkingRegions, checkRobloxStatus, regions])
 
   // Loop 2: Process IP Queue (Batch)
   useEffect(() => {

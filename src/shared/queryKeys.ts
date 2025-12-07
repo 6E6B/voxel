@@ -39,7 +39,8 @@ export const queryKeys = {
     search: (query: string, _sessionId?: string) =>
       [...queryKeys.games.all, 'search', query] as const,
     byPlaceIds: (placeIds: string[]) => [...queryKeys.games.all, 'byPlaceIds', placeIds] as const,
-    favorites: () => [...queryKeys.games.all, 'favorites'] as const
+    favorites: () => [...queryKeys.games.all, 'favorites'] as const,
+    recentlyPlayed: () => [...queryKeys.games.all, 'recentlyPlayed'] as const
   },
 
   // Avatar

@@ -36,9 +36,9 @@ export type ThemeDefinition = {
 }
 
 const commonRadii = {
-  md: '10px',
-  lg: '14px',
-  xl: '18px',
+  md: '6px',
+  lg: '10px',
+  xl: '14px',
   pill: '999px'
 }
 

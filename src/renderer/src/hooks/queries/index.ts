@@ -70,6 +70,7 @@ export {
   useSearchGames,
   useGamesByPlaceIds,
   useFavoriteGames,
+  useRecentlyPlayedGames,
   useAddFavoriteGame,
   useRemoveFavoriteGame
 } from '@renderer/features/games/api/useGames'

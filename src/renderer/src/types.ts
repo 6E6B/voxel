@@ -86,6 +86,7 @@ export interface Game {
   name: string
   creatorName: string
   creatorId: string
+  creatorType?: string
   playing: number
   visits: number
   maxPlayers: number
@@ -98,6 +99,12 @@ export interface Game {
   updated: string
   creatorHasVerifiedBadge: boolean
   userVote?: boolean | null
+  // Optional metadata (may not always be present from APIs)
+  ageRating?: string | null
+  supportedDevices?: string[]
+  supportsVoiceChat?: boolean | null
+  lastServerJobId?: string | null
+  friendsPlayingCount?: number | null
 }
 
 export interface GameServer {

@@ -19,7 +19,7 @@ export function useGameServers(
       const result = await window.api.getGameServers(
         placeId,
         pageParam as string | undefined,
-        100,
+        10,
         'Desc',
         excludeFullGames
       )

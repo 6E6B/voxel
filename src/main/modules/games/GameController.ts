@@ -1,5 +1,8 @@
 import { z } from 'zod'
 import { BrowserWindow, dialog } from 'electron'
+import fs from 'fs/promises'
+import { existsSync } from 'fs'
+import path from 'path'
 import { handle } from '../core/utils/handle'
 import { RobloxAuthService } from '../auth/RobloxAuthService'
 import { RobloxGameService } from './GameService'
@@ -38,6 +41,114 @@ export const registerGameHandlers = (): void => {
 
   handle('search-games', z.tuple([z.string(), z.string()]), async (_, query, sessionId) => {
     return RobloxGameService.searchGames(query, sessionId)
+  })
+
+  handle('get-recently-played-games', z.tuple([z.string().optional()]), async () => {
+    const LOGS_DIR = path.join(process.env.LOCALAPPDATA || '', 'Roblox', 'logs')
+
+    const parseLogContent = (content: string) => {
+      const placeIdMatchA = content.match(/placeid:(\d+)/)
+      const placeIdMatchB = content.match(/place (\d+) at/)
+      const universeIdMatch = content.match(/universeid:(\d+)/)
+
+      return {
+        placeId: placeIdMatchA?.[1] || placeIdMatchB?.[1],
+        universeId: universeIdMatch?.[1]
+      }
+    }
+
+    const getRecentPlacesFromLogs = async (
+      maxEntries: number = 40
+    ): Promise<{ placeIds: string[]; universeIds: string[] }> => {
+      const emptyResult: { placeIds: string[]; universeIds: string[] } = {
+        placeIds: [],
+        universeIds: []
+      }
+
+      if (!process.env.LOCALAPPDATA) {
+        console.warn('[GameController] LOCALAPPDATA not set, cannot read logs')
+        return emptyResult
+      }
+
+      if (!existsSync(LOGS_DIR)) {
+        console.warn('[GameController] Roblox logs directory not found:', LOGS_DIR)
+        return emptyResult
+      }
+
+      const files = await fs.readdir(LOGS_DIR)
+      const logFiles = files.filter((f) => f.endsWith('.log'))
+
+      const entries = await Promise.all(
+        logFiles.map(async (file) => {
+          const filePath = path.join(LOGS_DIR, file)
+          try {
+            const stats = await fs.stat(filePath)
+            const content = await fs.readFile(filePath, 'utf8')
+            const parsed = parseLogContent(content)
+
+            return {
+              lastModified: stats.mtimeMs,
+              placeId: parsed.placeId,
+              universeId: parsed.universeId
+            }
+          } catch (err) {
+            console.error(`[GameController] Failed to read log ${file}:`, err)
+            return { lastModified: 0, placeId: undefined, universeId: undefined }
+          }
+        })
+      )
+
+      // Newest first
+      entries.sort((a, b) => b.lastModified - a.lastModified)
+
+      const seenPlaces = new Set<string>()
+      const seenUniverses = new Set<string>()
+      const placeIds: string[] = []
+      const universeIds: string[] = []
+
+      for (const entry of entries) {
+        if (placeIds.length >= maxEntries) break
+        if (entry.placeId && !seenPlaces.has(entry.placeId)) {
+          seenPlaces.add(entry.placeId)
+          placeIds.push(entry.placeId)
+        } else if (entry.universeId && !seenUniverses.has(entry.universeId)) {
+          seenUniverses.add(entry.universeId)
+          universeIds.push(entry.universeId)
+        }
+      }
+
+      return { placeIds, universeIds }
+    }
+
+    const { placeIds, universeIds } = await getRecentPlacesFromLogs()
+
+    if (universeIds.length > 0) {
+      try {
+        return await RobloxGameService.getGamesByUniverseIds(universeIds.map((id) => Number(id)))
+      } catch (err) {
+        console.error('[GameController] Failed to hydrate recent universeIds:', err)
+      }
+    }
+
+    if (placeIds.length > 0) {
+      const accounts = storageService.getAccounts()
+      const accountWithCookie = accounts.find((acc) => acc.cookie && acc.cookie.length > 0)
+      const cookie = accountWithCookie ? accountWithCookie.cookie : undefined
+
+      if (!cookie) {
+        console.warn('[GameController] Skipping placeId hydration for recent games: no cookie')
+        return []
+      }
+
+      try {
+        return await RobloxGameService.getGamesByPlaceIds(placeIds, cookie)
+      } catch (err) {
+        console.error('[GameController] Failed to hydrate recent placeIds:', err)
+        return []
+      }
+    }
+
+    return []
   })
 
   handle(
@@ -136,13 +247,17 @@ export const registerGameHandlers = (): void => {
     return RobloxGameService.getGameSocialLinks(universeId, cookie)
   })
 
-  handle('vote-on-game', z.tuple([z.number(), z.boolean()]), async (_, universeId, vote) => {
-    const accounts = storageService.getAccounts()
-    const accountWithCookie = accounts.find((acc) => acc.cookie && acc.cookie.length > 0)
-    const cookie = accountWithCookie ? accountWithCookie.cookie : undefined
-    if (!cookie) throw new Error('No logged in account found')
-    return RobloxGameService.voteOnGame(universeId, vote, cookie)
-  })
+  handle(
+    'vote-on-game',
+    z.tuple([z.number(), z.boolean().nullable()]),
+    async (_, placeId, vote) => {
+      const accounts = storageService.getAccounts()
+      const accountWithCookie = accounts.find((acc) => acc.cookie && acc.cookie.length > 0)
+      const cookie = accountWithCookie ? accountWithCookie.cookie : undefined
+      if (!cookie) throw new Error('No logged in account found')
+      return RobloxGameService.voteOnGame(placeId, vote, cookie)
+    }
+  )
 
   handle('get-game-passes', z.tuple([z.number()]), async (_, universeId) => {
     const accounts = storageService.getAccounts()
@@ -150,6 +265,39 @@ export const registerGameHandlers = (): void => {
     const cookie = accountWithCookie ? accountWithCookie.cookie : undefined
     return RobloxGameService.getGamePasses(universeId, cookie)
   })
+
+  handle(
+    'purchase-game-pass',
+    z.tuple([
+      z.string(), // cookie
+      z.number(), // productId
+      z.number(), // expectedPrice
+      z.number(), // expectedSellerId
+      z.string().optional(), // expectedPurchaserId
+      z.string().optional() // idempotencyKey
+    ]),
+    async (
+      _,
+      cookieRaw,
+      productId,
+      expectedPrice,
+      expectedSellerId,
+      purchaserId,
+      idempotencyKey
+    ) => {
+      const cookie = RobloxAuthService.extractCookie(cookieRaw)
+      if (!cookie) throw new Error('No logged in account found')
+
+      return RobloxGameService.purchaseGamePass(
+        cookie,
+        productId,
+        expectedPrice,
+        expectedSellerId,
+        purchaserId,
+        idempotencyKey
+      )
+    }
+  )
 
   handle(
     'save-game-image',

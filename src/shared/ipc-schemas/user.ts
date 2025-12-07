@@ -295,13 +295,16 @@ export const profileAboutSchema = z.object({
   name: z.string().optional(),
   description: z.string().nullable().optional(),
   socialLinks: z
-    .array(
-      z.object({
-        type: z.string().optional(),
-        url: z.string().optional(),
-        title: z.string().optional()
-      })
-    )
+    .union([
+      z.array(
+        z.object({
+          type: z.string().optional(),
+          url: z.string().optional(),
+          title: z.string().optional()
+        })
+      ),
+      z.record(z.string(), z.any())
+    ])
     .nullable()
     .optional(),
   nameHistory: z.array(z.string()).nullable().optional(),

@@ -18,9 +18,15 @@ import {
   MessageCircle,
   ShoppingBag,
   Check,
-  Server
+  Server,
+  Loader2,
+  Shield,
+  MonitorSmartphone,
+  Link2,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react'
-import { Game, JoinMethod } from '@renderer/types'
+import { Account, Game, JoinMethod } from '@renderer/types'
 import { RobuxIcon } from '@renderer/components/UI/icons/RobuxIcon'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@renderer/components/UI/display/Tooltip'
 import {
@@ -32,6 +38,8 @@ import {
   SheetClose,
   SheetBody
 } from '@renderer/components/UI/dialogs/Sheet'
+import { Dialog, DialogBody, DialogContent } from '@renderer/components/UI/dialogs/Dialog'
+import { Button } from '@renderer/components/UI/buttons/Button'
 import { SlidingNumber } from '@renderer/components/UI/specialized/SlidingNumber'
 import { Tabs } from '@renderer/components/UI/navigation/Tabs'
 import { formatNumber } from '@renderer/utils/numberUtils'
@@ -47,14 +55,21 @@ import {
   useAddFavoriteGame,
   useRemoveFavoriteGame
 } from '@renderer/hooks/queries'
+import {
+  PurchaseErrorDialog,
+  PurchaseSuccessDialog
+} from '@renderer/features/avatar/components/AssetPricing'
 import GameImageContextMenu from './GameImageContextMenu'
 import VerifiedIcon from '@renderer/components/UI/icons/VerifiedIcon'
+import UniversalProfileModal from '@renderer/components/Modals/UniversalProfileModal'
+import { GroupDetailsModal } from '@renderer/features/groups/Modals/GroupDetailsModal'
 
 interface GameDetailsModalProps {
   isOpen: boolean
   onClose: () => void
   onLaunch: (config: { method: JoinMethod; target: string }) => void
   game: Game | null
+  account?: Account | null
   onViewServers?: (placeId: string) => void // Kept for compatibility but unused
 }
 
@@ -78,20 +93,47 @@ const getSocialIcon = (type: string) => {
 }
 
 const getPlatformName = (type: string): string => {
+  const normalized = type.toLowerCase()
+  if (normalized === 'pc' || normalized === 'desktop') return 'PC'
+  if (normalized === 'mobile' || normalized === 'phone') return 'Mobile'
+  if (normalized === 'console') return 'Console'
+  if (normalized === 'tablet') return 'Tablet'
   return type.charAt(0).toUpperCase() + type.slice(1).toLowerCase()
 }
 
-const GameDetailsModal: React.FC<GameDetailsModalProps> = ({ isOpen, onClose, onLaunch, game }) => {
+const GameDetailsModal: React.FC<GameDetailsModalProps> = ({
+  isOpen,
+  onClose,
+  onLaunch,
+  game,
+  account
+}) => {
   const [displayedGame, setDisplayedGame] = useState<Game | null>(null)
   const [thumbnails, setThumbnails] = useState<string[]>([])
   const [carouselIndex, setCarouselIndex] = useState(0)
   const [activeTab, setActiveTab] = useState<'info' | 'servers' | 'store'>('info')
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false)
+  const [isGroupModalOpen, setIsGroupModalOpen] = useState(false)
+  const [selectedCreatorId, setSelectedCreatorId] = useState<string | number | null>(null)
   const [isDragging, setIsDragging] = useState(false)
   const [dragStartX, setDragStartX] = useState(0)
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
   const dragOffsetRef = useRef(0)
   const carouselRef = useRef<HTMLDivElement>(null)
   const { showNotification } = useNotification()
+
+  const handleCreatorClick = () => {
+    if (!displayedGame) return
+
+    if (displayedGame.creatorType === 'Group') {
+      setSelectedCreatorId(parseInt(displayedGame.creatorId))
+      setIsGroupModalOpen(true)
+    } else {
+      setSelectedCreatorId(displayedGame.creatorId)
+      setIsProfileModalOpen(true)
+    }
+  }
+
   const queryClient = useQueryClient()
   const [contextMenu, setContextMenu] = useState<{
     x: number
@@ -164,6 +206,45 @@ const GameDetailsModal: React.FC<GameDetailsModalProps> = ({ isOpen, onClose, on
     [showNotification]
   )
 
+  const handleCopyLink = useCallback(async () => {
+    if (!displayedGame) return
+    const link = `https://www.roblox.com/games/${displayedGame.placeId || displayedGame.id}`
+
+    try {
+      await navigator.clipboard.writeText(link)
+      showNotification('Game link copied to clipboard', 'success')
+    } catch (err) {
+      console.error('Failed to copy link', err)
+      showNotification('Failed to copy link', 'error')
+    }
+  }, [displayedGame, showNotification])
+
+  const targetPlaceId = displayedGame?.placeId || displayedGame?.id
+  const lastServerJobId = displayedGame?.lastServerJobId ?? null
+  const hasFriendsPlaying = (displayedGame?.friendsPlayingCount ?? 0) > 0
+
+  const handleRejoinLastServer = useCallback(() => {
+    if (!displayedGame || !targetPlaceId) return
+    if (!lastServerJobId) {
+      showNotification('No recent server to rejoin', 'info')
+      return
+    }
+
+    onLaunch({ method: JoinMethod.JobId, target: `${targetPlaceId}:${lastServerJobId}` })
+    onClose()
+  }, [displayedGame, lastServerJobId, onClose, onLaunch, showNotification, targetPlaceId])
+
+  const handleJoinFriends = useCallback(() => {
+    if (!hasFriendsPlaying) {
+      showNotification('No friends playing this game right now', 'info')
+      return
+    }
+
+    // We don’t yet have a direct friend join target; jump to Servers tab so they can pick.
+    setActiveTab('servers')
+    showNotification('Jumped to Servers — look for friends online', 'info')
+  }, [hasFriendsPlaying, showNotification])
+
   const { data: socialLinks } = useQuery({
     queryKey: ['gameSocialLinks', game?.universeId],
     queryFn: async () => {
@@ -234,6 +315,22 @@ const GameDetailsModal: React.FC<GameDetailsModalProps> = ({ isOpen, onClose, on
     }, CAROUSEL_INTERVAL)
   }, [thumbnails.length])
 
+  const showCarouselControls = thumbnails.length > 1
+  const canCarouselLeft = showCarouselControls && carouselIndex > 0
+  const canCarouselRight = showCarouselControls && carouselIndex < thumbnails.length - 1
+
+  const handleCarouselLeft = useCallback(() => {
+    if (!showCarouselControls) return
+    setCarouselIndex((prev) => Math.max(prev - 1, 0))
+    startCarousel()
+  }, [showCarouselControls, startCarousel])
+
+  const handleCarouselRight = useCallback(() => {
+    if (!showCarouselControls) return
+    setCarouselIndex((prev) => Math.min(prev + 1, thumbnails.length - 1))
+    startCarousel()
+  }, [showCarouselControls, startCarousel, thumbnails.length])
+
   useEffect(() => {
     if (isOpen && thumbnails.length > 1) {
       startCarousel()
@@ -242,6 +339,31 @@ const GameDetailsModal: React.FC<GameDetailsModalProps> = ({ isOpen, onClose, on
       if (intervalRef.current) clearInterval(intervalRef.current)
     }
   }, [isOpen, thumbnails.length, startCarousel])
+
+  const finishDrag = useCallback(() => {
+    if (!isDragging) return
+    setIsDragging(false)
+
+    const threshold = 100
+    const finalOffset = dragOffsetRef.current
+    let nextIndex = carouselIndex
+
+    if (finalOffset > threshold && carouselIndex > 0) {
+      nextIndex = carouselIndex - 1
+    } else if (finalOffset < -threshold && carouselIndex < thumbnails.length - 1) {
+      nextIndex = carouselIndex + 1
+    }
+
+    dragOffsetRef.current = 0
+
+    if (carouselRef.current) {
+      carouselRef.current.style.transition = 'transform 500ms cubic-bezier(0.4, 0, 0.2, 1)'
+      carouselRef.current.style.transform = `translateX(calc(-${nextIndex * 100}%))`
+    }
+
+    setCarouselIndex(nextIndex)
+    startCarousel()
+  }, [carouselIndex, isDragging, startCarousel, thumbnails.length])
 
   // Update carousel transform when index changes (when not dragging)
   useEffect(() => {
@@ -305,8 +427,13 @@ const GameDetailsModal: React.FC<GameDetailsModalProps> = ({ isOpen, onClose, on
   const totalVotes = displayedGame ? displayedGame.likes + displayedGame.dislikes : 0
   const likePercentage =
     displayedGame && totalVotes > 0 ? Math.round((displayedGame.likes / totalVotes) * 100) : 0
-
   if (!displayedGame) return null
+
+  const ageRating = displayedGame.ageRating || 'Not rated'
+  const deviceNames =
+    displayedGame.supportedDevices && displayedGame.supportedDevices.length > 0
+      ? displayedGame.supportedDevices.map((device) => getPlatformName(device)).join(' / ')
+      : 'Unknown devices'
 
   return (
     <Sheet isOpen={isOpen} onClose={onClose}>
@@ -346,39 +473,47 @@ const GameDetailsModal: React.FC<GameDetailsModalProps> = ({ isOpen, onClose, on
                     dragOffsetRef.current = diff
                     carouselRef.current.style.transform = `translateX(calc(-${carouselIndex * 100}% + ${diff}px))`
                   }}
-                  onMouseUp={() => {
-                    if (!isDragging) return
-                    setIsDragging(false)
-
-                    const threshold = 100
-                    const finalOffset = dragOffsetRef.current
-                    if (finalOffset > threshold && carouselIndex > 0) {
-                      setCarouselIndex((prev) => prev - 1)
-                    } else if (finalOffset < -threshold && carouselIndex < thumbnails.length - 1) {
-                      setCarouselIndex((prev) => prev + 1)
-                    }
-
-                    dragOffsetRef.current = 0
-                    if (carouselRef.current) {
-                      carouselRef.current.style.transition =
-                        'transform 500ms cubic-bezier(0.4, 0, 0.2, 1)'
-                      carouselRef.current.style.transform = `translateX(calc(-${carouselIndex * 100}%))`
-                    }
-                    startCarousel()
-                  }}
+                  onMouseUp={finishDrag}
                   onMouseLeave={() => {
                     if (isDragging) {
-                      setIsDragging(false)
-                      dragOffsetRef.current = 0
-                      if (carouselRef.current) {
-                        carouselRef.current.style.transition =
-                          'transform 500ms cubic-bezier(0.4, 0, 0.2, 1)'
-                        carouselRef.current.style.transform = `translateX(calc(-${carouselIndex * 100}%))`
-                      }
-                      startCarousel()
+                      finishDrag()
                     }
                   }}
                 >
+                  {showCarouselControls && (
+                    <>
+                      {canCarouselLeft && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleCarouselLeft()
+                          }}
+                          className="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 flex items-center justify-center bg-[var(--color-surface-muted)] hover:bg-[var(--color-surface-hover)] rounded-full shadow-lg transition-colors border border-[var(--color-border)]"
+                          aria-label="Previous screenshot"
+                        >
+                          <ChevronLeft size={22} className="text-[var(--color-text-primary)]" />
+                        </button>
+                      )}
+                      {canCarouselRight && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleCarouselRight()
+                          }}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 flex items-center justify-center bg-[var(--color-surface-muted)] hover:bg-[var(--color-surface-hover)] rounded-full shadow-lg transition-colors border border-[var(--color-border)]"
+                          aria-label="Next screenshot"
+                        >
+                          <ChevronRight size={22} className="text-[var(--color-text-primary)]" />
+                        </button>
+                      )}
+                      {canCarouselLeft && (
+                        <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-neutral-950 to-transparent z-10" />
+                      )}
+                      {canCarouselRight && (
+                        <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-neutral-950 to-transparent z-10" />
+                      )}
+                    </>
+                  )}
                   <div
                     ref={carouselRef}
                     className="flex h-full"
@@ -443,18 +578,30 @@ const GameDetailsModal: React.FC<GameDetailsModalProps> = ({ isOpen, onClose, on
                       <User size={16} />
                       <span className="text-sm font-medium flex items-center gap-1">
                         by{' '}
-                        <span
-                          className={
+                        <button
+                          onClick={handleCreatorClick}
+                          className={cn(
+                            'hover:underline focus:outline-none',
                             displayedGame.creatorHasVerifiedBadge
                               ? 'text-[#3385ff] flex items-center gap-1'
                               : 'text-white'
-                          }
+                          )}
                         >
                           {displayedGame.creatorName}
                           {displayedGame.creatorHasVerifiedBadge && (
                             <VerifiedIcon width={14} height={14} />
                           )}
-                        </span>
+                        </button>
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-neutral-900 text-xs text-neutral-200 border border-neutral-800">
+                        <Shield size={14} className="text-neutral-400" />
+                        Age: {ageRating}
+                      </span>
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-neutral-900 text-xs text-neutral-200 border border-neutral-800">
+                        <MonitorSmartphone size={14} className="text-neutral-400" />
+                        {deviceNames}
                       </span>
                     </div>
                   </div>
@@ -471,6 +618,39 @@ const GameDetailsModal: React.FC<GameDetailsModalProps> = ({ isOpen, onClose, on
                     <Play fill="currentColor" size={20} />
                     <span>Play Now</span>
                   </button>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <button
+                      onClick={handleJoinFriends}
+                      className={cn(
+                        'w-full px-3 py-2 rounded-lg border border-neutral-800 bg-neutral-900 text-sm flex items-center justify-center gap-2 transition-colors',
+                        hasFriendsPlaying
+                          ? 'hover:bg-neutral-800 text-white'
+                          : 'text-neutral-500 cursor-not-allowed'
+                      )}
+                    >
+                      <Users size={16} />
+                      <span>{hasFriendsPlaying ? 'Join friends' : 'No friends playing'}</span>
+                    </button>
+                    <button
+                      onClick={handleRejoinLastServer}
+                      className={cn(
+                        'w-full px-3 py-2 rounded-lg border border-neutral-800 bg-neutral-900 text-sm flex items-center justify-center gap-2 transition-colors',
+                        lastServerJobId
+                          ? 'hover:bg-neutral-800 text-white'
+                          : 'text-neutral-500 cursor-not-allowed'
+                      )}
+                    >
+                      <Clock size={16} />
+                      <span>{lastServerJobId ? 'Rejoin last server' : 'No recent server'}</span>
+                    </button>
+                    <button
+                      onClick={handleCopyLink}
+                      className="w-full px-3 py-2 rounded-lg border border-neutral-800 bg-neutral-900 text-sm flex items-center justify-center gap-2 transition-colors hover:bg-neutral-800 text-white"
+                    >
+                      <Link2 size={16} />
+                      <span>Copy link</span>
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -683,6 +863,7 @@ const GameDetailsModal: React.FC<GameDetailsModalProps> = ({ isOpen, onClose, on
                           <GamePassCard
                             key={pass.id}
                             pass={pass}
+                            account={account}
                             showNotification={showNotification}
                           />
                         ))}
@@ -701,6 +882,20 @@ const GameDetailsModal: React.FC<GameDetailsModalProps> = ({ isOpen, onClose, on
         onClose={() => setContextMenu(null)}
         onSaveImage={handleSaveImage}
       />
+
+      <UniversalProfileModal
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+        userId={selectedCreatorId}
+        selectedAccount={account || null}
+      />
+
+      <GroupDetailsModal
+        isOpen={isGroupModalOpen}
+        onClose={() => setIsGroupModalOpen(false)}
+        groupId={typeof selectedCreatorId === 'number' ? selectedCreatorId : null}
+        selectedAccount={account || null}
+      />
     </Sheet>
   )
 }
@@ -708,14 +903,22 @@ const GameDetailsModal: React.FC<GameDetailsModalProps> = ({ isOpen, onClose, on
 // Game Pass Card Component
 const GamePassCard: React.FC<{
   pass: GamePass
+  account?: Account | null
   showNotification: (message: string, type: 'success' | 'error' | 'warning' | 'info') => void
-}> = ({ pass, showNotification }) => {
+}> = ({ pass, account, showNotification }) => {
   const [imageUrl, setImageUrl] = useState<string>('')
   const [isPurchasing, setIsPurchasing] = useState(false)
-  const [isOwned, _setIsOwned] = useState(pass.isOwned)
+  const [isOwned, setIsOwned] = useState(pass.isOwned)
+  const [showConfirm, setShowConfirm] = useState(false)
+  const [purchaseSuccess, setPurchaseSuccess] = useState<{
+    name: string
+    creator: string
+    price: number | string
+    thumbnailUrl: string
+  } | null>(null)
+  const [purchaseError, setPurchaseError] = useState<string | null>(null)
 
   useEffect(() => {
-    // Fetch thumbnail for game pass icon via Roblox thumbnails API
     if (pass.displayIconImageAssetId) {
       fetch(
         `https://thumbnails.roblox.com/v1/assets?assetIds=${pass.displayIconImageAssetId}&size=150x150&format=Png&isCircular=false`
@@ -727,31 +930,86 @@ const GamePassCard: React.FC<{
           }
         })
         .catch(() => {
-          // Fallback - won't load but at least won't error
           console.error('Failed to load game pass thumbnail')
         })
     }
   }, [pass.displayIconImageAssetId])
 
-  const handlePurchase = async () => {
-    if (!pass.price || isOwned) return
+  const handleOpenConfirm = () => {
+    if (isOwned) return
+    if (pass.price === null) {
+      showNotification('This game pass is not currently for sale', 'warning')
+      return
+    }
+    if (!account?.cookie) {
+      showNotification('Select an account with a valid cookie to purchase', 'error')
+      return
+    }
+    setPurchaseError(null)
+    setShowConfirm(true)
+  }
+
+  const handleConfirmPurchase = async () => {
+    if (!account?.cookie || pass.price === null) return
 
     setIsPurchasing(true)
+    setPurchaseError(null)
+
+    const sellerId = pass.creator?.creatorId
+    if (!sellerId) {
+      const message = 'Unable to determine seller for this game pass'
+      setPurchaseError(message)
+      showNotification(message, 'error')
+      setIsPurchasing(false)
+      setShowConfirm(false)
+      return
+    }
+    const idempotencyKey =
+      typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+        ? crypto.randomUUID()
+        : undefined
+
     try {
-      // Open the Roblox game pass page in browser for purchase
-      window.open(`https://www.roblox.com/game-pass/${pass.id}`, '_blank')
-      showNotification('Opening game pass page in browser...', 'info')
-    } catch (error) {
-      console.error('Failed to open game pass page:', error)
-      showNotification('Failed to open game pass page', 'error')
+      const result = await window.api.purchaseGamePass(
+        account.cookie,
+        pass.productId,
+        pass.price,
+        sellerId,
+        account.userId,
+        idempotencyKey
+      )
+
+      if (result?.purchased) {
+        setIsOwned(true)
+        setPurchaseSuccess({
+          name: pass.displayName || pass.name,
+          creator: pass.creator?.name || 'Unknown Creator',
+          price: pass.price,
+          thumbnailUrl: imageUrl
+        })
+        showNotification('Game pass purchased successfully', 'success')
+      } else {
+        const message =
+          result?.reason ||
+          result?.errorMessage ||
+          result?.shortMessage ||
+          result?.purchaseResult ||
+          'Failed to purchase game pass'
+        setPurchaseError(message)
+        showNotification(message, 'error')
+      }
+    } catch (error: any) {
+      const message = error?.message || 'Failed to purchase game pass'
+      setPurchaseError(message)
+      showNotification(message, 'error')
     } finally {
       setIsPurchasing(false)
+      setShowConfirm(false)
     }
   }
 
   return (
     <div className="bg-neutral-900/50 border border-neutral-800/50 rounded-lg p-3 flex gap-3 hover:bg-neutral-900 transition-colors">
-      {/* Icon */}
       <div className="w-16 h-16 rounded-lg bg-neutral-800 overflow-hidden flex-shrink-0">
         {imageUrl ? (
           <img src={imageUrl} alt={pass.displayName} className="w-full h-full object-cover" />
@@ -762,7 +1020,6 @@ const GamePassCard: React.FC<{
         )}
       </div>
 
-      {/* Info */}
       <div className="flex-1 min-w-0 flex flex-col justify-center">
         <h4 className="text-sm font-semibold text-white truncate">{pass.displayName}</h4>
         {pass.displayDescription && (
@@ -770,7 +1027,6 @@ const GamePassCard: React.FC<{
         )}
       </div>
 
-      {/* Price & Buy Button */}
       <div className="flex flex-col items-end justify-center gap-1 flex-shrink-0">
         {isOwned ? (
           <div className="flex items-center gap-1 px-3 py-1.5 bg-emerald-500/20 border border-emerald-500/30 rounded-lg text-emerald-400">
@@ -779,7 +1035,7 @@ const GamePassCard: React.FC<{
           </div>
         ) : pass.price !== null ? (
           <button
-            onClick={handlePurchase}
+            onClick={handleOpenConfirm}
             disabled={isPurchasing}
             className="flex items-center gap-1.5 px-3 py-1.5 bg-[rgba(var(--accent-color-rgb),0.15)] hover:bg-[rgba(var(--accent-color-rgb),0.25)] border border-[var(--accent-color-border)] rounded-lg text-[var(--accent-color)] transition-colors disabled:opacity-50"
           >
@@ -790,6 +1046,66 @@ const GamePassCard: React.FC<{
           <span className="text-xs text-neutral-500">Not for sale</span>
         )}
       </div>
+
+      <Dialog isOpen={showConfirm} onClose={() => !isPurchasing && setShowConfirm(false)}>
+        <DialogContent className="max-w-sm">
+          <DialogBody className="space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-lg overflow-hidden bg-neutral-900 border border-neutral-800 flex items-center justify-center">
+                {imageUrl ? (
+                  <img src={imageUrl} alt={pass.displayName} className="w-full h-full object-cover" />
+                ) : (
+                  <ShoppingBag size={24} className="text-neutral-600" />
+                )}
+              </div>
+              <div>
+                <p className="text-sm text-neutral-400">Confirm Purchase</p>
+                <p className="text-base font-semibold text-white truncate">{pass.displayName}</p>
+              </div>
+            </div>
+
+            <div className="text-sm text-neutral-300">
+              Buy this game pass for{' '}
+              <span className="inline-flex items-center gap-1 font-semibold text-emerald-400">
+                {pass.price?.toLocaleString()}
+                <RobuxIcon className="w-4 h-4" />
+              </span>
+              ?
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <Button variant="outline" className="flex-1" disabled={isPurchasing} onClick={() => setShowConfirm(false)}>
+                Cancel
+              </Button>
+              <Button
+                className="flex-1"
+                disabled={isPurchasing}
+                onClick={handleConfirmPurchase}
+              >
+                {isPurchasing && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                {isPurchasing ? 'Purchasing...' : 'Confirm'}
+              </Button>
+            </div>
+          </DialogBody>
+        </DialogContent>
+      </Dialog>
+
+      {purchaseSuccess && (
+        <PurchaseSuccessDialog
+          isOpen={!!purchaseSuccess}
+          onClose={() => setPurchaseSuccess(null)}
+          assetName={purchaseSuccess.name}
+          creatorName={purchaseSuccess.creator}
+          price={purchaseSuccess.price}
+          thumbnailUrl={purchaseSuccess.thumbnailUrl}
+        />
+      )}
+
+      <PurchaseErrorDialog
+        isOpen={!!purchaseError}
+        onClose={() => setPurchaseError(null)}
+        errorMessage={purchaseError || ''}
+      />
     </div>
   )
 }

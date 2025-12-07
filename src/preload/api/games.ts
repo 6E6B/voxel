@@ -6,6 +6,16 @@ import * as S from '../../shared/ipc-schemas'
 // GAMES API
 // ============================================================================
 
+const gamePassPurchaseResponseSchema = z
+  .object({
+    purchased: z.boolean().optional(),
+    reason: z.string().optional(),
+    errorMessage: z.string().optional(),
+    shortMessage: z.string().optional(),
+    statusCode: z.number().optional()
+  })
+  .passthrough()
+
 export const gamesApi = {
   getGameSorts: (sessionId?: string) => invoke('get-game-sorts', z.array(z.any()), sessionId),
   getGamesInSort: (sortId: string, sessionId?: string) =>
@@ -18,6 +28,8 @@ export const gamesApi = {
     invoke('get-game-thumbnail-16x9', z.array(z.string()), universeId),
   searchGames: (query: string, sessionId?: string) =>
     invoke('search-games', z.array(z.any()), query, sessionId),
+  getRecentlyPlayedGames: (sessionId?: string) =>
+    invoke('get-recently-played-games', z.array(z.any()), sessionId),
   launchGame: (
     cookie: string,
     placeId: string | number,
@@ -53,10 +65,28 @@ export const gamesApi = {
     invoke('get-regions-batch', S.regionsBatchSchema, addresses),
   getGameSocialLinks: (universeId: number) =>
     invoke('get-game-social-links', z.array(z.any()), universeId),
-  voteOnGame: (universeId: number, vote: boolean) =>
-    invoke('vote-on-game', z.any(), universeId, vote),
+  voteOnGame: (placeId: number, vote: boolean | null) =>
+    invoke('vote-on-game', z.any(), placeId, vote),
   getGamePasses: (universeId: number) =>
     invoke('get-game-passes', S.gamePassesResponseSchema, universeId),
+  purchaseGamePass: (
+    cookie: string,
+    productId: number,
+    expectedPrice: number,
+    expectedSellerId: number,
+    expectedPurchaserId?: string,
+    idempotencyKey?: string
+  ) =>
+    invoke(
+      'purchase-game-pass',
+      gamePassPurchaseResponseSchema,
+      cookie,
+      productId,
+      expectedPrice,
+      expectedSellerId,
+      expectedPurchaserId,
+      idempotencyKey
+    ),
   saveGameImage: (imageUrl: string, gameName: string) =>
     invoke('save-game-image', S.downloadResultSchema, imageUrl, gameName)
 }

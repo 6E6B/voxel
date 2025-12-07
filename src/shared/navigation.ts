@@ -10,6 +10,7 @@ export const SIDEBAR_TAB_IDS = [
   'Games',
   'Catalog',
   'Inventory',
+  'Transactions',
   'Install',
   'Logs',
   'Settings'

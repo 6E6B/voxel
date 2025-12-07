@@ -115,10 +115,14 @@ const AccessoryDetailsModal: React.FC<AccessoryDetailsModalProps> = ({
       account && account.cookie ? { cookie: account.cookie } : null
     )
 
-  const { isTryingOn, tryOnLoading, tryOnImageUrl, handleTryOn, handleRevertTryOn } = useTryOn(
-    currentAssetId,
-    account
-  )
+  const {
+    isTryingOn,
+    tryOnLoading,
+    tryOnImageUrl,
+    tryOnManifestUrl,
+    handleTryOn,
+    handleRevertTryOn
+  } = useTryOn(currentAssetId, account)
 
   // Resale data query - TanStack Query handles fetching automatically
   const isLimitedForResale = details?.isLimited || details?.isLimitedUnique
@@ -340,6 +344,7 @@ const AccessoryDetailsModal: React.FC<AccessoryDetailsModalProps> = ({
                   assetName={details.name || 'Unknown Asset'}
                   isTryingOn={isTryingOn}
                   tryOnImageUrl={tryOnImageUrl}
+                  tryOnManifestUrl={tryOnManifestUrl}
                   tryOnLoading={tryOnLoading}
                   cookie={account?.cookie}
                   onViewModeChange={setViewMode}

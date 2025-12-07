@@ -31,7 +31,16 @@ export const avatarApi = {
   setPlayerAvatarType: (cookie: string, playerAvatarType: 'R6' | 'R15') =>
     invoke('set-player-avatar-type', S.successResponseSchema, cookie, playerAvatarType),
   renderAvatarPreview: (cookie: string, userId: number, assetId: number) =>
-    invoke('render-avatar-preview', z.object({ imageUrl: z.string() }), cookie, userId, assetId),
+    invoke(
+      'render-avatar-preview',
+      z.object({
+        imageUrl: z.string(),
+        renderType: z.enum(['2d', '3d']).optional()
+      }),
+      cookie,
+      userId,
+      assetId
+    ),
   getBatchThumbnails: (targetIds: number[], type?: 'Asset' | 'Outfit' | 'BadgeIcon') =>
     invoke('get-batch-thumbnails', S.thumbnailBatchSchema, targetIds, type),
   getUserOutfits: (cookie: string, userId: number, isEditable: boolean, page: number) =>

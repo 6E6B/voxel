@@ -1125,7 +1125,7 @@ export class RobloxAvatarService {
     cookie: string,
     userId: number,
     assetIdToTryOn: number
-  ): Promise<{ imageUrl: string }> {
+  ): Promise<{ imageUrl: string; renderType: '2d' | '3d' }> {
     // Get the user's current avatar definition
     const currentAvatar = await this.getCurrentAvatar(cookie, userId)
 
@@ -1235,51 +1235,21 @@ export class RobloxAvatarService {
       body: payload
     })
 
+    let finalImageUrl = renderResponse.imageUrl
+    let finalState = renderResponse.state
+
     // If already complete, return immediately
-    if (renderResponse.state === 'Completed' && renderResponse.imageUrl) {
-      return { imageUrl: renderResponse.imageUrl }
+    if (finalState === 'Completed' && finalImageUrl) {
+      return this.normalizeRenderResult(finalImageUrl)
     }
 
-    // Poll for completion using the thumbnails batch API
-    // The render creates a thumbnail that can be fetched via the batch endpoint
+    // Poll the render endpoint until it completes to avoid returning stale thumbnails
     const maxAttempts = 20
     const pollInterval = 1000 // ms - give more time between polls
 
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
       await this.sleep(pollInterval)
 
-      // Use the thumbnails batch API to check if the render is complete
-      // Request type "AvatarHeadShot" or use the avatar thumbnail endpoint
-      try {
-        const thumbnailResponse = await request(thumbnailBatchSchema, {
-          method: 'POST',
-          url: 'https://thumbnails.roblox.com/v1/batch',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: [
-            {
-              requestId: `render_${userId}_${assetIdToTryOn}`,
-              targetId: userId,
-              type: 'AvatarHeadShot',
-              size: '420x420',
-              format: 'png',
-              isCircular: false
-            }
-          ]
-        })
-
-        if (thumbnailResponse.data && thumbnailResponse.data.length > 0) {
-          const entry = thumbnailResponse.data[0]
-          if (entry.state === 'Completed' && entry.imageUrl) {
-            return { imageUrl: entry.imageUrl }
-          }
-        }
-      } catch (pollError) {
-        console.warn('[RobloxAvatarService] Poll error:', pollError)
-      }
-
-      // Also try re-posting to the render endpoint to check status (without CSRF retry)
       try {
         const statusResponse = await request(avatarRenderResponseSchema, {
           method: 'POST',
@@ -1291,8 +1261,13 @@ export class RobloxAvatarService {
           body: payload
         })
 
-        if (statusResponse.state === 'Completed' && statusResponse.imageUrl) {
-          return { imageUrl: statusResponse.imageUrl }
+        finalState = statusResponse.state
+        if (statusResponse.imageUrl) {
+          finalImageUrl = statusResponse.imageUrl
+        }
+
+        if (statusResponse.state === 'Completed' && finalImageUrl) {
+          break
         }
 
         if (statusResponse.state === 'Error') {
@@ -1306,7 +1281,28 @@ export class RobloxAvatarService {
       }
     }
 
-    throw new Error('Avatar render timed out')
+    if (!finalImageUrl) {
+      throw new Error('Avatar render timed out')
+    }
+
+    return this.normalizeRenderResult(finalImageUrl)
+  }
+
+  private static normalizeRenderResult(imageUrl: string): {
+    imageUrl: string
+    renderType: '2d' | '3d'
+  } {
+    const is3D = this.is3DManifestUrl(imageUrl)
+    return { imageUrl, renderType: is3D ? '3d' : '2d' }
+  }
+
+  private static is3DManifestUrl(imageUrl: string) {
+    const normalized = imageUrl.toLowerCase()
+    return (
+      normalized.endsWith('.json') ||
+      normalized.includes('avatar-3d') ||
+      normalized.includes('thumbnail-3d')
+    )
   }
 
   private static sleep(ms: number): Promise<void> {

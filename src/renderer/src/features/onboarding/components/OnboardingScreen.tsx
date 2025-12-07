@@ -58,10 +58,10 @@ const OnboardingScreen: React.FC = () => {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0, scale: 1.1, filter: 'blur(10px)' }}
       transition={{ duration: 0.5 }}
-      className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-black overflow-hidden"
+      className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-[var(--color-app-bg)] overflow-hidden"
     >
       {/* Background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-neutral-900 via-black to-neutral-900" />
+      <div className="absolute inset-0 bg-gradient-to-br from-[var(--color-surface-strong)] via-[var(--color-app-bg)] to-[var(--color-surface-strong)]" />
 
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">

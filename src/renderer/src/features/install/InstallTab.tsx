@@ -86,6 +86,7 @@ const InstallTab: React.FC = () => {
 
   const [detectedInstallations, setDetectedInstallations] = useState<DetectedInstallation[]>([])
 
+  const [isCheckingUpdate, setIsCheckingUpdate] = useState<string | null>(null)
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean
     title: string
@@ -280,14 +281,14 @@ const InstallTab: React.FC = () => {
   }
 
   const handleDelete = (install: UnifiedInstallation) => {
-    if (install.isSystem) {
-      showNotification('Cannot delete system installation', 'error')
-      return
-    }
+    const message = install.isSystem
+      ? `This will remove the default Roblox installation detected at "${install.path}". This action cannot be undone.`
+      : `Are you sure you want to delete "${install.name}"? This action cannot be undone.`
+
     setConfirmModal({
       isOpen: true,
       title: 'Delete Installation',
-      message: `Are you sure you want to delete "${install.name}"? This action cannot be undone.`,
+      message,
       isDangerous: true,
       confirmText: 'Delete',
       onConfirm: async () => {
@@ -299,9 +300,42 @@ const InstallTab: React.FC = () => {
           console.error('Uninstall failed', e)
           showNotification('Failed to delete installation files', 'error')
         }
-        removeInstallation(install.id)
+        if (install.isSystem) {
+          setDetectedInstallations((prev) =>
+            prev.filter((d) => d.path.toLowerCase() !== install.path.toLowerCase())
+          )
+        } else {
+          removeInstallation(install.id)
+        }
       }
     })
+  }
+
+  const handleCheckForUpdates = async (install: UnifiedInstallation) => {
+    if (isCheckingUpdate) return
+
+    const binaryType = install.original?.binaryType ?? install.binaryType
+    setIsCheckingUpdate(install.id)
+
+    try {
+      // Use the install IPC directly to avoid clashing with the app updater API
+      // @ts-ignore
+      const result = await window.electron.ipcRenderer.invoke(
+        'check-for-updates',
+        getApiType(binaryType),
+        install.version
+      )
+
+      if (result?.hasUpdate) {
+        showNotification(`Update available: ${result.latestVersion}`, 'info')
+      } else {
+        showNotification('This installation is up to date', 'success')
+      }
+    } catch (e) {
+      showNotification('Failed to check for updates: ' + e, 'error')
+    } finally {
+      setIsCheckingUpdate(null)
+    }
   }
 
   const handleLaunch = async (install: UnifiedInstallation) => {
@@ -787,26 +821,38 @@ const InstallTab: React.FC = () => {
                       onClick: () => contextMenu.install && setShowConfigModal(contextMenu.install)
                     },
                     {
+                      label:
+                        isCheckingUpdate === contextMenu.install?.id
+                          ? 'Checking...'
+                          : 'Check for Updates',
+                      icon: (
+                        <RefreshCw
+                          size={14}
+                          className={
+                            isCheckingUpdate === contextMenu.install?.id ? 'animate-spin' : ''
+                          }
+                        />
+                      ),
+                      onClick: () =>
+                        contextMenu.install && handleCheckForUpdates(contextMenu.install)
+                    },
+                    {
                       label: 'Verify Files',
                       icon: <RefreshCw size={14} />,
                       onClick: () => contextMenu.install && handleVerify(contextMenu.install)
                     }
                   ]
                 },
-                ...(!contextMenu.install.isSystem
-                  ? [
-                      {
-                        items: [
-                          {
-                            label: 'Delete',
-                            icon: <Trash2 size={14} />,
-                            onClick: () => contextMenu.install && handleDelete(contextMenu.install),
-                            variant: 'danger' as const
-                          }
-                        ]
-                      }
-                    ]
-                  : [])
+                {
+                  items: [
+                    {
+                      label: 'Delete',
+                      icon: <Trash2 size={14} />,
+                      onClick: () => contextMenu.install && handleDelete(contextMenu.install),
+                      variant: 'danger' as const
+                    }
+                  ]
+                }
               ]
             : []
         }

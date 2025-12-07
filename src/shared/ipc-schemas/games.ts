@@ -183,7 +183,7 @@ export const voteResponseSchema = z.object({
       upVotes: z.number(),
       downVotes: z.number(),
       canVote: z.boolean(),
-      userVote: z.boolean(),
+      userVote: z.boolean().nullable(),
       hasVoted: z.boolean(),
       reasonForNotVoteable: z.string().optional()
     })

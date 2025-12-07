@@ -71,6 +71,13 @@ export const InventoryFilterSidebar = ({
   onClearAll,
   hasActiveFilters
 }: InventoryFilterSidebarProps) => {
+  const isAllCategoriesSelected = !selectedCategory && !selectedSubcategory
+
+  const handleSelectAllCategories = () => {
+    onCategoryChange(null)
+    onSubcategoryChange(null)
+  }
+
   // Category Tree Item
   const CategoryItem = ({ category }: { category: InventoryCategory }) => {
     const isSelected = selectedCategory?.categoryId === category.categoryId && !selectedSubcategory
@@ -83,13 +90,12 @@ export const InventoryFilterSidebar = ({
     }, [isParentOfSelected])
 
     const handleCategoryClick = () => {
+      onCategoryChange(category)
+      onSubcategoryChange(null)
+
       if (category.subcategories.length > 0) {
         // For categories with subcategories, only toggle expansion (dropdown behavior)
         setIsExpanded(!isExpanded)
-      } else {
-        // For categories without subcategories, select the category
-        onCategoryChange(category)
-        onSubcategoryChange(null)
       }
     }
 
@@ -174,6 +180,17 @@ export const InventoryFilterSidebar = ({
             Categories
           </div>
           <div className="space-y-0.5">
+            <button
+              onClick={handleSelectAllCategories}
+              className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm transition-all border ${
+                isAllCategoriesSelected
+                  ? 'bg-[var(--color-surface-hover)] border-[var(--color-border-strong)] text-[var(--color-text-primary)] font-medium shadow-[0_10px_30px_rgba(0,0,0,0.22)]'
+                  : 'border-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-hover)] hover:border-[var(--color-border-strong)]'
+              }`}
+            >
+              <span className="w-3.5" /> {/* Spacer to align with chevron */}
+              <span className="truncate text-left flex-1">All Categories</span>
+            </button>
             {categories.map((cat) => (
               <CategoryItem key={cat.categoryId} category={cat} />
             ))}

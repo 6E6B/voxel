@@ -1,5 +1,5 @@
 import React from 'react'
-import { Heart, MessageCircle, Repeat, Share, MoreHorizontal, BadgeCheck } from 'lucide-react'
+import { Heart, Repeat, MoreHorizontal, BadgeCheck } from 'lucide-react'
 import { Avatar, AvatarImage, AvatarFallback } from '../../../components/UI/display/Avatar'
 import { Card } from '../../../components/UI/display/Card'
 import { cn } from '../../../lib/utils'

@@ -199,10 +199,7 @@ const UserProfileView: React.FC<ProfileViewProps> = ({
 
   const { profile } = useProfileData({ userId: userIdNum, requestCookie, initialData })
   const { sortedFriends } = useFriendStatuses(userIdNum, requestCookie)
-  const { data: profilePlatform, isLoading: isLoadingProfilePlatform } = useUserProfilePlatform(
-    userIdNum,
-    requestCookie
-  )
+  const { data: profilePlatform } = useUserProfilePlatform(userIdNum, requestCookie)
 
   const { data: groups = [], isLoading: isLoadingGroups } = useUserGroups(userIdNum)
   const { data: collections = [], isLoading: isLoadingCollections } = useUserCollections(

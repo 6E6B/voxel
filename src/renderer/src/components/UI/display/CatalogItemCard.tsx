@@ -292,6 +292,72 @@ export const CatalogItemCard = ({
           </h3>
         )}
 
+        {!isCompact && (
+          <div className="flex items-center justify-between text-[11px] text-[var(--color-text-muted)]">
+            {/* Creator */}
+            <div className="flex items-center gap-1 truncate max-w-[70%]">
+              {item.creatorTargetId && onCreatorClick ? (
+                isCreatorTruncated ? (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        ref={creatorRef as React.RefObject<HTMLButtonElement>}
+                        type="button"
+                        onClick={handleCreatorClick}
+                        className={`truncate text-left hover:text-[var(--color-text-primary)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--focus-ring)] rounded-sm transition-colors text-xs ${item.creatorHasVerifiedBadge ? 'text-[var(--accent-color)] font-medium' : 'text-[var(--color-text-muted)]'}`}
+                      >
+                        {item.creatorName}
+                      </button>
+                    </TooltipTrigger>
+                    {item.creatorName && <TooltipContent>{item.creatorName}</TooltipContent>}
+                  </Tooltip>
+                ) : (
+                  <button
+                    ref={creatorRef as React.RefObject<HTMLButtonElement>}
+                    type="button"
+                    onClick={handleCreatorClick}
+                    className={`truncate text-left hover:text-[var(--color-text-primary)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--focus-ring)] rounded-sm transition-colors text-xs ${item.creatorHasVerifiedBadge ? 'text-[var(--accent-color)] font-medium' : 'text-[var(--color-text-muted)]'}`}
+                  >
+                    {item.creatorName}
+                  </button>
+                )
+              ) : isCreatorTruncated ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span
+                      ref={creatorRef as React.RefObject<HTMLSpanElement>}
+                      className={`truncate text-xs ${item.creatorHasVerifiedBadge ? 'text-[var(--accent-color)] font-medium' : 'text-[var(--color-text-muted)]'}`}
+                    >
+                      {item.creatorName}
+                    </span>
+                  </TooltipTrigger>
+                  {item.creatorName && <TooltipContent>{item.creatorName}</TooltipContent>}
+                </Tooltip>
+              ) : (
+                <span
+                  ref={creatorRef as React.RefObject<HTMLSpanElement>}
+                className={`truncate text-xs ${item.creatorHasVerifiedBadge ? 'text-[var(--accent-color)] font-medium' : 'text-[var(--color-text-muted)]'}`}
+                >
+                  {item.creatorName}
+                </span>
+              )}
+              {item.creatorHasVerifiedBadge && (
+                <VerifiedIcon width={14} height={14} className="shrink-0" />
+              )}
+            </div>
+
+            {/* Favorite Count */}
+            {item.favoriteCount !== undefined && item.favoriteCount > 0 && (
+              <div className="flex items-center gap-1.5 shrink-0">
+                <Star size={16} className="text-[var(--color-text-muted)]" />
+                <span className="text-xs text-[var(--color-text-secondary)]">
+                  {formatNumber(item.favoriteCount)}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="flex items-center justify-between">
           {/* Price */}
           {isPriceTruncated ? (
@@ -354,72 +420,6 @@ export const CatalogItemCard = ({
             </div>
           )}
         </div>
-
-        {!isCompact && (
-          <div className="flex items-center justify-between text-[11px] text-[var(--color-text-muted)]">
-            {/* Creator */}
-            <div className="flex items-center gap-1 truncate max-w-[70%]">
-              {item.creatorTargetId && onCreatorClick ? (
-                isCreatorTruncated ? (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        ref={creatorRef as React.RefObject<HTMLButtonElement>}
-                        type="button"
-                        onClick={handleCreatorClick}
-                        className={`truncate text-left hover:text-[var(--color-text-primary)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--focus-ring)] rounded-sm transition-colors text-xs ${item.creatorHasVerifiedBadge ? 'text-[var(--accent-color)] font-bold' : 'text-[var(--color-text-muted)]'}`}
-                      >
-                        {item.creatorName}
-                      </button>
-                    </TooltipTrigger>
-                    {item.creatorName && <TooltipContent>{item.creatorName}</TooltipContent>}
-                  </Tooltip>
-                ) : (
-                  <button
-                    ref={creatorRef as React.RefObject<HTMLButtonElement>}
-                    type="button"
-                    onClick={handleCreatorClick}
-                    className={`truncate text-left hover:text-[var(--color-text-primary)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--focus-ring)] rounded-sm transition-colors text-xs ${item.creatorHasVerifiedBadge ? 'text-[var(--accent-color)] font-bold' : 'text-[var(--color-text-muted)]'}`}
-                  >
-                    {item.creatorName}
-                  </button>
-                )
-              ) : isCreatorTruncated ? (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span
-                      ref={creatorRef as React.RefObject<HTMLSpanElement>}
-                      className={`truncate text-xs ${item.creatorHasVerifiedBadge ? 'text-[var(--accent-color)] font-bold' : 'text-[var(--color-text-muted)]'}`}
-                    >
-                      {item.creatorName}
-                    </span>
-                  </TooltipTrigger>
-                  {item.creatorName && <TooltipContent>{item.creatorName}</TooltipContent>}
-                </Tooltip>
-              ) : (
-                <span
-                  ref={creatorRef as React.RefObject<HTMLSpanElement>}
-                  className={`truncate text-xs ${item.creatorHasVerifiedBadge ? 'text-[var(--accent-color)] font-bold' : 'text-[var(--color-text-muted)]'}`}
-                >
-                  {item.creatorName}
-                </span>
-              )}
-              {item.creatorHasVerifiedBadge && (
-                <VerifiedIcon width={14} height={14} className="shrink-0" />
-              )}
-            </div>
-
-            {/* Favorite Count */}
-            {item.favoriteCount !== undefined && item.favoriteCount > 0 && (
-              <div className="flex items-center gap-1.5 shrink-0">
-                <Star size={16} className="text-[var(--color-text-muted)]" />
-                <span className="text-xs font-mono text-[var(--color-text-secondary)]">
-                  {formatNumber(item.favoriteCount)}
-                </span>
-              </div>
-            )}
-          </div>
-        )}
       </div>
     </motion.div>
   )

@@ -72,7 +72,7 @@ export interface AccountApi {
     cookie: string,
     userId: number,
     assetId: number
-  ) => Promise<{ imageUrl: string }>
+  ) => Promise<{ imageUrl: string; renderType?: '2d' | '3d' }>
   openRobloxLoginWindow: () => Promise<string>
 }
 
@@ -172,6 +172,7 @@ export interface GamesApi {
   getGamesByPlaceIds: (placeIds: string[]) => Promise<any[]>
   getGamesByUniverseIds: (universeIds: number[]) => Promise<any[]>
   searchGames: (query: string, sessionId?: string) => Promise<any[]>
+  getRecentlyPlayedGames: (sessionId?: string) => Promise<any[]>
   launchGame: (
     cookie: string,
     placeId: string | number,
@@ -196,8 +197,16 @@ export interface GamesApi {
   getRegionsBatch: (addresses: string[]) => Promise<RegionLookup>
   getGameThumbnail16x9: (universeId: number) => Promise<string[]>
   getGameSocialLinks: (universeId: number) => Promise<any[]>
-  voteOnGame: (universeId: number, vote: boolean) => Promise<any>
+  voteOnGame: (placeId: number, vote: boolean | null) => Promise<any>
   getGamePasses: (universeId: number) => Promise<GamePassesResponse>
+  purchaseGamePass: (
+    cookie: string,
+    productId: number,
+    expectedPrice: number,
+    expectedSellerId: number,
+    expectedPurchaserId?: string,
+    idempotencyKey?: string
+  ) => Promise<any>
   saveGameImage: (
     imageUrl: string,
     gameName: string

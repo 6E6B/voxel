@@ -50,8 +50,7 @@ export function useCatalogSearch(params: CatalogItemsSearchParams, enabled = tru
     staleTime: 2 * 60 * 1000, // Keep data warm for tab switches
     gcTime: 10 * 60 * 1000, // Drop from cache after 10 minutes unused
     refetchOnMount: false,
-    refetchOnWindowFocus: false,
-    keepPreviousData: true
+    refetchOnWindowFocus: false
   })
 }
 

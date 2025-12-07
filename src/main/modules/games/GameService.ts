@@ -124,6 +124,44 @@ export class RobloxGameService {
     return this.hydrateGames(universeIds, validGames)
   }
 
+  static async getRecentlyPlayedGames(
+    cookie?: string,
+    sessionId: string = randomUUID(),
+    count: number = 40
+  ) {
+    if (!cookie) {
+      console.warn('[RobloxGameService] No cookie found for recently played games')
+      return []
+    }
+
+    try {
+      const result = await request(
+        z.object({
+          games: z.array(z.any()).optional(),
+          data: z.array(z.any()).optional()
+        }),
+        {
+          url: `https://games.roblox.com/v1/games/list?modelType=Played&count=${count}&sortFilter=LastPlayed&sessionId=${sessionId}`,
+          cookie
+        }
+      )
+
+      const games = result.games || result.data || []
+      if (!Array.isArray(games) || games.length === 0) return []
+
+      const universeIds = games
+        .map((g: any) => g.universeId)
+        .filter((id: any) => typeof id === 'number')
+
+      if (universeIds.length === 0) return []
+
+      return this.hydrateGames(universeIds, games)
+    } catch (error) {
+      console.error('Failed to fetch recently played games', error)
+      return []
+    }
+  }
+
   private static async hydrateGames(universeIds: number[], initialData: any[]) {
     if (universeIds.length === 0) return []
 
@@ -222,6 +260,14 @@ export class RobloxGameService {
       const d = detailsMap[g.universeId]
       const thumb = thumbnailsMap[g.universeId]
 
+      // Derive lightweight metadata when upstream does not provide explicit fields.
+      // Age rating is not exposed here; treat "All" genre as "All Ages", otherwise unknown.
+      const ageRating = d?.genre === 'All' || d?.isAllGenre ? 'All Ages' : 'Not rated'
+      // Roblox APIs used here do not expose device info; default to PC.
+      const supportedDevices = ['PC']
+      // Voice chat support not available from this endpoint.
+      const supportsVoiceChat = null
+
       return {
         id: g.universeId.toString(),
         universeId: g.universeId.toString(),
@@ -229,6 +275,7 @@ export class RobloxGameService {
         name: g.name,
         creatorName: d?.creator?.name || 'Unknown',
         creatorId: d?.creator?.id?.toString() || '',
+        creatorType: d?.creator?.type || '',
         playing: d?.playing || g.playerCount || 0,
         visits: d?.visits || g.totalVisits || 0,
         maxPlayers: d?.maxPlayers || 0,
@@ -239,7 +286,12 @@ export class RobloxGameService {
         thumbnailUrl: thumb || '',
         created: d?.created || '',
         updated: d?.updated || '',
-        creatorHasVerifiedBadge: d?.creator?.hasVerifiedBadge || false
+        creatorHasVerifiedBadge: d?.creator?.hasVerifiedBadge || false,
+        ageRating,
+        supportedDevices,
+        supportsVoiceChat,
+        lastServerJobId: null,
+        friendsPlayingCount: null
       }
     })
   }
@@ -531,10 +583,10 @@ export class RobloxGameService {
     }
   }
 
-  static async voteOnGame(universeId: number, vote: boolean, cookie: string) {
+  static async voteOnGame(placeId: number, vote: boolean | null, cookie: string) {
     try {
       const result = await requestWithCsrf(voteResponseSchema, {
-        url: `https://apis.roblox.com/voting-api/vote/asset/${universeId}?vote=${vote}`,
+        url: `https://apis.roblox.com/voting-api/vote/asset/${placeId}?vote=${vote}`,
         method: 'POST',
         cookie
       })
@@ -556,5 +608,50 @@ export class RobloxGameService {
       console.error('Failed to fetch game passes', e)
       return { gamePasses: [], nextPageToken: null }
     }
+  }
+
+  static async purchaseGamePass(
+    cookie: string,
+    productId: number,
+    expectedPrice: number,
+    expectedSellerId: number,
+    expectedPurchaserId?: string,
+    idempotencyKey?: string
+  ) {
+    const purchaseResponseSchema = z
+      .object({
+        purchased: z.boolean().optional(),
+        reason: z.string().optional(),
+        errorMessage: z.string().optional(),
+        shortMessage: z.string().optional(),
+        statusCode: z.number().optional()
+      })
+      .passthrough()
+
+    const body: Record<string, any> = {
+      expectedCurrency: 1,
+      expectedPrice,
+      expectedSellerId,
+      expectedSellerType: 'User'
+    }
+
+    if (expectedPurchaserId) {
+      body.expectedPurchaserId = Number(expectedPurchaserId)
+      body.expectedPurchaserType = 'User'
+    }
+
+    if (idempotencyKey) {
+      body.idempotencyKey = idempotencyKey
+    }
+
+    return requestWithCsrf(purchaseResponseSchema, {
+      method: 'POST',
+      url: `https://economy.roblox.com/v1/purchases/products/${productId}`,
+      cookie,
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body
+    })
   }
 }

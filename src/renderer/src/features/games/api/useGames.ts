@@ -43,6 +43,18 @@ export function useSearchGames(query: string, sessionId?: string) {
   })
 }
 
+// Fetch recently played games for the authenticated user (requires a cookie in main)
+export function useRecentlyPlayedGames(sessionId?: string) {
+  return useQuery({
+    queryKey: queryKeys.games.recentlyPlayed(),
+    queryFn: () => window.api.getRecentlyPlayedGames(sessionId) as Promise<Game[]>,
+    staleTime: 60 * 1000,
+    gcTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false
+  })
+}
+
 // Fetch games by place IDs (for favorites)
 export function useGamesByPlaceIds(placeIds: string[]) {
   return useQuery({

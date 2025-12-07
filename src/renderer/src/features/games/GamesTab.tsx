@@ -1,7 +1,6 @@
-import { useState, useEffect, useMemo, useRef, CSSProperties, useCallback } from 'react'
+import { useState, useEffect, useMemo, useRef, useCallback, CSSProperties } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Users, Star, Gamepad2, ThumbsUp, Play, X } from 'lucide-react'
-import { VirtuosoGrid } from 'react-virtuoso'
 import { Game } from '@renderer/types'
 import GameContextMenu from './UI/GameContextMenu'
 import { useNotification } from '@renderer/features/system/stores/useSnackbarStore'
@@ -14,6 +13,7 @@ import {
   TooltipProvider
 } from '@renderer/components/UI/display/Tooltip'
 import CustomDropdown, { DropdownOption } from '@renderer/components/UI/menus/CustomDropdown'
+import { HorizontalCarousel } from '@renderer/components/UI/navigation/HorizontalCarousel'
 import { SkeletonGameGrid } from '@renderer/components/UI/display/SkeletonGrid'
 import FavoriteParticles from '@renderer/components/UI/specialized/FavoriteParticles'
 import { EmptyState } from '@renderer/components/UI/feedback/EmptyState'
@@ -25,6 +25,7 @@ import {
   useSearchGames,
   useGamesByPlaceIds,
   useFavoriteGames,
+  useRecentlyPlayedGames,
   useAddFavoriteGame,
   useRemoveFavoriteGame
 } from '@renderer/hooks/queries'
@@ -35,7 +36,7 @@ interface GamesTabProps {
   onGameSelect: (game: Game) => void
 }
 
-const responsiveGridStyle: CSSProperties = {
+const gridStyle: CSSProperties = {
   gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))'
 }
 
@@ -334,6 +335,20 @@ const GameCard = ({
   )
 }
 
+const GameCardSkeleton = () => (
+  <div className="w-[220px] shrink-0 rounded-xl border border-neutral-800 bg-neutral-950/60 overflow-hidden animate-pulse">
+    <div className="aspect-square w-full bg-neutral-900" />
+    <div className="p-3 border-t border-neutral-800 space-y-2">
+      <div className="h-4 w-3/4 bg-neutral-800 rounded" />
+      <div className="h-3 w-1/2 bg-neutral-800 rounded" />
+      <div className="flex justify-between items-center pt-1">
+        <div className="h-3 w-16 bg-neutral-800 rounded" />
+        <div className="h-3 w-12 bg-neutral-800 rounded" />
+      </div>
+    </div>
+  </div>
+)
+
 const GamesTab = ({ onGameSelect }: GamesTabProps) => {
   const { showNotification } = useNotification()
   const openModal = useOpenModal()
@@ -385,6 +400,11 @@ const GamesTab = ({ onGameSelect }: GamesTabProps) => {
     isFavoritesMode ? favorites : []
   )
 
+  // Recently played games (requires at least one stored account with a cookie)
+  const { data: recentlyPlayedGames = [], isLoading: isRecentLoading } = useRecentlyPlayedGames(
+    sessionId
+  )
+
   // Compute final games list
   const games = useMemo(() => {
     if (isFavoritesMode) {
@@ -401,7 +421,7 @@ const GamesTab = ({ onGameSelect }: GamesTabProps) => {
     return sortGames
   }, [isFavoritesMode, isSearchMode, favoriteGames, searchGames, sortGames, debouncedSearchQuery])
 
-  const isLoading = isFavoritesMode
+  const isRecommendedLoading = isFavoritesMode
     ? isFavoritesLoading
     : isSearchMode
       ? isSearchLoading
@@ -507,7 +527,7 @@ const GamesTab = ({ onGameSelect }: GamesTabProps) => {
           <div className="flex items-center gap-4">
             <h1 className="text-xl font-bold text-white">Games</h1>
             <span className="flex items-center justify-center px-2.5 py-0.5 rounded-full bg-neutral-900 border border-neutral-800 text-xs font-semibold tracking-tight text-neutral-400">
-              {isLoading ? '...' : games.length.toLocaleString()}
+              {isRecommendedLoading ? '...' : games.length.toLocaleString()}
             </span>
           </div>
 
@@ -648,50 +668,114 @@ const GamesTab = ({ onGameSelect }: GamesTabProps) => {
         )}
 
         <div className="flex-1 overflow-y-auto p-6 scrollbar-thin">
-          <AnimatePresence>
-            {isLoading ? (
-              <SkeletonGameGrid count={15} gridStyle={responsiveGridStyle} />
-            ) : games.length === 0 ? (
-              <motion.div
-                key="empty"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.15 }}
-                className="flex items-center justify-center h-full"
-              >
+          <div className="flex flex-col gap-10">
+            <section>
+              {isRecentLoading ? (
+                <div className="flex gap-3 overflow-x-auto scrollbar-none pb-2">
+                  {Array.from({ length: 8 }).map((_, idx) => (
+                    <GameCardSkeleton key={`recent-skel-${idx}`} />
+                  ))}
+                </div>
+              ) : recentlyPlayedGames.length === 0 ? (
                 <EmptyState
                   icon={Gamepad2}
-                  title="No games found"
-                  description={searchQuery ? 'Try adjusting your search terms' : undefined}
+                  title="No recent games yet"
+                  description="Play a game to see it show up here."
                   variant="minimal"
                 />
-              </motion.div>
-            ) : (
-              <motion.div
-                key="games"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.15 }}
-                className="h-full"
-              >
-                <VirtuosoGrid
-                  totalCount={games.length}
-                  overscan={200}
-                  listClassName="grid gap-6 grid-cols-[repeat(auto-fill,minmax(220px,1fr))]"
-                  itemContent={(index) => {
-                    const game = games[index]
-                    return (
+              ) : (
+                <HorizontalCarousel
+                  title="Recently Played"
+                  titleExtra={
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-neutral-900 border border-neutral-800 text-neutral-400">
+                      {recentlyPlayedGames.length}
+                    </span>
+                  }
+                >
+                  {recentlyPlayedGames.map((game, index) => (
+                    <div key={game.id || `recent-${index}`} className="w-[220px] shrink-0">
                       <GameCard
-                        key={game.id || index}
                         game={game}
                         onGameSelect={onGameSelect}
-                        onContextMenu={(e, game) => {
+                        onContextMenu={(e, currentGame) => {
                           e.preventDefault()
                           setActiveContextMenu({
-                            id: game.id,
-                            placeId: game.placeId,
-                            universeId: game.universeId,
-                            isFavorite: Boolean(game.placeId && favorites.includes(game.placeId)),
+                            id: currentGame.id,
+                            placeId: currentGame.placeId,
+                            universeId: currentGame.universeId,
+                            isFavorite: Boolean(
+                              currentGame.placeId && favorites.includes(currentGame.placeId)
+                            ),
+                            x: e.clientX,
+                            y: e.clientY
+                          })
+                        }}
+                        formatPlayerCount={formatPlayerCount}
+                        isFavorite={Boolean(game.placeId && favorites.includes(game.placeId))}
+                        favoriteBurst={Boolean(
+                          game.placeId && favoriteGameBurstKeys[game.placeId]
+                        )}
+                      />
+                    </div>
+                  ))}
+                </HorizontalCarousel>
+              )}
+            </section>
+
+            <section>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-lg font-semibold text-white">
+                    {showFavorites ? 'Favorites' : isSearchMode ? 'Results' : 'Recommended'}
+                  </h2>
+                  {!isRecommendedLoading && (
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-neutral-900 border border-neutral-800 text-neutral-400">
+                      {games.length}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <AnimatePresence>
+                {isRecommendedLoading ? (
+                  <SkeletonGameGrid count={15} gridStyle={gridStyle} />
+                ) : games.length === 0 ? (
+                  <motion.div
+                    key="empty"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.15 }}
+                    className="flex items-center justify-center h-full"
+                  >
+                    <EmptyState
+                      icon={Gamepad2}
+                      title="No games found"
+                      description={searchQuery ? 'Try adjusting your search terms' : undefined}
+                      variant="minimal"
+                    />
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="games"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.15 }}
+                    className="grid gap-6 grid-cols-[repeat(auto-fill,minmax(220px,1fr))]"
+                  >
+                    {games.map((game, index) => (
+                      <GameCard
+                        key={game.id || `game-${index}`}
+                        game={game}
+                        onGameSelect={onGameSelect}
+                        onContextMenu={(e, currentGame) => {
+                          e.preventDefault()
+                          setActiveContextMenu({
+                            id: currentGame.id,
+                            placeId: currentGame.placeId,
+                            universeId: currentGame.universeId,
+                            isFavorite: Boolean(
+                              currentGame.placeId && favorites.includes(currentGame.placeId)
+                            ),
                             x: e.clientX,
                             y: e.clientY
                           })
@@ -700,12 +784,12 @@ const GamesTab = ({ onGameSelect }: GamesTabProps) => {
                         isFavorite={Boolean(game.placeId && favorites.includes(game.placeId))}
                         favoriteBurst={Boolean(game.placeId && favoriteGameBurstKeys[game.placeId])}
                       />
-                    )
-                  }}
-                />
-              </motion.div>
-            )}
-          </AnimatePresence>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </section>
+          </div>
         </div>
 
         <GameContextMenu

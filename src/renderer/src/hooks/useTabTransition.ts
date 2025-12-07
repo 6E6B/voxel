@@ -7,6 +7,11 @@ type TransitionRoot =
   | Document
   | (HTMLElement & { startViewTransition?: Document['startViewTransition'] })
 
+const isViewTransitionCapable = (
+  el: HTMLElement
+): el is HTMLElement & { startViewTransition?: Document['startViewTransition'] } =>
+  'startViewTransition' in el
+
 const prefersReducedMotion = () => {
   if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -17,7 +22,7 @@ const getTransitionRoot = (): TransitionRoot | null => {
 
   // Prefer the tab surface for scoped transitions when supported
   const scopedSurface = document.querySelector<HTMLElement>('.tab-transition-surface')
-  if (scopedSurface && 'startViewTransition' in scopedSurface) {
+  if (scopedSurface && isViewTransitionCapable(scopedSurface)) {
     return scopedSurface
   }
 

@@ -151,43 +151,12 @@ function SlidingNumber({
 
   const isInView = !inView || inViewResult
 
-  const effectiveNumber = React.useMemo(
+  const rawNumber = React.useMemo(
     () => (!isInView ? 0 : Math.abs(Number(number))),
     [number, isInView]
   )
 
-  // Initialize with the current value to prevent animation on mount/remount
-  const targetValue = useMotionValue(effectiveNumber)
-  const animatedValue = useSpring(targetValue, transition)
-  const isInitialMountRef = React.useRef(true)
-  const previousValueRef = React.useRef<number>(effectiveNumber)
-
-  React.useEffect(() => {
-    // On initial mount, set the value immediately without animation
-    if (isInitialMountRef.current) {
-      isInitialMountRef.current = false
-      previousValueRef.current = effectiveNumber
-      // Set immediately without animation on first mount
-      targetValue.set(effectiveNumber)
-      return
-    }
-
-    // Don't animate if the value hasn't changed
-    if (effectiveNumber === previousValueRef.current) {
-      // Ensure the motion value is set to the current value (no animation)
-      const currentValue = targetValue.get()
-      if (Math.abs(currentValue - effectiveNumber) > 0.001) {
-        targetValue.set(effectiveNumber)
-      }
-      return
-    }
-
-    // Value has changed, animate to the new value
-    previousValueRef.current = effectiveNumber
-    targetValue.set(effectiveNumber)
-  }, [effectiveNumber, targetValue])
-
-  const formatNumber = React.useCallback(
+  const formatDisplayNumber = React.useCallback(
     (num: number) => {
       if (formatter) return formatter(num)
       return decimalPlaces != null ? num.toFixed(decimalPlaces) : num.toString()
@@ -195,12 +164,50 @@ function SlidingNumber({
     [decimalPlaces, formatter]
   )
 
-  const numberStr = formatNumber(effectiveNumber)
+  const numberStr = formatDisplayNumber(rawNumber)
 
   // Extract suffix (non-digit characters at the end, like K, M, B)
   const suffixMatch = numberStr.match(/[^\d.]+$/)
   const suffix = suffixMatch ? suffixMatch[0] : ''
   const numberWithoutSuffix = suffix ? numberStr.slice(0, -suffix.length) : numberStr
+
+  // Align the animated value with the formatted numeric portion so abbreviated numbers animate correctly
+  const displayValue = React.useMemo(() => {
+    const cleaned = numberWithoutSuffix.replace(/[^\d.-]/g, '')
+    const parsed = Number(cleaned)
+    return Number.isFinite(parsed) ? parsed : 0
+  }, [numberWithoutSuffix])
+
+  // Initialize with the current value to prevent animation on mount/remount
+  const targetValue = useMotionValue(displayValue)
+  const animatedValue = useSpring(targetValue, transition)
+  const isInitialMountRef = React.useRef(true)
+  const previousValueRef = React.useRef<number>(displayValue)
+
+  React.useEffect(() => {
+    // On initial mount, set the value immediately without animation
+    if (isInitialMountRef.current) {
+      isInitialMountRef.current = false
+      previousValueRef.current = displayValue
+      // Set immediately without animation on first mount
+      targetValue.set(displayValue)
+      return
+    }
+
+    // Don't animate if the value hasn't changed
+    if (displayValue === previousValueRef.current) {
+      // Ensure the motion value is set to the current value (no animation)
+      const currentValue = targetValue.get()
+      if (Math.abs(currentValue - displayValue) > 0.001) {
+        targetValue.set(displayValue)
+      }
+      return
+    }
+
+    // Value has changed, animate to the new value
+    previousValueRef.current = displayValue
+    targetValue.set(displayValue)
+  }, [displayValue, targetValue])
 
   const [newIntStrRaw, newDecStrRaw = ''] = numberWithoutSuffix.split('.')
   // Remove any non-digit characters from decimal part (in case of edge cases)

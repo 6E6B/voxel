@@ -106,6 +106,12 @@ export const CatalogFilterSidebar = ({
 }: CatalogFilterSidebarProps) => {
   // Local state for creator input to avoid lag from store updates on every keystroke
   const [localCreatorName, setLocalCreatorName] = useState(creatorName)
+  const isAllCategoriesSelected = !selectedCategory && !selectedSubcategory
+
+  const handleSelectAllCategories = () => {
+    onCategoryChange(null)
+    onSubcategoryChange(null)
+  }
 
   // Sync local state with store value when it changes externally (e.g., from clear filters)
   useEffect(() => {
@@ -123,12 +129,19 @@ export const CatalogFilterSidebar = ({
       if (isParentOfSelected) setIsExpanded(true)
     }, [isParentOfSelected])
 
+    const handleCategoryClick = () => {
+      onCategoryChange(category)
+      onSubcategoryChange(null)
+
+      if (category.subcategories.length > 0) {
+        setIsExpanded(!isExpanded)
+      }
+    }
+
     return (
       <div className="space-y-1">
         <button
-          onClick={() => {
-            setIsExpanded(!isExpanded)
-          }}
+          onClick={handleCategoryClick}
           className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm transition-colors group ${
             isSelected
               ? 'bg-[rgba(var(--accent-color-rgb),0.1)] text-[var(--accent-color)] font-medium'
@@ -206,6 +219,18 @@ export const CatalogFilterSidebar = ({
             Categories
           </div>
           <div className="space-y-0.5">
+            <button
+              onClick={handleSelectAllCategories}
+              className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm transition-colors group ${
+                isAllCategoriesSelected
+                  ? 'bg-[rgba(var(--accent-color-rgb),0.1)] text-[var(--accent-color)] font-medium'
+                  : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-hover)] border border-transparent hover:border-[var(--color-border-strong)]'
+              }`}
+            >
+              <span className="w-3.5" /> {/* Spacer to align with chevron */}
+              <span className="truncate text-left flex-1">All Categories</span>
+              {isAllCategoriesSelected && <Check size={14} className="shrink-0" />}
+            </button>
             {categories.map((cat) => (
               <CategoryItem key={cat.categoryId} category={cat} />
             ))}
