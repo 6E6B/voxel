@@ -1,5 +1,5 @@
 /// <reference path="./window.d.ts" />
-import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react'
+import React, { useState, useMemo, useRef, useEffect, useCallback, lazy, Suspense } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import { Search } from 'lucide-react'
 import { Account, AccountStatus, JoinMethod } from './types'
@@ -7,28 +7,12 @@ import { mapPresenceToStatus, isActiveStatus } from './utils/statusUtils'
 import JoinModal from './components/Modals/JoinModal'
 import EditNoteModal from './features/auth/Modals/EditNoteModal'
 import AddAccountModal from './features/auth/Modals/AddAccountModal'
-import UniversalProfileModal from './components/Modals/UniversalProfileModal'
-import GameDetailsModal from './features/games/Modals/GameDetailsModal'
-import AccessoryDetailsModal from './features/avatar/Modals/AccessoryDetailsModal'
 import Sidebar from './components/UI/navigation/Sidebar'
 import NotificationTray from './components/UI/feedback/NotificationTray'
 import SnackbarContainer from './features/system/components/SnackbarContainer'
 
 import ContextMenu from './components/UI/menus/ContextMenu'
 import AccountsTab from './features/auth/index'
-import ProfileTab from './features/profile/index'
-import FriendsTab from './features/friends/index'
-import GroupsTab from './features/groups/index'
-import GamesTab from './features/games/index'
-import CatalogTab from './features/catalog/index'
-import InventoryTab from './features/inventory/index'
-import TransactionsTab from './features/transactions/index'
-import LogsTab from './features/system/LogsView'
-import SettingsTab from './features/settings/index'
-import AvatarTab from './features/avatar/index'
-import InstallTab from './features/install/index'
-import NewsTab from './features/news/index'
-import CommandPalette from './features/command-palette/index'
 import PinLockScreen from './components/UI/security/PinLockScreen'
 import { OnboardingScreen, useHasCompletedOnboarding } from './features/onboarding'
 import { useSidebarResize } from './hooks/useSidebarResize'
@@ -84,6 +68,23 @@ import {
 
 import { useSelectedIds, useSetSelectedIds } from './stores/useSelectionStore'
 
+const ProfileTab = lazy(() => import('./features/profile/index'))
+const FriendsTab = lazy(() => import('./features/friends/index'))
+const GroupsTab = lazy(() => import('./features/groups/index'))
+const GamesTab = lazy(() => import('./features/games/index'))
+const CatalogTab = lazy(() => import('./features/catalog/index'))
+const InventoryTab = lazy(() => import('./features/inventory/index'))
+const TransactionsTab = lazy(() => import('./features/transactions/index'))
+const LogsTab = lazy(() => import('./features/system/LogsView'))
+const SettingsTab = lazy(() => import('./features/settings/index'))
+const AvatarTab = lazy(() => import('./features/avatar/index'))
+const InstallTab = lazy(() => import('./features/install/index'))
+const NewsTab = lazy(() => import('./features/news/index'))
+const GameDetailsModal = lazy(() => import('./features/games/Modals/GameDetailsModal'))
+const AccessoryDetailsModal = lazy(() => import('./features/avatar/Modals/AccessoryDetailsModal'))
+const UniversalProfileModal = lazy(() => import('./components/Modals/UniversalProfileModal'))
+const CommandPalette = lazy(() => import('./features/command-palette/index'))
+
 interface JoinConfig {
   method: JoinMethod
   target: string
@@ -92,12 +93,19 @@ interface JoinConfig {
 const isMac = window.platform?.isMac ?? false
 
 const App: React.FC = () => {
-  const { showNotification } = useNotification()
-  const queryClient = useQueryClient()
+  const perfLoggedRef = useRef(false)
+  const catalogInitTriggeredRef = useRef(false)
 
   useEffect(() => {
-    initCatalogSearchIndex()
+    if (perfLoggedRef.current) return
+    perfLoggedRef.current = true
+    const now = performance.now()
+    const base = (window as any).__perfRendererStart ?? now
+    console.log('[perf:renderer] app-mounted', (now - base).toFixed(1))
   }, [])
+
+  const { showNotification } = useNotification()
+  const queryClient = useQueryClient()
 
   const hasCompletedOnboarding = useHasCompletedOnboarding()
 
@@ -114,6 +122,13 @@ const App: React.FC = () => {
 
   const openCommandPalette = useCommandPaletteStore((s) => s.open)
   const isCommandPaletteOpen = useCommandPaletteStore((s) => s.isOpen)
+
+  // Defer catalog search index init until command palette is actually opened
+  useEffect(() => {
+    if (!isCommandPaletteOpen || catalogInitTriggeredRef.current) return
+    catalogInitTriggeredRef.current = true
+    initCatalogSearchIndex()
+  }, [isCommandPaletteOpen])
 
   const activeTab = useActiveTab()
   const setActiveTabState = useSetActiveTab()
@@ -646,49 +661,90 @@ const App: React.FC = () => {
             />
           )}
 
-          {activeTab === 'Profile' &&
-            (selectedAccount ? (
-              <ProfileTab account={selectedAccount} />
-            ) : (
-              <div className="flex flex-col items-center justify-center h-full text-[var(--color-text-muted)]">
-                <p>Select an account to view profile</p>
-              </div>
-            ))}
+          {activeTab === 'Profile' && (
+            <Suspense fallback={<LoadingSpinnerFullPage />}>
+              {selectedAccount ? (
+                <ProfileTab account={selectedAccount} />
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full text-[var(--color-text-muted)]">
+                  <p>Select an account to view profile</p>
+                </div>
+              )}
+            </Suspense>
+          )}
 
-          {activeTab === 'News' && <NewsTab />}
+          {activeTab === 'News' && (
+            <Suspense fallback={<LoadingSpinnerFullPage />}>
+              <NewsTab />
+            </Suspense>
+          )}
 
           {activeTab === 'Friends' && (
-            <FriendsTab selectedAccount={selectedAccount} onFriendJoin={handleFriendJoin} />
+            <Suspense fallback={<LoadingSpinnerFullPage />}>
+              <FriendsTab selectedAccount={selectedAccount} onFriendJoin={handleFriendJoin} />
+            </Suspense>
           )}
 
-          {activeTab === 'Groups' && <GroupsTab selectedAccount={selectedAccount} />}
+          {activeTab === 'Groups' && (
+            <Suspense fallback={<LoadingSpinnerFullPage />}>
+              <GroupsTab selectedAccount={selectedAccount} />
+            </Suspense>
+          )}
 
-          {activeTab === 'Games' && <GamesTab onGameSelect={setSelectedGame} />}
+          {activeTab === 'Games' && (
+            <Suspense fallback={<LoadingSpinnerFullPage />}>
+              <GamesTab onGameSelect={setSelectedGame} />
+            </Suspense>
+          )}
 
           {activeTab === 'Catalog' && (
-            <CatalogTab
-              onItemSelect={handleCommandPaletteViewAccessory}
-              onCreatorSelect={(creatorId) => setQuickProfileUserId(String(creatorId))}
-              cookie={accounts.find((a) => a.cookie)?.cookie}
-            />
+            <Suspense fallback={<LoadingSpinnerFullPage />}>
+              <CatalogTab
+                onItemSelect={handleCommandPaletteViewAccessory}
+                onCreatorSelect={(creatorId) => setQuickProfileUserId(String(creatorId))}
+                cookie={accounts.find((a) => a.cookie)?.cookie}
+              />
+            </Suspense>
           )}
 
-          {activeTab === 'Inventory' && <InventoryTab account={selectedAccount} />}
+          {activeTab === 'Inventory' && (
+            <Suspense fallback={<LoadingSpinnerFullPage />}>
+              <InventoryTab account={selectedAccount} />
+            </Suspense>
+          )}
 
-          {activeTab === 'Transactions' && <TransactionsTab account={selectedAccount} />}
+          {activeTab === 'Transactions' && (
+            <Suspense fallback={<LoadingSpinnerFullPage />}>
+              <TransactionsTab account={selectedAccount} />
+            </Suspense>
+          )}
 
-          {activeTab === 'Logs' && <LogsTab />}
+          {activeTab === 'Logs' && (
+            <Suspense fallback={<LoadingSpinnerFullPage />}>
+              <LogsTab />
+            </Suspense>
+          )}
 
-          {activeTab === 'Avatar' && <AvatarTab account={selectedAccount} />}
+          {activeTab === 'Avatar' && (
+            <Suspense fallback={<LoadingSpinnerFullPage />}>
+              <AvatarTab account={selectedAccount} />
+            </Suspense>
+          )}
 
-          {activeTab === 'Install' && <InstallTab />}
+          {activeTab === 'Install' && (
+            <Suspense fallback={<LoadingSpinnerFullPage />}>
+              <InstallTab />
+            </Suspense>
+          )}
 
           {activeTab === 'Settings' && (
-            <SettingsTab
-              accounts={accounts}
-              settings={settings}
-              onUpdateSettings={updateSettings}
-            />
+            <Suspense fallback={<LoadingSpinnerFullPage />}>
+              <SettingsTab
+                accounts={accounts}
+                settings={settings}
+                onUpdateSettings={updateSettings}
+              />
+            </Suspense>
           )}
         </div>
       </main>
@@ -714,26 +770,30 @@ const App: React.FC = () => {
         account={editingAccount}
       />
 
-      <UniversalProfileModal
-        isOpen={!!infoAccount}
-        onClose={() => setInfoAccount(null)}
-        userId={infoAccount?.userId || null}
-        selectedAccount={infoAccount}
-        initialData={{
-          name: infoAccount?.username,
-          displayName: infoAccount?.displayName,
-          status: infoAccount?.status,
-          headshotUrl: infoAccount?.avatarUrl
-        }}
-      />
+      <Suspense fallback={null}>
+        <UniversalProfileModal
+          isOpen={!!infoAccount}
+          onClose={() => setInfoAccount(null)}
+          userId={infoAccount?.userId || null}
+          selectedAccount={infoAccount}
+          initialData={{
+            name: infoAccount?.username,
+            displayName: infoAccount?.displayName,
+            status: infoAccount?.status,
+            headshotUrl: infoAccount?.avatarUrl
+          }}
+        />
+      </Suspense>
 
-      <GameDetailsModal
-        isOpen={!!selectedGame}
-        onClose={() => setSelectedGame(null)}
-        onLaunch={handleLaunch}
-        game={selectedGame}
-        account={selectedAccount || accounts.find((a) => a.cookie) || null}
-      />
+      <Suspense fallback={null}>
+        <GameDetailsModal
+          isOpen={!!selectedGame}
+          onClose={() => setSelectedGame(null)}
+          onLaunch={handleLaunch}
+          game={selectedGame}
+          account={selectedAccount || accounts.find((a) => a.cookie) || null}
+        />
+      </Suspense>
 
       <InstanceSelectionModal
         isOpen={modals.instanceSelection}
@@ -745,37 +805,43 @@ const App: React.FC = () => {
         installations={availableInstallations}
       />
 
-      <UniversalProfileModal
-        isOpen={!!quickProfileUserId}
-        onClose={() => setQuickProfileUserId(null)}
-        userId={quickProfileUserId}
-        selectedAccount={accounts.find((a) => a.cookie) || null}
-        initialData={{}}
-      />
+      <Suspense fallback={null}>
+        <UniversalProfileModal
+          isOpen={!!quickProfileUserId}
+          onClose={() => setQuickProfileUserId(null)}
+          userId={quickProfileUserId}
+          selectedAccount={accounts.find((a) => a.cookie) || null}
+          initialData={{}}
+        />
+      </Suspense>
 
-      <AccessoryDetailsModal
-        isOpen={!!commandPaletteAccessory}
-        onClose={() => setCommandPaletteAccessory(null)}
-        assetId={commandPaletteAccessory?.id || null}
-        account={accounts.find((a) => a.cookie) || null}
-        initialData={
-          commandPaletteAccessory
-            ? {
-                name: commandPaletteAccessory.name,
-                imageUrl: commandPaletteAccessory.imageUrl || ''
-              }
-            : undefined
-        }
-      />
+      <Suspense fallback={null}>
+        <AccessoryDetailsModal
+          isOpen={!!commandPaletteAccessory}
+          onClose={() => setCommandPaletteAccessory(null)}
+          assetId={commandPaletteAccessory?.id || null}
+          account={accounts.find((a) => a.cookie) || null}
+          initialData={
+            commandPaletteAccessory
+              ? {
+                  name: commandPaletteAccessory.name,
+                  imageUrl: commandPaletteAccessory.imageUrl || ''
+                }
+              : undefined
+          }
+        />
+      </Suspense>
 
       {/* Command Palette */}
       <AnimatePresence>
         {isCommandPaletteOpen && (
-          <CommandPalette
-            onViewProfile={handleCommandPaletteViewProfile}
-            onLaunchGame={handleCommandPaletteLaunchGame}
-            onViewAccessory={handleCommandPaletteViewAccessory}
-          />
+          <Suspense fallback={null}>
+            <CommandPalette
+              onViewProfile={handleCommandPaletteViewProfile}
+              onLaunchGame={handleCommandPaletteLaunchGame}
+              onViewAccessory={handleCommandPaletteViewAccessory}
+            />
+          </Suspense>
         )}
       </AnimatePresence>
 

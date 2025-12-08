@@ -21,6 +21,11 @@ export const registerCatalogDatabaseHandlers = (): void => {
     return catalogDatabaseService.getAllItems()
   })
 
+  // Get exported catalog index (built in a worker thread)
+  handle('get-catalog-index-export', z.tuple([]), async () => {
+    return catalogDatabaseService.getExportedIndex()
+  })
+
   // Search items by name
   handle(
     'search-catalog-db',

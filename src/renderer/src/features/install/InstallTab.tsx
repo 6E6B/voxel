@@ -150,8 +150,8 @@ const InstallTab: React.FC = () => {
         name:
           detected.binaryType === BinaryType.WindowsStudio ||
           detected.binaryType === BinaryType.MacStudio
-            ? 'Roblox Studio'
-            : 'Roblox Player',
+            ? 'Studio'
+            : 'Player',
         binaryType: detected.binaryType as BinaryType,
         version: detected.version,
         channel: 'Default',

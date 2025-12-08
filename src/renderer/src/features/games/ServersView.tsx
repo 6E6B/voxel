@@ -241,10 +241,7 @@ const ServersList = ({ placeId, onJoin }: ServersListProps) => {
   // Loop 1: Dispatch Roblox Checks (High Concurrency)
   useEffect(() => {
     const candidates = filteredServers.filter(
-      (s) =>
-        s.region === 'Unknown' &&
-        !checkingRegions[s.id] &&
-        !regions[s.id] // Don't check if we already have it in store
+      (s) => s.region === 'Unknown' && !checkingRegions[s.id] && !regions[s.id] // Don't check if we already have it in store
     )
 
     const currentChecking = Object.keys(checkingRegions).length

@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronDown, ChevronRight, Filter } from 'lucide-react'
+import { ChevronDown, ChevronRight, Filter, Check } from 'lucide-react'
 import { Button } from '@renderer/components/UI/buttons/Button'
 import { InventoryCategory, InventorySubcategory } from './inventoryCategories'
 
@@ -103,10 +103,10 @@ export const InventoryFilterSidebar = ({
       <div className="space-y-1">
         <button
           onClick={handleCategoryClick}
-          className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm transition-all group border ${
+          className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm transition-colors group ${
             isSelected
-              ? 'bg-[var(--color-surface-hover)] border-[var(--color-border-strong)] text-[var(--color-text-primary)] font-medium shadow-[0_10px_30px_rgba(0,0,0,0.22)]'
-              : 'border-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-hover)] hover:border-[var(--color-border-strong)]'
+              ? 'bg-[rgba(var(--accent-color-rgb),0.1)] text-[var(--accent-color)] font-medium'
+              : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-hover)] border border-transparent hover:border-[var(--color-border-strong)]'
           }`}
         >
           {category.subcategories.length > 0 ? (
@@ -137,10 +137,10 @@ export const InventoryFilterSidebar = ({
                       onCategoryChange(category)
                       onSubcategoryChange(sub)
                     }}
-                    className={`w-full text-left px-2 py-1.5 rounded-lg text-xs transition-all border ${
+                    className={`w-full text-left px-2 py-1.5 rounded-lg text-xs transition-colors ${
                       selectedSubcategory?.subcategoryId === sub.subcategoryId
-                        ? 'bg-[var(--color-surface-hover)] border-[var(--color-border-strong)] text-[var(--color-text-primary)] font-medium shadow-[0_10px_30px_rgba(0,0,0,0.22)]'
-                        : 'border-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-hover)] hover:border-[var(--color-border-strong)]'
+                        ? 'bg-[rgba(var(--accent-color-rgb),0.1)] text-[var(--accent-color)] font-medium'
+                        : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-hover)] border border-transparent hover:border-[var(--color-border-strong)]'
                     }`}
                   >
                     {sub.name}
@@ -182,14 +182,15 @@ export const InventoryFilterSidebar = ({
           <div className="space-y-0.5">
             <button
               onClick={handleSelectAllCategories}
-              className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm transition-all border ${
+              className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm transition-colors group ${
                 isAllCategoriesSelected
-                  ? 'bg-[var(--color-surface-hover)] border-[var(--color-border-strong)] text-[var(--color-text-primary)] font-medium shadow-[0_10px_30px_rgba(0,0,0,0.22)]'
-                  : 'border-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-hover)] hover:border-[var(--color-border-strong)]'
+                  ? 'bg-[rgba(var(--accent-color-rgb),0.1)] text-[var(--accent-color)] font-medium'
+                  : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-hover)] border border-transparent hover:border-[var(--color-border-strong)]'
               }`}
             >
               <span className="w-3.5" /> {/* Spacer to align with chevron */}
               <span className="truncate text-left flex-1">All Categories</span>
+              {isAllCategoriesSelected && <Check size={14} className="shrink-0" />}
             </button>
             {categories.map((cat) => (
               <CategoryItem key={cat.categoryId} category={cat} />

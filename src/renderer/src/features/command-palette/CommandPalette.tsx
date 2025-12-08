@@ -1051,768 +1051,782 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
           }}
           onClick={(e) => e.stopPropagation()}
         >
-        {/* Header */}
-        <div
-          className="flex items-center gap-3 px-4 py-3.5 border-b"
-          style={{ borderColor: 'var(--color-border-subtle)', background: STRIP_BG }}
-        >
-          {step === 'input' ? (
-            <>
-              <motion.button
-                onClick={goBack}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="p-1.5 rounded-lg border transition-all duration-150 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] bg-[var(--color-surface-muted)] hover:bg-[var(--color-surface-hover)] border-[var(--color-border-subtle)]"
-              >
-                <ArrowLeft size={16} strokeWidth={2} />
-              </motion.button>
-              <div className="flex-1 flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-[var(--color-surface-muted)] border border-[var(--color-border-subtle)] flex items-center justify-center text-[var(--color-text-muted)]">
-                  {iconMap[activeCommand?.icon || 'sparkles']}
-                </div>
-                <div className="flex-1">
-                  <div className="text-[10px] uppercase tracking-wider text-neutral-500 font-medium mb-0.5">
-                    {activeCommand?.inputLabel || 'Input'}
+          {/* Header */}
+          <div
+            className="flex items-center gap-3 px-4 py-3.5 border-b"
+            style={{ borderColor: 'var(--color-border-subtle)', background: STRIP_BG }}
+          >
+            {step === 'input' ? (
+              <>
+                <motion.button
+                  onClick={goBack}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="p-1.5 rounded-lg border transition-all duration-150 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] bg-[var(--color-surface-muted)] hover:bg-[var(--color-surface-hover)] border-[var(--color-border-subtle)]"
+                >
+                  <ArrowLeft size={16} strokeWidth={2} />
+                </motion.button>
+                <div className="flex-1 flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-[var(--color-surface-muted)] border border-[var(--color-border-subtle)] flex items-center justify-center text-[var(--color-text-muted)]">
+                    {iconMap[activeCommand?.icon || 'sparkles']}
                   </div>
+                  <div className="flex-1">
+                    <div className="text-[10px] uppercase tracking-wider text-neutral-500 font-medium mb-0.5">
+                      {activeCommand?.inputLabel || 'Input'}
+                    </div>
+                    <input
+                      ref={inputRef}
+                      type="text"
+                      value={inputValue}
+                      onChange={(e) => setInputValue(e.target.value)}
+                      placeholder={activeCommand?.inputPlaceholder}
+                      disabled={isLoading}
+                      className="w-full bg-transparent text-[var(--color-text-primary)] text-[13px] placeholder:text-[var(--color-text-muted)] focus:outline-none"
+                      autoFocus
+                    />
+                  </div>
+                </div>
+                {isLoading && (
+                  <Loader2 size={16} className="text-[var(--color-text-muted)] animate-spin" />
+                )}
+              </>
+            ) : step === 'select' ? (
+              <>
+                <motion.button
+                  onClick={goBack}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="p-1.5 rounded-lg border transition-all duration-150 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] bg-[var(--color-surface-muted)] hover:bg-[var(--color-surface-hover)] border-[var(--color-border-subtle)]"
+                >
+                  <ArrowLeft size={16} strokeWidth={2} />
+                </motion.button>
+                <div className="flex-1 flex items-center gap-2.5 rounded-xl px-3 py-2 border bg-[var(--color-surface-muted)] border-[var(--color-border)] focus-within:border-[var(--color-border-strong)] focus-within:bg-[var(--color-surface-hover)] transition-all duration-150">
+                  <Terminal size={15} className="text-neutral-500" strokeWidth={1.75} />
                   <input
                     ref={inputRef}
                     type="text"
-                    value={inputValue}
-                    onChange={(e) => setInputValue(e.target.value)}
-                    placeholder={activeCommand?.inputPlaceholder}
-                    disabled={isLoading}
-                    className="w-full bg-transparent text-[var(--color-text-primary)] text-[13px] placeholder:text-[var(--color-text-muted)] focus:outline-none"
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder="Search commands..."
+                    className="flex-1 bg-transparent text-[var(--color-text-primary)] text-[13px] placeholder:text-[var(--color-text-muted)] focus:outline-none"
                     autoFocus
                   />
                 </div>
-              </div>
-              {isLoading && (
-                <Loader2 size={16} className="text-[var(--color-text-muted)] animate-spin" />
-              )}
-            </>
-          ) : step === 'select' ? (
-            <>
-              <motion.button
-                onClick={goBack}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="p-1.5 rounded-lg border transition-all duration-150 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] bg-[var(--color-surface-muted)] hover:bg-[var(--color-surface-hover)] border-[var(--color-border-subtle)]"
-              >
-                <ArrowLeft size={16} strokeWidth={2} />
-              </motion.button>
-              <div className="flex-1 flex items-center gap-2.5 rounded-xl px-3 py-2 border bg-[var(--color-surface-muted)] border-[var(--color-border)] focus-within:border-[var(--color-border-strong)] focus-within:bg-[var(--color-surface-hover)] transition-all duration-150">
-                <Terminal size={15} className="text-neutral-500" strokeWidth={1.75} />
-                <input
-                  ref={inputRef}
-                  type="text"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search commands..."
-                  className="flex-1 bg-transparent text-[var(--color-text-primary)] text-[13px] placeholder:text-[var(--color-text-muted)] focus:outline-none"
-                  autoFocus
-                />
-              </div>
-              <kbd className="hidden sm:flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-[var(--color-text-muted)] bg-[var(--color-surface-muted)] border border-[var(--color-border-subtle)] rounded-md">
-                ESC
-              </kbd>
-            </>
-          ) : (
-            <>
-              <div className="flex-1 flex items-center gap-2.5 rounded-xl px-3 py-2 border bg-[var(--color-surface-muted)] border-[var(--color-border)] focus-within:border-[var(--color-border-strong)] focus-within:bg-[var(--color-surface-hover)] transition-all duration-150">
-                <Search size={15} className="text-[var(--color-text-muted)]" strokeWidth={1.75} />
-                <input
-                  ref={inputRef}
-                  type="text"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search players, limiteds, catalog..."
-                  className="flex-1 bg-transparent text-[var(--color-text-primary)] text-[13px] placeholder:text-[var(--color-text-muted)] focus:outline-none"
-                  autoFocus
-                />
-                {query && (
-                  <motion.button
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    onClick={() => setQuery('')}
-                    className="p-0.5 rounded-md hover:bg-[var(--color-surface-hover)] text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors"
-                  >
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                      <path
-                        d="M3 3L9 9M9 3L3 9"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                      />
-                    </svg>
-                  </motion.button>
-                )}
-              </div>
-              <div className="hidden sm:flex items-center gap-2">
-                {(limitedsCount > 0 || catalogCount > 0) && (
-                  <span className="text-[10px] text-[var(--color-text-muted)] tabular-nums">
-                    {(limitedsCount + catalogCount).toLocaleString()} items
-                  </span>
-                )}
-                <kbd className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-[var(--color-text-muted)] bg-[var(--color-surface-muted)] border border-[var(--color-border-subtle)] rounded-md">
+                <kbd className="hidden sm:flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-[var(--color-text-muted)] bg-[var(--color-surface-muted)] border border-[var(--color-border-subtle)] rounded-md">
                   ESC
                 </kbd>
-              </div>
-            </>
-          )}
-        </div>
-
-        {/* Universal Search Results */}
-        {step === 'search' && (
-          <div ref={listRef} className="overflow-y-auto" style={{ maxHeight: listMaxHeight }}>
-            {!query.trim() ? (
-              <div className="px-6 py-10 text-center">
-                <div
-                  className="w-12 h-12 mx-auto mb-4 rounded-2xl flex items-center justify-center border border-[var(--color-border-subtle)]"
-                  style={{ background: TILE_BG }}
-                >
-                  <Search size={20} className="text-[var(--color-text-muted)]" strokeWidth={1.5} />
-                </div>
-                <div className="text-[var(--color-text-secondary)] text-[13px] font-medium mb-1.5">
-                  Search anything
-                </div>
-                <div className="text-[var(--color-text-muted)] text-[12px] mb-5 max-w-[280px] mx-auto leading-relaxed">
-                  Find players, limiteds, catalog items, or run commands
-                </div>
-                <div className="flex flex-wrap justify-center gap-1.5">
-                  {Object.entries(resultTypeBadges).map(([key, badge]) => (
-                    <span
-                      key={key}
-                      className={cn(
-                        'text-[10px] font-medium px-2 py-1 rounded-lg border flex items-center gap-1.5',
-                        badge.className
-                      )}
+              </>
+            ) : (
+              <>
+                <div className="flex-1 flex items-center gap-2.5 rounded-xl px-3 py-2 border bg-[var(--color-surface-muted)] border-[var(--color-border)] focus-within:border-[var(--color-border-strong)] focus-within:bg-[var(--color-surface-hover)] transition-all duration-150">
+                  <Search size={15} className="text-[var(--color-text-muted)]" strokeWidth={1.75} />
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder="Search players, limiteds, catalog..."
+                    className="flex-1 bg-transparent text-[var(--color-text-primary)] text-[13px] placeholder:text-[var(--color-text-muted)] focus:outline-none"
+                    autoFocus
+                  />
+                  {query && (
+                    <motion.button
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      onClick={() => setQuery('')}
+                      className="p-0.5 rounded-md hover:bg-[var(--color-surface-hover)] text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors"
                     >
-                      {badge.icon}
-                      {badge.label}
-                    </span>
-                  ))}
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                        <path
+                          d="M3 3L9 9M9 3L3 9"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                        />
+                      </svg>
+                    </motion.button>
+                  )}
                 </div>
-                <div
-                  className="mt-5 pt-4 border-t"
-                  style={{ borderColor: 'var(--color-border-subtle)' }}
-                >
-                  <div className="text-[11px] text-[var(--color-text-muted)] flex items-center justify-center gap-2">
-                    <span>Type</span>
-                    <kbd className="px-1.5 py-0.5 rounded font-mono text-[var(--color-text-muted)] bg-[var(--color-surface-muted)] border border-[var(--color-border-subtle)]">
-                      &gt;
-                    </kbd>
-                    <span>for commands only</span>
+                <div className="hidden sm:flex items-center gap-2">
+                  {(limitedsCount > 0 || catalogCount > 0) && (
+                    <span className="text-[10px] text-[var(--color-text-muted)] tabular-nums">
+                      {(limitedsCount + catalogCount).toLocaleString()} items
+                    </span>
+                  )}
+                  <kbd className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-[var(--color-text-muted)] bg-[var(--color-surface-muted)] border border-[var(--color-border-subtle)] rounded-md">
+                    ESC
+                  </kbd>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Universal Search Results */}
+          {step === 'search' && (
+            <div ref={listRef} className="overflow-y-auto" style={{ maxHeight: listMaxHeight }}>
+              {!query.trim() ? (
+                <div className="px-6 py-10 text-center">
+                  <div
+                    className="w-12 h-12 mx-auto mb-4 rounded-2xl flex items-center justify-center border border-[var(--color-border-subtle)]"
+                    style={{ background: TILE_BG }}
+                  >
+                    <Search
+                      size={20}
+                      className="text-[var(--color-text-muted)]"
+                      strokeWidth={1.5}
+                    />
+                  </div>
+                  <div className="text-[var(--color-text-secondary)] text-[13px] font-medium mb-1.5">
+                    Search anything
+                  </div>
+                  <div className="text-[var(--color-text-muted)] text-[12px] mb-5 max-w-[280px] mx-auto leading-relaxed">
+                    Find players, limiteds, catalog items, or run commands
+                  </div>
+                  <div className="flex flex-wrap justify-center gap-1.5">
+                    {Object.entries(resultTypeBadges).map(([key, badge]) => (
+                      <span
+                        key={key}
+                        className={cn(
+                          'text-[10px] font-medium px-2 py-1 rounded-lg border flex items-center gap-1.5',
+                          badge.className
+                        )}
+                      >
+                        {badge.icon}
+                        {badge.label}
+                      </span>
+                    ))}
+                  </div>
+                  <div
+                    className="mt-5 pt-4 border-t"
+                    style={{ borderColor: 'var(--color-border-subtle)' }}
+                  >
+                    <div className="text-[11px] text-[var(--color-text-muted)] flex items-center justify-center gap-2">
+                      <span>Type</span>
+                      <kbd className="px-1.5 py-0.5 rounded font-mono text-[var(--color-text-muted)] bg-[var(--color-surface-muted)] border border-[var(--color-border-subtle)]">
+                        &gt;
+                      </kbd>
+                      <span>for commands only</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ) : query.startsWith('>') ? (
-              (() => {
-                const cmdQuery = query.slice(1).trim().toLowerCase()
-                const filteredCmds = cmdQuery
-                  ? commands.filter((cmd) => {
-                      const matchLabel = cmd.label.toLowerCase().includes(cmdQuery)
-                      const matchDesc = cmd.description?.toLowerCase().includes(cmdQuery)
-                      const matchKeywords = cmd.keywords?.some((k) => k.includes(cmdQuery))
-                      return matchLabel || matchDesc || matchKeywords
-                    })
-                  : commands
+              ) : query.startsWith('>') ? (
+                (() => {
+                  const cmdQuery = query.slice(1).trim().toLowerCase()
+                  const filteredCmds = cmdQuery
+                    ? commands.filter((cmd) => {
+                        const matchLabel = cmd.label.toLowerCase().includes(cmdQuery)
+                        const matchDesc = cmd.description?.toLowerCase().includes(cmdQuery)
+                        const matchKeywords = cmd.keywords?.some((k) => k.includes(cmdQuery))
+                        return matchLabel || matchDesc || matchKeywords
+                      })
+                    : commands
 
-                if (filteredCmds.length === 0) {
+                  if (filteredCmds.length === 0) {
+                    return (
+                      <div className="px-6 py-12 text-center">
+                        <div
+                          className="w-10 h-10 mx-auto mb-3 rounded-xl flex items-center justify-center border border-[var(--color-border-subtle)]"
+                          style={{ background: TILE_BG }}
+                        >
+                          <Terminal
+                            size={18}
+                            className="text-[var(--color-text-muted)]"
+                            strokeWidth={1.5}
+                          />
+                        </div>
+                        <div className="text-[var(--color-text-secondary)] text-[13px]">
+                          No commands found
+                        </div>
+                        <div className="text-[var(--color-text-muted)] text-[11px] mt-1">
+                          Try a different search term
+                        </div>
+                      </div>
+                    )
+                  }
+
                   return (
-                    <div className="px-6 py-12 text-center">
+                    <div className="py-1.5">
+                      <div className="px-4 py-2 text-[10px] font-semibold uppercase tracking-wider flex items-center gap-2 text-[var(--color-text-secondary)]">
+                        <Terminal size={11} strokeWidth={2} />
+                        Commands
+                        <span className="ml-auto text-[var(--color-text-muted)] normal-case font-normal tracking-normal">
+                          {filteredCmds.length} {filteredCmds.length === 1 ? 'result' : 'results'}
+                        </span>
+                      </div>
+                      {filteredCmds.slice(0, 15).map((cmd, idx) => {
+                        const isSelected = idx === selectedIndex
+                        return (
+                          <motion.button
+                            key={cmd.id}
+                            initial={false}
+                            animate={{ backgroundColor: isSelected ? SELECTED_BG : UNSELECTED_BG }}
+                            transition={{ duration: 0.1 }}
+                            data-selected={isSelected}
+                            onClick={() => selectCommand(cmd)}
+                            onMouseEnter={() => setSelectedIndex(idx)}
+                            className="w-full flex items-center gap-3 px-3 py-2 text-left rounded-lg mx-1 group transition-colors duration-100"
+                            style={{ width: 'calc(100% - 8px)' }}
+                          >
+                            <div
+                              className={cn(
+                                ICON_BASE_CLASSES,
+                                isSelected
+                                  ? 'bg-[var(--accent-color)] text-[var(--accent-color-foreground)] shadow-lg shadow-[var(--accent-color)]/20'
+                                  : ICON_UNSELECTED_CLASSES
+                              )}
+                            >
+                              {iconMap[cmd.icon] || <Sparkles size={16} strokeWidth={1.75} />}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <span className="text-[13px] font-medium truncate block text-neutral-200 group-hover:text-white transition-colors">
+                                {cmd.label}
+                              </span>
+                              {cmd.description && (
+                                <div className="text-[11px] text-neutral-500 truncate mt-0.5">
+                                  {cmd.description}
+                                </div>
+                              )}
+                            </div>
+                            {cmd.requiresInput ? (
+                              <ChevronRight size={14} className="text-neutral-600 flex-shrink-0" />
+                            ) : (
+                              <CornerDownLeft
+                                size={13}
+                                className={cn(
+                                  'flex-shrink-0 transition-all duration-150',
+                                  isSelected ? 'opacity-100 text-neutral-500' : 'opacity-0'
+                                )}
+                              />
+                            )}
+                          </motion.button>
+                        )
+                      })}
+                    </div>
+                  )
+                })()
+              ) : universalSearchResults.length === 0 ? (
+                <div className="px-6 py-12 text-center">
+                  {limitedsLoading || catalogLoading || playerLoading ? (
+                    <div className="flex flex-col items-center gap-3">
+                      <div
+                        className="w-10 h-10 rounded-xl flex items-center justify-center border border-[var(--color-border-subtle)]"
+                        style={{ background: TILE_BG }}
+                      >
+                        <Loader2
+                          size={18}
+                          className="text-[var(--color-text-secondary)] animate-spin"
+                        />
+                      </div>
+                      <div className="text-[var(--color-text-secondary)] text-[13px]">
+                        {playerLoading ? 'Searching players...' : 'Indexing items...'}
+                      </div>
+                    </div>
+                  ) : (
+                    <>
                       <div
                         className="w-10 h-10 mx-auto mb-3 rounded-xl flex items-center justify-center border border-[var(--color-border-subtle)]"
                         style={{ background: TILE_BG }}
                       >
-                        <Terminal
+                        <Search
                           size={18}
                           className="text-[var(--color-text-muted)]"
                           strokeWidth={1.5}
                         />
                       </div>
                       <div className="text-[var(--color-text-secondary)] text-[13px]">
-                        No commands found
+                        No results found
                       </div>
                       <div className="text-[var(--color-text-muted)] text-[11px] mt-1">
                         Try a different search term
                       </div>
-                    </div>
-                  )
-                }
+                    </>
+                  )}
+                </div>
+              ) : (
+                <div className="py-1">
+                  <Virtuoso
+                    data={universalSearchResults}
+                    overscan={20}
+                    computeItemKey={(_idx, item) =>
+                      item.type === 'command' ? `cmd-${item.command.id}` : `${item.type}-${item.id}`
+                    }
+                    style={{ height: listMaxHeight - 16 }}
+                    itemContent={(idx, result) => {
+                      if (result.type === 'player') {
+                        return (
+                          <UniversalPlayerRow
+                            result={result}
+                            idx={idx}
+                            selectedIndex={selectedIndex}
+                            onSelect={handleSelectUniversalResult}
+                            onHover={setSelectedIndex}
+                          />
+                        )
+                      }
 
-                return (
-                  <div className="py-1.5">
-                    <div className="px-4 py-2 text-[10px] font-semibold uppercase tracking-wider flex items-center gap-2 text-[var(--color-text-secondary)]">
-                      <Terminal size={11} strokeWidth={2} />
-                      Commands
-                      <span className="ml-auto text-[var(--color-text-muted)] normal-case font-normal tracking-normal">
-                        {filteredCmds.length} {filteredCmds.length === 1 ? 'result' : 'results'}
+                      if (result.type === 'limited') {
+                        return (
+                          <UniversalLimitedRow
+                            result={result}
+                            idx={idx}
+                            selectedIndex={selectedIndex}
+                            onSelect={handleSelectUniversalResult}
+                            onHover={setSelectedIndex}
+                          />
+                        )
+                      }
+
+                      if (result.type === 'catalog') {
+                        return (
+                          <UniversalCatalogRow
+                            result={result}
+                            idx={idx}
+                            selectedIndex={selectedIndex}
+                            onSelect={handleSelectUniversalResult}
+                            onHover={setSelectedIndex}
+                          />
+                        )
+                      }
+
+                      if (result.type === 'command') {
+                        return (
+                          <UniversalCommandRow
+                            result={result}
+                            idx={idx}
+                            selectedIndex={selectedIndex}
+                            onSelect={handleSelectUniversalResult}
+                            onHover={setSelectedIndex}
+                          />
+                        )
+                      }
+
+                      return null
+                    }}
+                  />
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Command List */}
+          {step === 'select' && (
+            <div ref={listRef} className="overflow-y-auto" style={{ maxHeight: listMaxHeight }}>
+              {flatCommands.length === 0 ? (
+                <div className="px-6 py-12 text-center">
+                  <div
+                    className="w-10 h-10 mx-auto mb-3 rounded-xl flex items-center justify-center border border-[var(--color-border-subtle)]"
+                    style={{ background: TILE_BG }}
+                  >
+                    <Terminal
+                      size={18}
+                      className="text-[var(--color-text-muted)]"
+                      strokeWidth={1.5}
+                    />
+                  </div>
+                  <div className="text-[var(--color-text-secondary)] text-[13px]">
+                    No commands found
+                  </div>
+                  <div className="text-[var(--color-text-muted)] text-[11px] mt-1">
+                    Try a different search
+                  </div>
+                </div>
+              ) : (
+                <div className="py-1.5">
+                  {groupedCommands.map(({ category, commands: cmds }) => (
+                    <div key={category} className="mb-1">
+                      <div
+                        className="px-4 py-2 text-[10px] font-semibold uppercase tracking-wider flex items-center gap-2 sticky top-0 backdrop-blur-sm z-10 border-b"
+                        style={{
+                          backgroundColor: TILE_BG,
+                          borderColor: 'var(--color-border-subtle)'
+                        }}
+                      >
+                        {categoryLabels[category]}
+                        <span className="w-px h-3 bg-[var(--color-border)]" />
+                        <span className="text-[var(--color-text-muted)] normal-case font-normal tracking-normal">
+                          {cmds.length}
+                        </span>
+                      </div>
+                      {cmds.map((cmd) => {
+                        const idx = commandIndex++
+                        const isSelected = idx === selectedIndex
+                        const isRecent = recentCommandIds.includes(cmd.id)
+
+                        return (
+                          <motion.button
+                            key={cmd.id}
+                            initial={false}
+                            animate={{ backgroundColor: isSelected ? SELECTED_BG : UNSELECTED_BG }}
+                            transition={{ duration: 0.1 }}
+                            data-selected={isSelected}
+                            onClick={() => selectCommand(cmd)}
+                            onMouseEnter={() => setSelectedIndex(idx)}
+                            className="w-full flex items-center gap-3 px-3 py-2 text-left rounded-lg mx-1 group transition-colors duration-100"
+                            style={{ width: 'calc(100% - 8px)' }}
+                          >
+                            <div
+                              className={cn(
+                                ICON_BASE_CLASSES,
+                                isSelected
+                                  ? 'bg-[var(--accent-color)] text-[var(--accent-color-foreground)] shadow-lg shadow-[var(--accent-color)]/20'
+                                  : ICON_UNSELECTED_CLASSES
+                              )}
+                            >
+                              {iconMap[cmd.icon] || <Sparkles size={16} strokeWidth={1.75} />}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span className="text-[13px] font-medium truncate text-neutral-200 group-hover:text-white transition-colors">
+                                  {cmd.label}
+                                </span>
+                                {isRecent && (
+                                  <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-md bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center gap-1">
+                                    <Clock size={9} />
+                                    Recent
+                                  </span>
+                                )}
+                              </div>
+                              {cmd.description && (
+                                <div className="text-[11px] text-neutral-500 truncate mt-0.5">
+                                  {cmd.description}
+                                </div>
+                              )}
+                            </div>
+                            {cmd.requiresInput ? (
+                              <ChevronRight size={14} className="text-neutral-600 flex-shrink-0" />
+                            ) : (
+                              <CornerDownLeft
+                                size={13}
+                                className={cn(
+                                  'flex-shrink-0 transition-all duration-150',
+                                  isSelected ? 'opacity-100 text-neutral-500' : 'opacity-0'
+                                )}
+                              />
+                            )}
+                          </motion.button>
+                        )
+                      })}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Input Step Content */}
+          {step === 'input' && (
+            <div>
+              {/* Friend Suggestions */}
+              {filteredFriends.length > 0 && (
+                <div
+                  ref={suggestionsRef}
+                  className="overflow-y-auto"
+                  style={{ maxHeight: secondaryListMaxHeight }}
+                >
+                  <div
+                    className="px-4 py-2 text-[10px] font-semibold uppercase tracking-wider flex items-center gap-2 sticky top-0 backdrop-blur-sm z-10 border-b text-[var(--color-text-secondary)]"
+                    style={{ backgroundColor: TILE_BG, borderColor: 'var(--color-border-subtle)' }}
+                  >
+                    <Users size={11} strokeWidth={2} />
+                    Friends
+                    <span className="ml-auto text-[var(--color-text-muted)] normal-case font-normal tracking-normal">
+                      {filteredFriends.length}
+                    </span>
+                  </div>
+                  {filteredFriends.map((friend, idx) => {
+                    const isSelected = idx === suggestionIndex
+                    return (
+                      <motion.button
+                        key={friend.id}
+                        initial={false}
+                        animate={{ backgroundColor: isSelected ? SELECTED_BG : UNSELECTED_BG }}
+                        transition={{ duration: 0.1 }}
+                        data-suggestion-selected={isSelected}
+                        onClick={() => {
+                          setInputValue(friend.username)
+                          setTimeout(() => submitInput(), 0)
+                        }}
+                        onMouseEnter={() => setSuggestionIndex(idx)}
+                        className="w-full flex items-center gap-3 px-3 py-2 text-left rounded-lg mx-1 group transition-colors duration-100"
+                        style={{ width: 'calc(100% - 8px)' }}
+                      >
+                        <img
+                          src={friend.avatarUrl}
+                          alt={friend.displayName}
+                          className="w-9 h-9 rounded-full bg-[var(--color-surface-muted)] flex-shrink-0 ring-1 ring-[var(--color-border-subtle)]"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-[13px] font-medium truncate text-neutral-200 group-hover:text-white transition-colors">
+                            {friend.displayName}
+                          </div>
+                          <div className="text-[11px] text-neutral-500 truncate mt-0.5">
+                            @{friend.username}
+                          </div>
+                        </div>
+                        {friend.gameActivity && (
+                          <div className="flex items-center gap-1.5 text-[10px] font-medium px-2 py-1 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                            <Gamepad2 size={11} />
+                            <span className="max-w-[80px] truncate">
+                              {friend.gameActivity.name}
+                            </span>
+                          </div>
+                        )}
+                        <CornerDownLeft
+                          size={13}
+                          className={cn(
+                            'flex-shrink-0 transition-all duration-150',
+                            isSelected ? 'opacity-100 text-neutral-500' : 'opacity-0'
+                          )}
+                        />
+                      </motion.button>
+                    )
+                  })}
+                </div>
+              )}
+
+              {/* Help text */}
+              <div
+                className="px-4 py-3 flex items-center justify-between border-t"
+                style={{ borderColor: 'var(--color-border-subtle)', background: STRIP_BG }}
+              >
+                <span className="text-[var(--color-text-muted)] text-[12px]">
+                  {filteredFriends.length > 0
+                    ? 'Select a friend or type a username'
+                    : 'Type a username'}
+                </span>
+                <div className="flex items-center gap-3">
+                  {filteredFriends.length > 0 && (
+                    <div className="flex items-center gap-1.5">
+                      <kbd className="px-1.5 py-0.5 text-[10px] font-medium text-[var(--color-text-muted)] bg-[var(--color-surface-muted)] border border-[var(--color-border-subtle)] rounded">
+                        Tab
+                      </kbd>
+                      <span className="text-[var(--color-text-muted)] text-[10px]">
+                        autocomplete
                       </span>
                     </div>
-                    {filteredCmds.slice(0, 15).map((cmd, idx) => {
-                      const isSelected = idx === selectedIndex
-                      return (
-                        <motion.button
-                          key={cmd.id}
-                          initial={false}
-                          animate={{ backgroundColor: isSelected ? SELECTED_BG : UNSELECTED_BG }}
-                          transition={{ duration: 0.1 }}
-                          data-selected={isSelected}
-                          onClick={() => selectCommand(cmd)}
-                          onMouseEnter={() => setSelectedIndex(idx)}
-                          className="w-full flex items-center gap-3 px-3 py-2 text-left rounded-lg mx-1 group transition-colors duration-100"
-                          style={{ width: 'calc(100% - 8px)' }}
-                        >
-                          <div
-                            className={cn(
-                              ICON_BASE_CLASSES,
-                              isSelected
-                                ? 'bg-[var(--accent-color)] text-[var(--accent-color-foreground)] shadow-lg shadow-[var(--accent-color)]/20'
-                                : ICON_UNSELECTED_CLASSES
-                            )}
-                          >
-                            {iconMap[cmd.icon] || <Sparkles size={16} strokeWidth={1.75} />}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <span className="text-[13px] font-medium truncate block text-neutral-200 group-hover:text-white transition-colors">
-                              {cmd.label}
-                            </span>
-                            {cmd.description && (
-                              <div className="text-[11px] text-neutral-500 truncate mt-0.5">
-                                {cmd.description}
-                              </div>
-                            )}
-                          </div>
-                          {cmd.requiresInput ? (
-                            <ChevronRight size={14} className="text-neutral-600 flex-shrink-0" />
-                          ) : (
-                            <CornerDownLeft
-                              size={13}
-                              className={cn(
-                                'flex-shrink-0 transition-all duration-150',
-                                isSelected ? 'opacity-100 text-neutral-500' : 'opacity-0'
-                              )}
-                            />
-                          )}
-                        </motion.button>
-                      )
-                    })}
+                  )}
+                  <div className="flex items-center gap-1.5">
+                    <kbd className="px-1.5 py-0.5 text-[10px] font-medium text-[var(--color-text-muted)] bg-[var(--color-surface-muted)] border border-[var(--color-border-subtle)] rounded">
+                      ↵
+                    </kbd>
+                    <span className="text-[var(--color-text-muted)] text-[10px]">confirm</span>
                   </div>
-                )
-              })()
-            ) : universalSearchResults.length === 0 ? (
-              <div className="px-6 py-12 text-center">
-                {limitedsLoading || catalogLoading || playerLoading ? (
-                  <div className="flex flex-col items-center gap-3">
-                    <div
-                      className="w-10 h-10 rounded-xl flex items-center justify-center border border-[var(--color-border-subtle)]"
-                      style={{ background: TILE_BG }}
-                    >
-                      <Loader2
-                        size={18}
-                        className="text-[var(--color-text-secondary)] animate-spin"
-                      />
-                    </div>
-                    <div className="text-[var(--color-text-secondary)] text-[13px]">
-                      {playerLoading ? 'Searching players...' : 'Indexing items...'}
-                    </div>
+                </div>
+              </div>
+
+              {isLoading && (
+                <div
+                  className="px-4 py-4 flex items-center justify-center gap-2 border-t"
+                  style={{ borderColor: 'var(--color-border-subtle)' }}
+                >
+                  <Loader2 size={15} className="text-[var(--color-text-secondary)] animate-spin" />
+                  <span className="text-[12px] text-[var(--color-text-secondary)]">Loading...</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Results Step Content */}
+          {step === 'results' && (
+            <div>
+              {/* Results Header */}
+              <div
+                className="px-4 py-3 border-b flex items-center gap-3"
+                style={{ borderColor: 'var(--color-border-subtle)', background: STRIP_BG }}
+              >
+                <motion.button
+                  onClick={goBack}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="p-1.5 rounded-lg border transition-all duration-150 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] bg-[var(--color-surface-muted)] hover:bg-[var(--color-surface-hover)] border-[var(--color-border-subtle)]"
+                >
+                  <ArrowLeft size={16} strokeWidth={2} />
+                </motion.button>
+                <div className="flex-1">
+                  <div className="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-medium mb-0.5">
+                    Search Results
                   </div>
-                ) : (
-                  <>
+                  <div className="text-[13px] text-[var(--color-text-primary)] font-medium">
+                    {searchResults.length} {searchResults.length === 1 ? 'item' : 'items'} found
+                  </div>
+                </div>
+              </div>
+
+              {/* Results List */}
+              <div ref={resultsRef} style={{ height: listMaxHeight }}>
+                {searchResults.length === 0 ? (
+                  <div className="px-6 py-12 text-center">
                     <div
                       className="w-10 h-10 mx-auto mb-3 rounded-xl flex items-center justify-center border border-[var(--color-border-subtle)]"
                       style={{ background: TILE_BG }}
                     >
-                      <Search
+                      <Boxes
                         size={18}
                         className="text-[var(--color-text-muted)]"
                         strokeWidth={1.5}
                       />
                     </div>
                     <div className="text-[var(--color-text-secondary)] text-[13px]">
-                      No results found
+                      No items found
                     </div>
-                    <div className="text-[var(--color-text-muted)] text-[11px] mt-1">
-                      Try a different search term
-                    </div>
-                  </>
-                )}
-              </div>
-            ) : (
-              <div className="py-1">
-                <Virtuoso
-                  data={universalSearchResults}
-                  overscan={20}
-                  computeItemKey={(_idx, item) =>
-                    item.type === 'command' ? `cmd-${item.command.id}` : `${item.type}-${item.id}`
-                  }
-                  style={{ height: listMaxHeight - 16 }}
-                  itemContent={(idx, result) => {
-                    if (result.type === 'player') {
-                      return (
-                        <UniversalPlayerRow
-                          result={result}
-                          idx={idx}
-                          selectedIndex={selectedIndex}
-                          onSelect={handleSelectUniversalResult}
-                          onHover={setSelectedIndex}
-                        />
-                      )
-                    }
-
-                    if (result.type === 'limited') {
-                      return (
-                        <UniversalLimitedRow
-                          result={result}
-                          idx={idx}
-                          selectedIndex={selectedIndex}
-                          onSelect={handleSelectUniversalResult}
-                          onHover={setSelectedIndex}
-                        />
-                      )
-                    }
-
-                    if (result.type === 'catalog') {
-                      return (
-                        <UniversalCatalogRow
-                          result={result}
-                          idx={idx}
-                          selectedIndex={selectedIndex}
-                          onSelect={handleSelectUniversalResult}
-                          onHover={setSelectedIndex}
-                        />
-                      )
-                    }
-
-                    if (result.type === 'command') {
-                      return (
-                        <UniversalCommandRow
-                          result={result}
-                          idx={idx}
-                          selectedIndex={selectedIndex}
-                          onSelect={handleSelectUniversalResult}
-                          onHover={setSelectedIndex}
-                        />
-                      )
-                    }
-
-                    return null
-                  }}
-                />
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Command List */}
-        {step === 'select' && (
-          <div ref={listRef} className="overflow-y-auto" style={{ maxHeight: listMaxHeight }}>
-            {flatCommands.length === 0 ? (
-              <div className="px-6 py-12 text-center">
-                <div
-                  className="w-10 h-10 mx-auto mb-3 rounded-xl flex items-center justify-center border border-[var(--color-border-subtle)]"
-                  style={{ background: TILE_BG }}
-                >
-                  <Terminal
-                    size={18}
-                    className="text-[var(--color-text-muted)]"
-                    strokeWidth={1.5}
-                  />
-                </div>
-                <div className="text-[var(--color-text-secondary)] text-[13px]">
-                  No commands found
-                </div>
-                <div className="text-[var(--color-text-muted)] text-[11px] mt-1">
-                  Try a different search
-                </div>
-              </div>
-            ) : (
-              <div className="py-1.5">
-                {groupedCommands.map(({ category, commands: cmds }) => (
-                  <div key={category} className="mb-1">
-                    <div
-                      className="px-4 py-2 text-[10px] font-semibold uppercase tracking-wider flex items-center gap-2 sticky top-0 backdrop-blur-sm z-10 border-b"
-                      style={{
-                        backgroundColor: TILE_BG,
-                        borderColor: 'var(--color-border-subtle)'
-                      }}
-                    >
-                      {categoryLabels[category]}
-                      <span className="w-px h-3 bg-[var(--color-border)]" />
-                      <span className="text-[var(--color-text-muted)] normal-case font-normal tracking-normal">
-                        {cmds.length}
-                      </span>
-                    </div>
-                    {cmds.map((cmd) => {
-                      const idx = commandIndex++
-                      const isSelected = idx === selectedIndex
-                      const isRecent = recentCommandIds.includes(cmd.id)
-
+                  </div>
+                ) : (
+                  <Virtuoso
+                    data={searchResults}
+                    overscan={20}
+                    computeItemKey={(_idx, item) => `${item.itemType}-${item.id}`}
+                    itemContent={(idx, item) => {
+                      const isSelected = idx === resultSelectedIndex
                       return (
                         <motion.button
-                          key={cmd.id}
+                          key={`${item.itemType}-${item.id}`}
                           initial={false}
                           animate={{ backgroundColor: isSelected ? SELECTED_BG : UNSELECTED_BG }}
                           transition={{ duration: 0.1 }}
-                          data-selected={isSelected}
-                          onClick={() => selectCommand(cmd)}
-                          onMouseEnter={() => setSelectedIndex(idx)}
+                          data-result-selected={isSelected}
+                          data-index={idx}
+                          onClick={() => selectResult(item)}
+                          onMouseEnter={() => setResultSelectedIndex(idx)}
                           className="w-full flex items-center gap-3 px-3 py-2 text-left rounded-lg mx-1 group transition-colors duration-100"
                           style={{ width: 'calc(100% - 8px)' }}
                         >
-                          <div
-                            className={cn(
-                              ICON_BASE_CLASSES,
-                              isSelected
-                                ? 'bg-[var(--accent-color)] text-[var(--accent-color-foreground)] shadow-lg shadow-[var(--accent-color)]/20'
-                                : ICON_UNSELECTED_CLASSES
-                            )}
-                          >
-                            {iconMap[cmd.icon] || <Sparkles size={16} strokeWidth={1.75} />}
-                          </div>
+                          {item.imageUrl ? (
+                            <img
+                              src={item.imageUrl}
+                              alt={item.name}
+                              className="flex-shrink-0 w-9 h-9 rounded-lg bg-[var(--color-surface-muted)] object-cover ring-1 ring-[var(--color-border-subtle)]"
+                            />
+                          ) : (
+                            <div
+                              className={cn(
+                                ICON_BASE_CLASSES,
+                                isSelected
+                                  ? 'bg-[var(--accent-color)] text-[var(--accent-color-foreground)]'
+                                  : ICON_UNSELECTED_CLASSES
+                              )}
+                            >
+                              <Boxes size={16} strokeWidth={1.75} />
+                            </div>
+                          )}
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
                               <span className="text-[13px] font-medium truncate text-neutral-200 group-hover:text-white transition-colors">
-                                {cmd.label}
+                                {item.name}
                               </span>
-                              {isRecent && (
-                                <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-md bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center gap-1">
-                                  <Clock size={9} />
-                                  Recent
-                                </span>
+                              {item.creatorHasVerifiedBadge && (
+                                <VerifiedIcon width={11} height={11} className="flex-shrink-0" />
                               )}
                             </div>
-                            {cmd.description && (
-                              <div className="text-[11px] text-neutral-500 truncate mt-0.5">
-                                {cmd.description}
-                              </div>
-                            )}
+                            <div className="flex items-center gap-1.5 text-[11px] text-neutral-500 mt-0.5">
+                              <span className="truncate">by {item.creatorName || 'Unknown'}</span>
+                              {item.price !== null && item.price !== undefined && (
+                                <>
+                                  <span className="text-neutral-700">·</span>
+                                  <span className="text-emerald-400/90">
+                                    R$ {item.price.toLocaleString()}
+                                  </span>
+                                </>
+                              )}
+                              {item.isOffSale && (
+                                <>
+                                  <span className="text-neutral-700">·</span>
+                                  <span className="text-red-400/80">Off Sale</span>
+                                </>
+                              )}
+                            </div>
                           </div>
-                          {cmd.requiresInput ? (
-                            <ChevronRight size={14} className="text-neutral-600 flex-shrink-0" />
-                          ) : (
-                            <CornerDownLeft
-                              size={13}
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            <span
                               className={cn(
-                                'flex-shrink-0 transition-all duration-150',
-                                isSelected ? 'opacity-100 text-neutral-500' : 'opacity-0'
+                                'text-[10px] font-medium px-1.5 py-0.5 rounded-md border flex items-center gap-1',
+                                resultTypeBadges.catalog.className
+                              )}
+                            >
+                              {resultTypeBadges.catalog.icon}
+                              {item.itemType}
+                            </span>
+                            <ChevronRight
+                              size={14}
+                              className={cn(
+                                'text-neutral-600 transition-all duration-150',
+                                isSelected
+                                  ? 'opacity-100 translate-x-0'
+                                  : 'opacity-0 -translate-x-1'
                               )}
                             />
-                          )}
+                          </div>
                         </motion.button>
                       )
-                    })}
-                  </div>
-                ))}
+                    }}
+                  />
+                )}
               </div>
-            )}
-          </div>
-        )}
 
-        {/* Input Step Content */}
-        {step === 'input' && (
-          <div>
-            {/* Friend Suggestions */}
-            {filteredFriends.length > 0 && (
+              {/* Results Help text */}
               <div
-                ref={suggestionsRef}
-                className="overflow-y-auto"
-                style={{ maxHeight: secondaryListMaxHeight }}
+                className="px-4 py-3 flex items-center justify-between border-t"
+                style={{ borderColor: 'var(--color-border-subtle)', background: STRIP_BG }}
               >
-                <div
-                  className="px-4 py-2 text-[10px] font-semibold uppercase tracking-wider flex items-center gap-2 sticky top-0 backdrop-blur-sm z-10 border-b text-[var(--color-text-secondary)]"
-                  style={{ backgroundColor: TILE_BG, borderColor: 'var(--color-border-subtle)' }}
-                >
-                  <Users size={11} strokeWidth={2} />
-                  Friends
-                  <span className="ml-auto text-[var(--color-text-muted)] normal-case font-normal tracking-normal">
-                    {filteredFriends.length}
-                  </span>
-                </div>
-                {filteredFriends.map((friend, idx) => {
-                  const isSelected = idx === suggestionIndex
-                  return (
-                    <motion.button
-                      key={friend.id}
-                      initial={false}
-                      animate={{ backgroundColor: isSelected ? SELECTED_BG : UNSELECTED_BG }}
-                      transition={{ duration: 0.1 }}
-                      data-suggestion-selected={isSelected}
-                      onClick={() => {
-                        setInputValue(friend.username)
-                        setTimeout(() => submitInput(), 0)
-                      }}
-                      onMouseEnter={() => setSuggestionIndex(idx)}
-                      className="w-full flex items-center gap-3 px-3 py-2 text-left rounded-lg mx-1 group transition-colors duration-100"
-                      style={{ width: 'calc(100% - 8px)' }}
-                    >
-                      <img
-                        src={friend.avatarUrl}
-                        alt={friend.displayName}
-                        className="w-9 h-9 rounded-full bg-[var(--color-surface-muted)] flex-shrink-0 ring-1 ring-[var(--color-border-subtle)]"
-                      />
-                      <div className="flex-1 min-w-0">
-                        <div className="text-[13px] font-medium truncate text-neutral-200 group-hover:text-white transition-colors">
-                          {friend.displayName}
-                        </div>
-                        <div className="text-[11px] text-neutral-500 truncate mt-0.5">
-                          @{friend.username}
-                        </div>
-                      </div>
-                      {friend.gameActivity && (
-                        <div className="flex items-center gap-1.5 text-[10px] font-medium px-2 py-1 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                          <Gamepad2 size={11} />
-                          <span className="max-w-[80px] truncate">{friend.gameActivity.name}</span>
-                        </div>
-                      )}
-                      <CornerDownLeft
-                        size={13}
-                        className={cn(
-                          'flex-shrink-0 transition-all duration-150',
-                          isSelected ? 'opacity-100 text-neutral-500' : 'opacity-0'
-                        )}
-                      />
-                    </motion.button>
-                  )
-                })}
-              </div>
-            )}
-
-            {/* Help text */}
-            <div
-              className="px-4 py-3 flex items-center justify-between border-t"
-              style={{ borderColor: 'var(--color-border-subtle)', background: STRIP_BG }}
-            >
-              <span className="text-[var(--color-text-muted)] text-[12px]">
-                {filteredFriends.length > 0
-                  ? 'Select a friend or type a username'
-                  : 'Type a username'}
-              </span>
-              <div className="flex items-center gap-3">
-                {filteredFriends.length > 0 && (
+                <span className="text-[var(--color-text-muted)] text-[12px]">
+                  Select an item to open
+                </span>
+                <div className="flex items-center gap-3">
                   <div className="flex items-center gap-1.5">
                     <kbd className="px-1.5 py-0.5 text-[10px] font-medium text-[var(--color-text-muted)] bg-[var(--color-surface-muted)] border border-[var(--color-border-subtle)] rounded">
-                      Tab
+                      ↵
                     </kbd>
-                    <span className="text-[var(--color-text-muted)] text-[10px]">autocomplete</span>
+                    <span className="text-[var(--color-text-muted)] text-[10px]">open</span>
                   </div>
-                )}
-                <div className="flex items-center gap-1.5">
-                  <kbd className="px-1.5 py-0.5 text-[10px] font-medium text-[var(--color-text-muted)] bg-[var(--color-surface-muted)] border border-[var(--color-border-subtle)] rounded">
-                    ↵
-                  </kbd>
-                  <span className="text-[var(--color-text-muted)] text-[10px]">confirm</span>
+                  <div className="flex items-center gap-1.5">
+                    <kbd className="px-1.5 py-0.5 text-[10px] font-medium text-[var(--color-text-muted)] bg-[var(--color-surface-muted)] border border-[var(--color-border-subtle)] rounded">
+                      ESC
+                    </kbd>
+                    <span className="text-[var(--color-text-muted)] text-[10px]">back</span>
+                  </div>
                 </div>
               </div>
             </div>
+          )}
 
-            {isLoading && (
-              <div
-                className="px-4 py-4 flex items-center justify-center gap-2 border-t"
-                style={{ borderColor: 'var(--color-border-subtle)' }}
-              >
-                <Loader2 size={15} className="text-[var(--color-text-secondary)] animate-spin" />
-                <span className="text-[12px] text-[var(--color-text-secondary)]">Loading...</span>
+          {/* Footer */}
+          <div
+            className="flex items-center justify-between px-4 py-2.5 border-t"
+            style={{ borderColor: 'var(--color-border-subtle)', background: STRIP_BG }}
+          >
+            <div className="flex items-center gap-4 text-[var(--color-text-muted)]">
+              <div className="flex items-center gap-1.5">
+                <kbd className="w-5 h-5 flex items-center justify-center text-[10px] font-medium bg-[var(--color-surface-muted)] border border-[var(--color-border-subtle)] rounded">
+                  ↑
+                </kbd>
+                <kbd className="w-5 h-5 flex items-center justify-center text-[10px] font-medium bg-[var(--color-surface-muted)] border border-[var(--color-border-subtle)] rounded">
+                  ↓
+                </kbd>
+                <span className="ml-0.5 text-[10px]">navigate</span>
               </div>
-            )}
-          </div>
-        )}
-
-        {/* Results Step Content */}
-        {step === 'results' && (
-          <div>
-            {/* Results Header */}
-            <div
-              className="px-4 py-3 border-b flex items-center gap-3"
-              style={{ borderColor: 'var(--color-border-subtle)', background: STRIP_BG }}
-            >
-              <motion.button
-                onClick={goBack}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="p-1.5 rounded-lg border transition-all duration-150 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] bg-[var(--color-surface-muted)] hover:bg-[var(--color-surface-hover)] border-[var(--color-border-subtle)]"
-              >
-                <ArrowLeft size={16} strokeWidth={2} />
-              </motion.button>
-              <div className="flex-1">
-                <div className="text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-medium mb-0.5">
-                  Search Results
-                </div>
-                <div className="text-[13px] text-[var(--color-text-primary)] font-medium">
-                  {searchResults.length} {searchResults.length === 1 ? 'item' : 'items'} found
-                </div>
+              <div className="w-px h-3 bg-[var(--color-border-subtle)]" />
+              <div className="flex items-center gap-1.5">
+                <kbd className="px-1.5 h-5 flex items-center justify-center text-[10px] font-medium bg-[var(--color-surface-muted)] border border-[var(--color-border-subtle)] rounded">
+                  ↵
+                </kbd>
+                <span className="text-[10px]">select</span>
               </div>
-            </div>
-
-            {/* Results List */}
-            <div ref={resultsRef} style={{ height: listMaxHeight }}>
-              {searchResults.length === 0 ? (
-                <div className="px-6 py-12 text-center">
-                  <div
-                    className="w-10 h-10 mx-auto mb-3 rounded-xl flex items-center justify-center border border-[var(--color-border-subtle)]"
-                    style={{ background: TILE_BG }}
-                  >
-                    <Boxes size={18} className="text-[var(--color-text-muted)]" strokeWidth={1.5} />
+              {step === 'search' && (
+                <>
+                  <div className="w-px h-3 bg-[var(--color-border-subtle)]" />
+                  <div className="flex items-center gap-1.5">
+                    <kbd className="px-1.5 h-5 flex items-center justify-center text-[10px] font-medium bg-[var(--color-surface-muted)] border border-[var(--color-border-subtle)] rounded">
+                      &gt;
+                    </kbd>
+                    <span className="text-[10px]">commands</span>
                   </div>
-                  <div className="text-[var(--color-text-secondary)] text-[13px]">
-                    No items found
-                  </div>
-                </div>
-              ) : (
-                <Virtuoso
-                  data={searchResults}
-                  overscan={20}
-                  computeItemKey={(_idx, item) => `${item.itemType}-${item.id}`}
-                  itemContent={(idx, item) => {
-                    const isSelected = idx === resultSelectedIndex
-                    return (
-                      <motion.button
-                        key={`${item.itemType}-${item.id}`}
-                        initial={false}
-                        animate={{ backgroundColor: isSelected ? SELECTED_BG : UNSELECTED_BG }}
-                        transition={{ duration: 0.1 }}
-                        data-result-selected={isSelected}
-                        data-index={idx}
-                        onClick={() => selectResult(item)}
-                        onMouseEnter={() => setResultSelectedIndex(idx)}
-                        className="w-full flex items-center gap-3 px-3 py-2 text-left rounded-lg mx-1 group transition-colors duration-100"
-                        style={{ width: 'calc(100% - 8px)' }}
-                      >
-                        {item.imageUrl ? (
-                          <img
-                            src={item.imageUrl}
-                            alt={item.name}
-                            className="flex-shrink-0 w-9 h-9 rounded-lg bg-[var(--color-surface-muted)] object-cover ring-1 ring-[var(--color-border-subtle)]"
-                          />
-                        ) : (
-                          <div
-                            className={cn(
-                              ICON_BASE_CLASSES,
-                              isSelected
-                                ? 'bg-[var(--accent-color)] text-[var(--accent-color-foreground)]'
-                                : ICON_UNSELECTED_CLASSES
-                            )}
-                          >
-                            <Boxes size={16} strokeWidth={1.75} />
-                          </div>
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="text-[13px] font-medium truncate text-neutral-200 group-hover:text-white transition-colors">
-                              {item.name}
-                            </span>
-                            {item.creatorHasVerifiedBadge && (
-                              <VerifiedIcon width={11} height={11} className="flex-shrink-0" />
-                            )}
-                          </div>
-                          <div className="flex items-center gap-1.5 text-[11px] text-neutral-500 mt-0.5">
-                            <span className="truncate">by {item.creatorName || 'Unknown'}</span>
-                            {item.price !== null && item.price !== undefined && (
-                              <>
-                                <span className="text-neutral-700">·</span>
-                                <span className="text-emerald-400/90">
-                                  R$ {item.price.toLocaleString()}
-                                </span>
-                              </>
-                            )}
-                            {item.isOffSale && (
-                              <>
-                                <span className="text-neutral-700">·</span>
-                                <span className="text-red-400/80">Off Sale</span>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                          <span
-                            className={cn(
-                              'text-[10px] font-medium px-1.5 py-0.5 rounded-md border flex items-center gap-1',
-                              resultTypeBadges.catalog.className
-                            )}
-                          >
-                            {resultTypeBadges.catalog.icon}
-                            {item.itemType}
-                          </span>
-                          <ChevronRight
-                            size={14}
-                            className={cn(
-                              'text-neutral-600 transition-all duration-150',
-                              isSelected ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-1'
-                            )}
-                          />
-                        </div>
-                      </motion.button>
-                    )
-                  }}
-                />
+                </>
               )}
             </div>
-
-            {/* Results Help text */}
-            <div
-              className="px-4 py-3 flex items-center justify-between border-t"
-              style={{ borderColor: 'var(--color-border-subtle)', background: STRIP_BG }}
-            >
-              <span className="text-[var(--color-text-muted)] text-[12px]">
-                Select an item to open
-              </span>
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-1.5">
-                  <kbd className="px-1.5 py-0.5 text-[10px] font-medium text-[var(--color-text-muted)] bg-[var(--color-surface-muted)] border border-[var(--color-border-subtle)] rounded">
-                    ↵
-                  </kbd>
-                  <span className="text-[var(--color-text-muted)] text-[10px]">open</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <kbd className="px-1.5 py-0.5 text-[10px] font-medium text-[var(--color-text-muted)] bg-[var(--color-surface-muted)] border border-[var(--color-border-subtle)] rounded">
-                    ESC
-                  </kbd>
-                  <span className="text-[var(--color-text-muted)] text-[10px]">back</span>
-                </div>
-              </div>
+            <div className="flex items-center gap-1 text-[10px] text-[var(--color-text-muted)] bg-[var(--color-surface-muted)] px-2 py-1 rounded-md border border-[var(--color-border-subtle)]">
+              <Command size={11} strokeWidth={1.5} />
+              <span className="font-medium">K</span>
             </div>
           </div>
-        )}
-
-        {/* Footer */}
-        <div
-          className="flex items-center justify-between px-4 py-2.5 border-t"
-          style={{ borderColor: 'var(--color-border-subtle)', background: STRIP_BG }}
-        >
-          <div className="flex items-center gap-4 text-[var(--color-text-muted)]">
-            <div className="flex items-center gap-1.5">
-              <kbd className="w-5 h-5 flex items-center justify-center text-[10px] font-medium bg-[var(--color-surface-muted)] border border-[var(--color-border-subtle)] rounded">
-                ↑
-              </kbd>
-              <kbd className="w-5 h-5 flex items-center justify-center text-[10px] font-medium bg-[var(--color-surface-muted)] border border-[var(--color-border-subtle)] rounded">
-                ↓
-              </kbd>
-              <span className="ml-0.5 text-[10px]">navigate</span>
-            </div>
-            <div className="w-px h-3 bg-[var(--color-border-subtle)]" />
-            <div className="flex items-center gap-1.5">
-              <kbd className="px-1.5 h-5 flex items-center justify-center text-[10px] font-medium bg-[var(--color-surface-muted)] border border-[var(--color-border-subtle)] rounded">
-                ↵
-              </kbd>
-              <span className="text-[10px]">select</span>
-            </div>
-            {step === 'search' && (
-              <>
-                <div className="w-px h-3 bg-[var(--color-border-subtle)]" />
-                <div className="flex items-center gap-1.5">
-                  <kbd className="px-1.5 h-5 flex items-center justify-center text-[10px] font-medium bg-[var(--color-surface-muted)] border border-[var(--color-border-subtle)] rounded">
-                    &gt;
-                  </kbd>
-                  <span className="text-[10px]">commands</span>
-                </div>
-              </>
-            )}
-          </div>
-          <div className="flex items-center gap-1 text-[10px] text-[var(--color-text-muted)] bg-[var(--color-surface-muted)] px-2 py-1 rounded-md border border-[var(--color-border-subtle)]">
-            <Command size={11} strokeWidth={1.5} />
-            <span className="font-medium">K</span>
-          </div>
-        </div>
         </motion.div>
       </div>
     </motion.div>

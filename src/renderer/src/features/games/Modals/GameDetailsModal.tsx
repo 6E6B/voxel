@@ -1053,7 +1053,11 @@ const GamePassCard: React.FC<{
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-lg overflow-hidden bg-neutral-900 border border-neutral-800 flex items-center justify-center">
                 {imageUrl ? (
-                  <img src={imageUrl} alt={pass.displayName} className="w-full h-full object-cover" />
+                  <img
+                    src={imageUrl}
+                    alt={pass.displayName}
+                    className="w-full h-full object-cover"
+                  />
                 ) : (
                   <ShoppingBag size={24} className="text-neutral-600" />
                 )}
@@ -1074,14 +1078,15 @@ const GamePassCard: React.FC<{
             </div>
 
             <div className="flex gap-3 pt-2">
-              <Button variant="outline" className="flex-1" disabled={isPurchasing} onClick={() => setShowConfirm(false)}>
-                Cancel
-              </Button>
               <Button
+                variant="outline"
                 className="flex-1"
                 disabled={isPurchasing}
-                onClick={handleConfirmPurchase}
+                onClick={() => setShowConfirm(false)}
               >
+                Cancel
+              </Button>
+              <Button className="flex-1" disabled={isPurchasing} onClick={handleConfirmPurchase}>
                 {isPurchasing && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
                 {isPurchasing ? 'Purchasing...' : 'Confirm'}
               </Button>

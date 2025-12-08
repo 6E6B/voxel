@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect, Suspense, useCallback } from 'react'
 import { Canvas, useThree, useFrame, invalidate } from '@react-three/fiber'
 import { OrbitControls as DreiOrbitControls, BakeShadows, AdaptiveDpr } from '@react-three/drei'
-import type { OrbitControls as OrbitControlsImpl } from 'three/examples/jsm/controls/OrbitControls'
+import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
 import * as THREE from 'three'
 import { load3DObjectFromUrl, dispose3DObject, ObjectType } from './avatar3DUtils'
 import {

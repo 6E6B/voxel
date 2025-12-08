@@ -5,6 +5,12 @@ import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import iconIco from '../../resources/build/icons/icon.ico?asset'
 import iconIcns from '../../resources/build/icons/icon.icns?asset'
 
+const mainStart = performance.now()
+const logPerf = (label: string) => {
+  const delta = performance.now() - mainStart
+  console.log(`[perf:main] ${label} ${delta.toFixed(1)}ms`)
+}
+
 // Lazy imports - these will be loaded after window is shown
 let registerRobloxHandlers: typeof import('./modules/core/RobloxHandler').registerRobloxHandlers
 let registerStorageHandlers: typeof import('./modules/system/StorageController').registerStorageHandlers
@@ -79,6 +85,30 @@ function createWindow(): BrowserWindow {
       }
     }
     mainWindow.show()
+    logPerf('ready-to-show')
+  })
+
+  mainWindow.webContents.once('dom-ready', () => {
+    logPerf('dom-ready')
+  })
+
+  mainWindow.webContents.once('did-finish-load', () => {
+    logPerf('did-finish-load')
+  })
+
+  mainWindow.webContents.on('console-message', (_event, ...args: any[]) => {
+    // Support both legacy (level, message, line, sourceId) and new params object signature
+    if (args.length === 1 && typeof args[0] === 'object') {
+      const params = args[0] as any
+      const level = params.level ?? 0
+      const message = params.message ?? ''
+      const line = params.lineNumber ?? 0
+      const sourceId = params.sourceId ?? ''
+      console.log(`[renderer:${level}] ${message} (${sourceId}:${line})`)
+    } else {
+      const [level = 0, message = '', line = 0, sourceId = ''] = args as any[]
+      console.log(`[renderer:${level}] ${message} (${sourceId}:${line})`)
+    }
   })
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
@@ -180,9 +210,11 @@ app.whenReady().then(async () => {
 
   // Create window immediately for fast perceived startup
   const mainWindow = createWindow()
+  logPerf('window-created')
 
   // Load modules in parallel while window is loading
   const loadedModules = await loadModules()
+  logPerf('modules-loaded')
 
   // Register handlers after modules are loaded
   loadedModules.registerRobloxHandlers()
@@ -192,6 +224,7 @@ app.whenReady().then(async () => {
 
   // Initialize PIN service (loads persisted lockout state)
   loadedModules.pinService.initialize()
+  logPerf('handlers-registered')
 
   // Helper for CORS headers
   const UpsertKeyValue = (obj: Record<string, any>, keyToChange: string, value: any) => {

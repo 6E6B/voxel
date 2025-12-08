@@ -560,6 +560,25 @@ export const catalogDbSearchResultSchema = z.object({
   Sales: z.number()
 })
 
+// Exported FlexSearch catalog index schema
+export const catalogIndexExportSchema = z.object({
+  version: z.number(),
+  catalogHash: z.string(),
+  catalogIndex: z.record(z.string(), z.string()),
+  catalogItems: z.array(
+    z.tuple([
+      z.number(),
+      catalogDbSearchResultSchema.extend({
+        Description: z.string(), // ensure non-null description in export
+        PriceInRobux: z.number(), // coerce nullable numeric to number for search data
+        IsForSale: z.boolean(),
+        IsLimited: z.boolean(),
+        IsLimitedUnique: z.boolean()
+      })
+    ])
+  )
+})
+
 export const salesDataSchema = z.object({
   id: z.number(),
   sales: z.number()
@@ -567,3 +586,4 @@ export const salesDataSchema = z.object({
 
 export type CatalogDbItem = z.infer<typeof catalogDbItemSchema>
 export type CatalogDbSearchResult = z.infer<typeof catalogDbSearchResultSchema>
+export type CatalogIndexExport = z.infer<typeof catalogIndexExportSchema>

@@ -401,9 +401,8 @@ const GamesTab = ({ onGameSelect }: GamesTabProps) => {
   )
 
   // Recently played games (requires at least one stored account with a cookie)
-  const { data: recentlyPlayedGames = [], isLoading: isRecentLoading } = useRecentlyPlayedGames(
-    sessionId
-  )
+  const { data: recentlyPlayedGames = [], isLoading: isRecentLoading } =
+    useRecentlyPlayedGames(sessionId)
 
   // Compute final games list
   const games = useMemo(() => {
@@ -712,9 +711,7 @@ const GamesTab = ({ onGameSelect }: GamesTabProps) => {
                         }}
                         formatPlayerCount={formatPlayerCount}
                         isFavorite={Boolean(game.placeId && favorites.includes(game.placeId))}
-                        favoriteBurst={Boolean(
-                          game.placeId && favoriteGameBurstKeys[game.placeId]
-                        )}
+                        favoriteBurst={Boolean(game.placeId && favoriteGameBurstKeys[game.placeId])}
                       />
                     </div>
                   ))}

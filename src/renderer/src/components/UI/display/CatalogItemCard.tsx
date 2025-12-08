@@ -336,7 +336,7 @@ export const CatalogItemCard = ({
               ) : (
                 <span
                   ref={creatorRef as React.RefObject<HTMLSpanElement>}
-                className={`truncate text-xs ${item.creatorHasVerifiedBadge ? 'text-[var(--accent-color)] font-medium' : 'text-[var(--color-text-muted)]'}`}
+                  className={`truncate text-xs ${item.creatorHasVerifiedBadge ? 'text-[var(--accent-color)] font-medium' : 'text-[var(--color-text-muted)]'}`}
                 >
                   {item.creatorName}
                 </span>

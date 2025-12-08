@@ -704,8 +704,16 @@ export interface SalesData {
   sales: number
 }
 
+export interface CatalogIndexExport {
+  version: number
+  catalogHash: string
+  catalogIndex: Record<string, string>
+  catalogItems: [number, CatalogDbSearchResult][]
+}
+
 export interface CatalogDatabaseApi {
   getAllCatalogItems: () => Promise<CatalogDbSearchResult[]>
+  getCatalogIndexExport: () => Promise<CatalogIndexExport>
   searchCatalogDb: (query: string, limit?: number) => Promise<CatalogDbSearchResult[]>
   getCatalogItemById: (assetId: number) => Promise<CatalogDbItem | null>
   getSalesData: (assetId: number) => Promise<SalesData | null>

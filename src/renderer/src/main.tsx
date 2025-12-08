@@ -5,16 +5,20 @@ import App from './App'
 import { ThemeProvider } from './theme/ThemeProvider'
 import './index.css'
 
+const rendererStart = performance.now()
+;(window as any).__perfRendererStart = rendererStart
+console.log('[perf:renderer] entry', rendererStart.toFixed(1))
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 30 * 1000, // 30 seconds
-      gcTime: 5 * 60 * 1000, // 5 minutes (formerly cacheTime)
-      retry: 1, // Single retry for IPC calls
-      refetchOnWindowFocus: false // Electron doesn't benefit from this
+      staleTime: 30 * 1000,
+      gcTime: 5 * 60 * 1000,
+      retry: 1,
+      refetchOnWindowFocus: false
     },
     mutations: {
-      retry: 0 // Don't retry mutations
+      retry: 0
     }
   }
 })

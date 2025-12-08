@@ -198,6 +198,7 @@ export const catalogApi = {
 
 export const catalogDatabaseApi = {
   getAllCatalogItems: () => invoke('get-all-catalog-items', z.array(S.catalogDbSearchResultSchema)),
+  getCatalogIndexExport: () => invoke('get-catalog-index-export', S.catalogIndexExportSchema),
   searchCatalogDb: (query: string, limit?: number) =>
     invoke('search-catalog-db', z.array(S.catalogDbSearchResultSchema), query, limit),
   getCatalogItemById: (assetId: number) =>

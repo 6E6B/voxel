@@ -59,14 +59,16 @@ export function initCatalogSearchIndex(): void {
   if (catalogInitStarted) return
   catalogInitStarted = true
 
+  const scheduleIdle =
+    typeof window !== 'undefined' && 'requestIdleCallback' in window
+      ? (cb: IdleRequestCallback) => (window as any).requestIdleCallback(cb)
+      : (cb: IdleRequestCallback) =>
+          setTimeout(() => cb({ didTimeout: false, timeRemaining: () => 50 } as IdleDeadline), 0)
+
   const initCatalog = async () => {
     try {
-      // Fetch catalog items from the SQLite database via IPC
-      const items = await window.api.getAllCatalogItems()
-      const currentHash = computeItemsHash(items)
-
       const persistedIndex = loadPersistedIndex()
-      if (persistedIndex && persistedIndex.catalogHash === currentHash) {
+      if (persistedIndex) {
         console.log('[CatalogSearch] Loading persisted index...')
         const imported = await searchService.importCatalogIndex(persistedIndex)
         if (imported) {
@@ -76,7 +78,24 @@ export function initCatalogSearchIndex(): void {
         console.log('[CatalogSearch] Failed to import persisted index, rebuilding...')
       }
 
-      console.log('[CatalogSearch] Building new catalog index...')
+      // Load prebuilt index from main-process worker to avoid blocking main thread
+      try {
+        const exported = await window.api.getCatalogIndexExport()
+        const imported = await searchService.importCatalogIndex(exported)
+        if (imported) {
+          savePersistedIndex(exported)
+          console.log('[CatalogSearch] Loaded catalog index from main worker')
+          return
+        }
+        console.warn('[CatalogSearch] Failed to import main worker index, falling back')
+      } catch (workerErr) {
+        console.warn('[CatalogSearch] Failed to fetch catalog index export:', workerErr)
+      }
+
+      // Fallback: build index in renderer worker if export unavailable
+      console.log('[CatalogSearch] Building new catalog index in renderer...')
+      const items = await window.api.getAllCatalogItems()
+      const currentHash = computeItemsHash(items)
       searchService.initCatalog(items)
 
       const checkAndExport = () => {
@@ -98,7 +117,9 @@ export function initCatalogSearchIndex(): void {
     }
   }
 
-  initCatalog()
+  scheduleIdle(() => {
+    void initCatalog()
+  })
 }
 
 /**
