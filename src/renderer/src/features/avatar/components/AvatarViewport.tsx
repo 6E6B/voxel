@@ -13,6 +13,7 @@ interface AvatarViewportProps {
   renderText: string
   onRefresh: () => void
   onReset: () => void
+  resetSignal?: number
   onRenderStart?: () => void
   onRenderComplete?: () => void
   onRenderError?: (error: string) => void
@@ -32,6 +33,7 @@ export const AvatarViewport: React.FC<AvatarViewportProps> = ({
   isRendering,
   onRefresh,
   onReset,
+  resetSignal = 0,
   onRenderStart,
   onRenderComplete,
   onRenderError,
@@ -75,6 +77,7 @@ export const AvatarViewport: React.FC<AvatarViewportProps> = ({
           enableZoom={true}
           enablePan={true}
           autoRotateSpeed={0}
+          resetSignal={resetSignal}
           onLoadStart={onRenderStart}
           onLoad={onRenderComplete}
           onError={onRenderError}

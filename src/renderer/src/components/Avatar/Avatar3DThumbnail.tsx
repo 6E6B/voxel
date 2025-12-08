@@ -1,6 +1,7 @@
 import React, { useRef, useState, useEffect, Suspense, useCallback } from 'react'
 import { Canvas, useThree, useFrame, invalidate } from '@react-three/fiber'
-import { OrbitControls, BakeShadows, AdaptiveDpr } from '@react-three/drei'
+import { OrbitControls as DreiOrbitControls, BakeShadows, AdaptiveDpr } from '@react-three/drei'
+import type { OrbitControls as OrbitControlsImpl } from 'three/examples/jsm/controls/OrbitControls'
 import * as THREE from 'three'
 import { load3DObjectFromUrl, dispose3DObject, ObjectType } from './avatar3DUtils'
 import {
@@ -42,6 +43,8 @@ interface Model3DViewerProps {
   enableFireEffects?: boolean
   /** Enable sparkles effects from asset hierarchy (for accessories with Sparkles) */
   enableSparklesEffects?: boolean
+  /** External trigger to reset orbit controls */
+  resetSignal?: number
   /** Callbacks */
   onLoad?: () => void
   onError?: (error: string) => void
@@ -90,6 +93,7 @@ interface SceneControlsProps {
   enablePan: boolean
   minDistance: number
   maxDistance: number
+  controlsRef?: React.MutableRefObject<OrbitControlsImpl | null>
 }
 
 // Animated rig that smoothly transitions the model into view
@@ -236,10 +240,12 @@ const SceneControls: React.FC<SceneControlsProps> = ({
   enableZoom,
   enablePan,
   minDistance,
-  maxDistance
+  maxDistance,
+  controlsRef
 }) => {
   return (
-    <OrbitControls
+    <DreiOrbitControls
+      ref={controlsRef}
       autoRotate={autoRotate}
       autoRotateSpeed={autoRotateSpeed}
       enableRotate={enableRotate}
@@ -324,6 +330,7 @@ export const Model3DViewer: React.FC<Model3DViewerProps> = ({
   fov: customFov,
   enableFireEffects = true,
   enableSparklesEffects = true,
+  resetSignal = 0,
   onLoad,
   onError,
   onLoadStart,
@@ -332,6 +339,7 @@ export const Model3DViewer: React.FC<Model3DViewerProps> = ({
 }) => {
   const [isLoading, setIsLoading] = useState(true)
   const [_error, setError] = useState<string | null>(null)
+  const controlsRef = useRef<OrbitControlsImpl | null>(null)
 
   const objectType: ObjectType = explicitType || (userId ? 'avatar' : 'asset')
   const objectId = userId || assetId
@@ -386,6 +394,10 @@ export const Model3DViewer: React.FC<Model3DViewerProps> = ({
   const handleLoad = useCallback(() => {
     setIsLoading(false)
     setError(null)
+    if (controlsRef.current) {
+      controlsRef.current.saveState()
+      controlsRef.current.update()
+    }
     onLoadRef.current?.()
   }, [])
 
@@ -407,6 +419,13 @@ export const Model3DViewer: React.FC<Model3DViewerProps> = ({
       onLoadStartRef.current?.()
     }
   }, [effectiveManifestUrl])
+
+  useEffect(() => {
+    if (controlsRef.current) {
+      controlsRef.current.reset()
+      controlsRef.current.update()
+    }
+  }, [resetSignal])
 
   const combinedClassName = `relative w-full h-full ${className}`.trim()
 
@@ -466,6 +485,7 @@ export const Model3DViewer: React.FC<Model3DViewerProps> = ({
           enablePan={enablePan}
           minDistance={effectiveZoomLimits.min}
           maxDistance={effectiveZoomLimits.max}
+          controlsRef={controlsRef}
         />
         <Suspense fallback={null}>
           <AnimatedRig isLoaded={!isLoading} objectType={objectType}>

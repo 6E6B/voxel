@@ -57,6 +57,7 @@ const AvatarTab: React.FC<AvatarTabProps> = ({ account }) => {
   const { avatarRenderWidth, isResizing, handleResizeStart } =
     useAvatarRenderResize(avatarRenderContainerRef)
   const [isLargeScreen, setIsLargeScreen] = useState(window.innerWidth >= 1024)
+  const [resetCameraSignal, setResetCameraSignal] = useState(0)
 
   const [isRendering, setIsRendering] = useState(false)
   const [renderText, setRenderText] = useState('')
@@ -77,7 +78,9 @@ const AvatarTab: React.FC<AvatarTabProps> = ({ account }) => {
     setRenderText(status)
   }, [])
 
-  const resetCamera = useCallback(() => {}, [])
+  const resetCamera = useCallback(() => {
+    setResetCameraSignal((signal) => signal + 1)
+  }, [])
 
   const renderAvatar = useCallback(async (_userId: string) => {}, [])
 
@@ -307,6 +310,7 @@ const AvatarTab: React.FC<AvatarTabProps> = ({ account }) => {
           renderText={renderText}
           onRefresh={handleRefreshAvatar}
           onReset={resetCamera}
+          resetSignal={resetCameraSignal}
           onRenderStart={handleRenderStart}
           onRenderComplete={handleRenderComplete}
           onRenderError={handleRenderError}
