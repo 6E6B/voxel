@@ -1,5 +1,15 @@
 import React, { useMemo, useRef, useState } from 'react'
-import { Settings, Menu, ChevronLeft, ArrowRightLeft, LogOut, ChevronUp, Heart } from 'lucide-react'
+import {
+  Settings,
+  Menu,
+  ChevronLeft,
+  ArrowRightLeft,
+  LogOut,
+  ChevronUp,
+  Heart,
+  Settings2,
+  Ticket
+} from 'lucide-react'
 import { Account, TabId } from '@renderer/types'
 import SidebarItem from './SidebarItem'
 import { Button } from '../buttons/Button'
@@ -16,6 +26,7 @@ import { formatNumber } from '@renderer/utils/numberUtils'
 import { useClickOutside } from '../../../hooks/useClickOutside'
 import { useAccountsManager, useAccountStats } from '../../../features/auth/api/useAccounts'
 import CreditsDialog from '../dialogs/CreditsDialog'
+import RedeemCodeDialog from '../dialogs/RedeemCodeDialog'
 import { useTabTransition } from '@renderer/hooks/useTabTransition'
 import {
   getVisibleSidebarTabs,
@@ -30,16 +41,19 @@ interface ProfileCardProps {
   isCollapsed: boolean
   onSettingsClick: () => void
   onTransactionsClick: () => void
+  onRobloxSettingsClick: () => void
 }
 
 const ProfileCard = ({
   account,
   isCollapsed,
   onSettingsClick,
-  onTransactionsClick
+  onTransactionsClick,
+  onRobloxSettingsClick
 }: ProfileCardProps) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [isCreditsOpen, setIsCreditsOpen] = useState(false)
+  const [isRedeemOpen, setIsRedeemOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const { removeAccount } = useAccountsManager()
   const { data: accountStats } = useAccountStats(account.cookie)
@@ -68,8 +82,16 @@ const ProfileCard = ({
       }
     },
     {
+      icon: Settings2,
+      label: 'Roblox Settings',
+      onClick: () => {
+        onRobloxSettingsClick()
+        setIsDropdownOpen(false)
+      }
+    },
+    {
       icon: Settings,
-      label: 'Settings',
+      label: 'App Settings',
       onClick: () => {
         onSettingsClick()
         setIsDropdownOpen(false)
@@ -80,6 +102,14 @@ const ProfileCard = ({
       label: 'Credits',
       onClick: () => {
         setIsCreditsOpen(true)
+        setIsDropdownOpen(false)
+      }
+    },
+    {
+      icon: Ticket,
+      label: 'Redeem Code',
+      onClick: () => {
+        setIsRedeemOpen(true)
         setIsDropdownOpen(false)
       }
     },
@@ -265,6 +295,11 @@ const ProfileCard = ({
         </div>
       </button>
       <CreditsDialog isOpen={isCreditsOpen} onClose={() => setIsCreditsOpen(false)} />
+      <RedeemCodeDialog
+        isOpen={isRedeemOpen}
+        onClose={() => setIsRedeemOpen(false)}
+        account={account}
+      />
     </div>
   )
 }
@@ -313,7 +348,11 @@ const Sidebar = ({
   )
   const sidebarTabsToRender = useMemo(
     () =>
-      sidebarTabs.filter((tab) => !(tab.id === 'Settings' && selectedAccount && showProfileCard)),
+      sidebarTabs.filter(
+        (tab) =>
+          !(tab.id === 'Settings' && selectedAccount && showProfileCard) &&
+          tab.id !== 'AccountSettings'
+      ),
     [selectedAccount, showProfileCard, sidebarTabs]
   )
 
@@ -389,6 +428,7 @@ const Sidebar = ({
               isCollapsed={isSidebarCollapsed}
               onSettingsClick={() => setActiveTab('Settings')}
               onTransactionsClick={() => setActiveTab('Transactions')}
+              onRobloxSettingsClick={() => setActiveTab('AccountSettings')}
             />
           </div>
         )}

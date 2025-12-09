@@ -195,7 +195,7 @@ export type VoteResponse = z.infer<typeof voteResponseSchema>
 
 export const gamePassSchema = z.object({
   id: z.number(),
-  productId: z.number(),
+  productId: z.number().nullable(),
   name: z.string(),
   isForSale: z.boolean(),
   price: z.number().nullable(),

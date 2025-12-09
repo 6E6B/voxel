@@ -1,7 +1,6 @@
 import { useMemo } from 'react'
-import { Grid, List, UserPlus, Layers } from 'lucide-react'
+import { Grid, List, UserPlus, Users, Gamepad2, Wifi, WifiOff, Wrench, User } from 'lucide-react'
 import { AccountStatus } from '@renderer/types'
-import { getStatusIcon } from '@renderer/utils/statusUtils'
 import { Button } from '@renderer/components/UI/buttons/Button'
 import CustomDropdown, { DropdownOption } from '@renderer/components/UI/menus/CustomDropdown'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@renderer/components/UI/display/Tooltip'
@@ -19,6 +18,14 @@ interface AccountsToolbarProps {
   onAddAccount: () => void
 }
 
+const statusIcons: Record<AccountStatus, JSX.Element> = {
+  [AccountStatus.Online]: <Wifi size={16} className="text-blue-500" />,
+  [AccountStatus.InGame]: <Gamepad2 size={16} className="text-emerald-500" />,
+  [AccountStatus.InStudio]: <Wrench size={16} className="text-orange-500" />,
+  [AccountStatus.Offline]: <WifiOff size={16} className="text-neutral-500" />,
+  [AccountStatus.Banned]: <User size={16} className="text-red-500" />
+}
+
 const AccountsToolbar = ({
   filteredAccountsCount,
   viewMode,
@@ -33,17 +40,17 @@ const AccountsToolbar = ({
       {
         value: 'All',
         label: 'All',
-        icon: <Layers size={14} />
+        icon: <Users size={16} className="text-[var(--color-text-secondary)]" />
       },
       ...Object.values(AccountStatus).map((status) => ({
         value: status,
         label: status,
-        icon: getStatusIcon(status as AccountStatus)
+        icon: statusIcons[status as AccountStatus]
       }))
     ]
   }, [])
   return (
-    <div className="shrink-0 h-[72px] bg-neutral-950 border-b border-neutral-800 flex items-center justify-between px-6 gap-6 z-20">
+    <div className="shrink-0 h-[72px] bg-[var(--color-surface-strong)] border-b border-[var(--color-border)] flex items-center justify-between px-6 gap-6 z-20">
       {/* Left: Title and Account Count */}
       <div className="flex items-center gap-4 shrink-0">
         <h1 className="text-xl font-bold text-white">Accounts</h1>

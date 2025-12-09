@@ -369,7 +369,7 @@ const InventoryTab = ({ account }: InventoryTabProps) => {
 
         <div className="flex-1 flex flex-col min-w-0">
           {/* Toolbar */}
-          <div className="shrink-0 h-[72px] bg-neutral-950 border-b border-neutral-800 z-20 flex items-center justify-between px-6 gap-4">
+          <div className="shrink-0 h-[72px] bg-[var(--color-surface-strong)] border-b border-[var(--color-border)] z-20 flex items-center justify-between px-6 gap-4">
             <div className="flex items-center gap-4 flex-1">
               <h1 className="text-xl font-bold text-white">Inventory</h1>
               <span className="flex items-center justify-center px-2.5 py-0.5 rounded-full bg-neutral-900 border border-neutral-800 text-xs font-semibold tracking-tight text-neutral-400">

@@ -410,7 +410,7 @@ const InstallTab: React.FC = () => {
         className="flex flex-col h-full bg-[var(--color-app-bg)] overflow-hidden text-[var(--color-text-secondary)]"
       >
         {/* Header */}
-        <div className="shrink-0 h-[72px] bg-[var(--color-surface)] border-b border-[var(--color-border)] flex items-center justify-between px-6 z-20">
+        <div className="shrink-0 h-[72px] bg-[var(--color-surface-strong)] border-b border-[var(--color-border)] flex items-center justify-between px-6 z-20">
           <div className="flex items-center gap-4">
             <h1 className="text-xl font-bold text-[var(--color-text-primary)]">Installations</h1>
             <span className="flex items-center justify-center px-2.5 py-0.5 rounded-full bg-[var(--color-surface-muted)] border border-[var(--color-border)] text-xs font-semibold tracking-tight text-[var(--color-text-muted)]">

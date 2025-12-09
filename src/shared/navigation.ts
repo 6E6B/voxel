@@ -13,7 +13,8 @@ export const SIDEBAR_TAB_IDS = [
   'Transactions',
   'Install',
   'Logs',
-  'Settings'
+  'Settings',
+  'AccountSettings'
 ] as const satisfies readonly TabId[]
 
 export const DEFAULT_SIDEBAR_TAB_ORDER: TabId[] = [...SIDEBAR_TAB_IDS]

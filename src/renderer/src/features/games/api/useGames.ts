@@ -48,10 +48,11 @@ export function useRecentlyPlayedGames(sessionId?: string) {
   return useQuery({
     queryKey: queryKeys.games.recentlyPlayed(),
     queryFn: () => window.api.getRecentlyPlayedGames(sessionId) as Promise<Game[]>,
-    staleTime: 60 * 1000,
+    staleTime: 30 * 1000,
     gcTime: 5 * 60 * 1000,
-    refetchOnWindowFocus: false,
-    refetchOnMount: false
+    refetchInterval: 30 * 1000,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true
   })
 }
 

@@ -43,6 +43,11 @@ export const registerUserHandlers = (): void => {
     return RobloxUserService.getPresence(cookie, authData.id)
   })
 
+  handle('get-voice-settings', z.tuple([z.string()]), async (_, cookieRaw) => {
+    const cookie = RobloxAuthService.extractCookie(cookieRaw)
+    return RobloxUserService.getVoiceSettings(cookie)
+  })
+
   handle('get-batch-account-statuses', z.tuple([z.array(z.string())]), async (_, cookieRaws) => {
     // Extract cookies for the service, but keep original cookies for the result keys
     const cookieMap = new Map<string, string>()

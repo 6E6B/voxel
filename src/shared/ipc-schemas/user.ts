@@ -24,6 +24,26 @@ export const accountStatsSchema = baseStatsSchema.extend({
   robuxBalance: z.number()
 })
 
+export const voiceSettingsSchema = z
+  .object({
+    isVoiceEnabled: z.boolean().optional(),
+    isUserOptIn: z.boolean().optional(),
+    isUserEligible: z.boolean().optional(),
+    isBanned: z.boolean().optional(),
+    bannedUntil: z
+      .object({
+        Seconds: z.number().optional(),
+        Nanos: z.number().optional()
+      })
+      .nullable()
+      .optional(),
+    canVerifyAgeForVoice: z.boolean().optional(),
+    isVerifiedForVoice: z.boolean().optional(),
+    denialReason: z.number().optional(),
+    isOptInDisabled: z.boolean().optional()
+  })
+  .passthrough()
+
 export const friendStatsSchema = baseStatsSchema.extend({
   description: z.string().optional(),
   created: z.string().optional(),
@@ -48,6 +68,7 @@ export type AccountStats = z.infer<typeof accountStatsSchema>
 export type FriendStats = z.infer<typeof friendStatsSchema>
 export type ExtendedUserDetails = z.infer<typeof extendedUserDetailsSchema>
 export type DetailedStats = z.infer<typeof detailedStatsSchema>
+export type VoiceSettings = z.infer<typeof voiceSettingsSchema>
 
 export const deployHistorySchema = z.record(z.string(), z.array(z.string()))
 export type DeployHistory = z.infer<typeof deployHistorySchema>

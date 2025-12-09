@@ -31,11 +31,15 @@ export const ProfileStats: React.FC<ProfileStatsProps> = ({
   pastUsernames = []
 }) => {
   const [showRelativeJoinDate, setShowRelativeJoinDate] = useState(false)
+  const [showAllPastUsernames, setShowAllPastUsernames] = useState(false)
   const { data: rolimonsPlayer } = useRolimonsPlayer(userId, true)
   const lastOnlineDate = rolimonsPlayer?.last_online
     ? new Date(rolimonsPlayer.last_online * 1000)
     : null
   const filteredPastUsernames = pastUsernames.filter((name) => !/^#+$/.test(name.trim()))
+  const displayedPastUsernames = showAllPastUsernames
+    ? filteredPastUsernames
+    : filteredPastUsernames.slice(0, 8)
   const hasValueStats =
     (rolimonsPlayer?.value !== undefined && rolimonsPlayer.value !== null) ||
     (rolimonsPlayer?.rap !== undefined && rolimonsPlayer.rap !== null)
@@ -108,7 +112,7 @@ export const ProfileStats: React.FC<ProfileStatsProps> = ({
               <span className="text-sm font-medium">Past Usernames</span>
             </div>
             <div className="flex flex-wrap gap-1.5 pl-[22px]">
-              {filteredPastUsernames.slice(0, 8).map((name, i) => (
+              {displayedPastUsernames.map((name, i) => (
                 <span
                   key={i}
                   className="text-xs text-[var(--color-text-secondary)] bg-[var(--color-surface-hover)] px-2 py-1 rounded-md border border-[var(--color-border-subtle)]"
@@ -117,9 +121,13 @@ export const ProfileStats: React.FC<ProfileStatsProps> = ({
                 </span>
               ))}
               {filteredPastUsernames.length > 8 && (
-                <span className="text-xs text-[var(--color-text-muted)] px-1 py-1">
-                  +{filteredPastUsernames.length - 8} more
-                </span>
+                <button
+                  type="button"
+                  className="text-xs text-[var(--color-text-muted)] px-1 py-1 underline-offset-2 hover:text-[var(--color-text-primary)] hover:underline transition-colors"
+                  onClick={() => setShowAllPastUsernames((prev) => !prev)}
+                >
+                  {showAllPastUsernames ? 'Show less' : `+${filteredPastUsernames.length - 8} more`}
+                </button>
               )}
             </div>
           </div>

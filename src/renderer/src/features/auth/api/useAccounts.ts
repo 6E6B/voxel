@@ -24,7 +24,9 @@ export function useAccountStats(cookie: string | undefined) {
     queryKey: queryKeys.accounts.stats(cookie || ''),
     queryFn: () => window.api.fetchAccountStats(cookie!),
     enabled: !!cookie,
-    staleTime: 60 * 1000 // 1 minute
+    staleTime: 60 * 1000, // 1 minute
+    refetchInterval: 60 * 1000, // keep robux balance fresh for selected profile
+    refetchOnWindowFocus: false
   })
 }
 

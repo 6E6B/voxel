@@ -6,6 +6,9 @@ import AccountListView from './AccountListView'
 import AccountGridView from './AccountGridView'
 import { useSelectedIds, useSetSelectedIds } from '../../stores/useSelectionStore'
 import { useSetActiveMenu, useSetInfoAccount, useOpenModal } from '../../stores/useUIStore'
+import { useVoiceSettingsForAccounts } from './api/useVoiceSettings'
+import { VoiceSettings } from '@shared/ipc-schemas'
+import { useNotification } from '../system/stores/useSnackbarStore'
 
 type ViewMode = 'list' | 'grid'
 
@@ -13,6 +16,48 @@ interface AccountsTabProps {
   accounts: Account[]
   onAccountsChange: (accounts: Account[]) => void
   allowMultipleInstances: boolean
+}
+
+type VoiceBanInfo = {
+  message: string
+  endsAt?: number
+}
+
+const formatDurationShort = (ms: number) => {
+  const totalSeconds = Math.max(0, Math.floor(ms / 1000))
+  const days = Math.floor(totalSeconds / 86400)
+  const hours = Math.floor((totalSeconds % 86400) / 3600)
+  const minutes = Math.floor((totalSeconds % 3600) / 60)
+
+  const parts: string[] = []
+  if (days) parts.push(`${days}d`)
+  if (hours) parts.push(`${hours}h`)
+  if (!days && minutes) parts.push(`${minutes}m`)
+  if (parts.length === 0) parts.push('less than 1m')
+
+  return parts.slice(0, 2).join(' ')
+}
+
+const getVoiceBanInfo = (status?: VoiceSettings): VoiceBanInfo | null => {
+  if (!status || !status.isBanned) return null
+
+  const seconds = status.bannedUntil?.Seconds
+  const nanos = status.bannedUntil?.Nanos ?? 0
+
+  const endsAt =
+    typeof seconds === 'number' ? seconds * 1000 + Math.floor(nanos / 1_000_000) : undefined
+
+  if (!endsAt) {
+    return { message: 'Voice chat banned' }
+  }
+
+  const remaining = endsAt - Date.now()
+  const message =
+    remaining > 0
+      ? `Voice chat banned · ${formatDurationShort(remaining)} left`
+      : 'Voice chat ban active'
+
+  return { message, endsAt }
 }
 
 const AccountsTab = memo(
@@ -23,6 +68,39 @@ const AccountsTab = memo(
     const setActiveMenu = useSetActiveMenu()
     const setInfoAccount = useSetInfoAccount()
     const openModal = useOpenModal()
+    const { showNotification } = useNotification()
+
+    const { statusByAccountId } = useVoiceSettingsForAccounts(accounts)
+    const notifiedVoiceBansRef = React.useRef<Set<string>>(new Set())
+
+    const voiceBanInfo = useMemo(() => {
+      const map: Record<string, VoiceBanInfo> = {}
+
+      Object.entries(statusByAccountId).forEach(([accountId, status]) => {
+        const info = getVoiceBanInfo(status)
+        if (info) {
+          map[accountId] = info
+        }
+      })
+
+      return map
+    }, [statusByAccountId])
+
+    React.useEffect(() => {
+      Object.entries(voiceBanInfo).forEach(([accountId, info]) => {
+        if (notifiedVoiceBansRef.current.has(accountId)) return
+        const account = accounts.find((a) => a.id === accountId)
+        const name = account?.displayName || account?.username || 'Account'
+        const remainingText = info.message.replace('Voice chat banned', '').replace(/^·\s*/, '')
+        const message =
+          remainingText.length > 0
+            ? `${name} is voice chat banned — ${remainingText}`
+            : `${name} is voice chat banned`
+
+        showNotification(message, 'warning')
+        notifiedVoiceBansRef.current.add(accountId)
+      })
+    }, [voiceBanInfo, accounts, showNotification])
 
     const [searchQuery, setSearchQuery] = useState('')
     const [viewMode, setViewMode] = useState<ViewMode>('grid')
@@ -170,6 +248,7 @@ const AccountsTab = memo(
               onInfoOpen={handleInfoOpen}
               onMoveAccount={!isFiltering ? handleMoveAccount : undefined}
               allowMultipleInstances={allowMultipleInstances}
+              voiceBanInfo={voiceBanInfo}
             />
           ) : (
             <AccountGridView
@@ -179,6 +258,7 @@ const AccountsTab = memo(
               onMenuOpen={handleMenuOpen}
               onInfoOpen={handleInfoOpen}
               onMoveAccount={!isFiltering ? handleMoveAccount : undefined}
+              voiceBanInfo={voiceBanInfo}
             />
           )}
         </div>

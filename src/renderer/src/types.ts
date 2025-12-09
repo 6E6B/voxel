@@ -12,6 +12,7 @@ export type TabId =
   | 'Avatar'
   | 'Install'
   | 'News'
+  | 'AccountSettings'
 
 export enum AccountStatus {
   Online = 'Online',

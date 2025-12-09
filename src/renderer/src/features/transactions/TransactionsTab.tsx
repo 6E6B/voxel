@@ -574,7 +574,7 @@ const TransactionsTab = ({ account }: TransactionsTabProps) => {
     <TooltipProvider>
       <div className="flex flex-col h-full bg-neutral-950">
         {/* Toolbar */}
-        <div className="shrink-0 h-[72px] bg-neutral-950 border-b border-neutral-800 z-20 flex items-center justify-between px-6 gap-4">
+        <div className="shrink-0 h-[72px] bg-[var(--color-surface-strong)] border-b border-[var(--color-border)] z-20 flex items-center justify-between px-6 gap-4">
           <div className="flex items-center gap-4">
             <h1 className="text-xl font-bold text-white flex items-center gap-2">
               <ArrowRightLeft size={22} className="text-neutral-400" />

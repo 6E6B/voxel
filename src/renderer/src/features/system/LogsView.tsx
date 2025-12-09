@@ -372,7 +372,7 @@ const LogsTab: React.FC = () => {
 
   return (
     <div className="flex flex-col h-full bg-[var(--color-app-bg)] text-[var(--color-text-secondary)]">
-      <div className="shrink-0 h-[72px] bg-[var(--color-surface)] border-b border-[var(--color-border)] flex items-center justify-between px-6 z-20">
+      <div className="shrink-0 h-[72px] bg-[var(--color-surface-strong)] border-b border-[var(--color-border)] flex items-center justify-between px-6 z-20">
         <h1 className="text-xl font-bold text-[var(--color-text-primary)]">Logs</h1>
         <div className="flex items-center gap-3">
           <Tooltip>

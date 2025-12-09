@@ -287,7 +287,7 @@ const FriendsTab = ({ selectedAccount, onFriendJoin, onFriendsCountChange }: Fri
     <TooltipProvider>
       <div className="flex flex-col h-full bg-neutral-950">
         {/* Toolbar */}
-        <div className="shrink-0 h-[72px] bg-neutral-950 border-b border-neutral-800 z-20 flex items-center justify-between px-6">
+        <div className="shrink-0 h-[72px] bg-[var(--color-surface-strong)] border-b border-[var(--color-border)] z-20 flex items-center justify-between px-6">
           <div className="flex items-center gap-4 shrink-0">
             <h1 className="text-xl font-bold text-white">Friends</h1>
             <span className="flex items-center justify-center px-2.5 py-0.5 rounded-full bg-neutral-900 border border-neutral-800 text-xs font-semibold tracking-tight text-neutral-400">
@@ -572,6 +572,7 @@ const FriendsTab = ({ selectedAccount, onFriendJoin, onFriendsCountChange }: Fri
           onClose={() => setIsInfoModalOpen(false)}
           userId={selectedFriend?.userId || null}
           selectedAccount={selectedAccount}
+          onJoinGame={onFriendJoin}
           initialData={{
             name: selectedFriend?.username,
             displayName: selectedFriend?.displayName,

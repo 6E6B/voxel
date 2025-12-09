@@ -80,6 +80,7 @@ const SettingsTab = lazy(() => import('./features/settings/index'))
 const AvatarTab = lazy(() => import('./features/avatar/index'))
 const InstallTab = lazy(() => import('./features/install/index'))
 const NewsTab = lazy(() => import('./features/news/index'))
+const AccountSettingsTab = lazy(() => import('./features/accountSettings/index'))
 const GameDetailsModal = lazy(() => import('./features/games/Modals/GameDetailsModal'))
 const AccessoryDetailsModal = lazy(() => import('./features/avatar/Modals/AccessoryDetailsModal'))
 const UniversalProfileModal = lazy(() => import('./components/Modals/UniversalProfileModal'))
@@ -116,6 +117,10 @@ const App: React.FC = () => {
     setAppUnlocked(true)
     queryClient.invalidateQueries({ queryKey: queryKeys.accounts.list() })
   }, [queryClient, setAppUnlocked])
+
+  const refreshRecentlyPlayed = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: queryKeys.games.recentlyPlayed() })
+  }, [queryClient])
 
   const notifyServerLocation = useNotifyServerLocation()
   const addTrayNotification = useNotificationTrayStore((state) => state.addNotification)
@@ -348,6 +353,8 @@ const App: React.FC = () => {
 
       showNotification(`Launching ${accountsToLaunch.length} accounts...`, 'info')
 
+      let launchedAny = false
+
       for (const account of accountsToLaunch) {
         if (!account.cookie) continue
 
@@ -364,6 +371,7 @@ const App: React.FC = () => {
             installPath
           )
           showNotification(`Launched successfully for ${account.displayName}`, 'success')
+          launchedAny = true
 
           if (notifyServerLocation) {
             const pollForServerLocation = async () => {
@@ -431,6 +439,12 @@ const App: React.FC = () => {
           showNotification(`Failed to launch for ${account.displayName}: ${e.message}`, 'error')
         }
       }
+
+      if (launchedAny) {
+        window.setTimeout(() => {
+          refreshRecentlyPlayed()
+        }, 4000)
+      }
     } catch (error: any) {
       console.error('Launch error:', error)
       showNotification(`Launch failed: ${error.message}`, 'error')
@@ -487,14 +501,15 @@ const App: React.FC = () => {
     }
   }
 
-  const handleFriendJoin = (placeId: string, jobId?: string, userId?: string) => {
+  const handleFriendJoin = (placeId: string | number, jobId?: string, userId?: string) => {
+    const placeTarget = typeof placeId === 'number' ? placeId.toString() : placeId
     let config: JoinConfig
     if (userId) {
-      config = { method: JoinMethod.Friend, target: `${userId}:${placeId}` }
+      config = { method: JoinMethod.Friend, target: `${userId}:${placeTarget}` }
     } else if (jobId) {
-      config = { method: JoinMethod.JobId, target: `${placeId}:${jobId}` }
+      config = { method: JoinMethod.JobId, target: `${placeTarget}:${jobId}` }
     } else {
-      config = { method: JoinMethod.PlaceId, target: placeId }
+      config = { method: JoinMethod.PlaceId, target: placeTarget }
     }
     handleLaunch(config)
   }
@@ -664,7 +679,7 @@ const App: React.FC = () => {
           {activeTab === 'Profile' && (
             <Suspense fallback={<LoadingSpinnerFullPage />}>
               {selectedAccount ? (
-                <ProfileTab account={selectedAccount} />
+                <ProfileTab account={selectedAccount} onJoinGame={handleFriendJoin} />
               ) : (
                 <div className="flex flex-col items-center justify-center h-full text-[var(--color-text-muted)]">
                   <p>Select an account to view profile</p>
@@ -744,6 +759,12 @@ const App: React.FC = () => {
                 settings={settings}
                 onUpdateSettings={updateSettings}
               />
+            </Suspense>
+          )}
+
+          {activeTab === 'AccountSettings' && (
+            <Suspense fallback={<LoadingSpinnerFullPage />}>
+              <AccountSettingsTab account={selectedAccount} />
             </Suspense>
           )}
         </div>

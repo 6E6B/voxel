@@ -21,7 +21,8 @@ import {
   rolimonsApi,
   transactionsApi,
   updaterApi,
-  newsApi
+  newsApi,
+  accountSettingsApi
 } from './api'
 
 // Platform info
@@ -52,7 +53,8 @@ const api = {
   ...netlogApi,
   ...transactionsApi,
   ...updaterApi,
-  ...newsApi
+  ...newsApi,
+  ...accountSettingsApi
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
-import { ChevronDown, Check } from 'lucide-react'
+import { ChevronDown, Check, Loader2 } from 'lucide-react'
 import { useClickOutside } from '../../../hooks/useClickOutside'
 import { motion, AnimatePresence } from 'framer-motion'
 
@@ -18,6 +18,8 @@ interface CustomDropdownProps {
   placeholder?: string
   className?: string
   buttonClassName?: string
+  isLoading?: boolean
+  disabled?: boolean
 }
 
 const CustomDropdown: React.FC<CustomDropdownProps> = ({
@@ -26,7 +28,9 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
   onChange,
   placeholder = 'Select...',
   className = '',
-  buttonClassName
+  buttonClassName,
+  isLoading = false,
+  disabled = false
 }) => {
   const [isOpen, setIsOpen] = useState(false)
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0, width: 0 })
@@ -127,11 +131,14 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
     <div className={`relative ${className}`} ref={dropdownRef}>
       <button
         type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className={`pressable w-full flex items-center justify-between ${buttonClassName || defaultButtonClasses}`}
+        onClick={() => !disabled && !isLoading && setIsOpen(!isOpen)}
+        disabled={disabled || isLoading}
+        className={`pressable w-full flex items-center justify-between ${buttonClassName || defaultButtonClasses} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
       >
         <div className="flex items-center gap-2 truncate pr-4">
-          {selectedOption ? (
+          {isLoading ? (
+            <Loader2 size={14} className="animate-spin text-[var(--color-text-muted)]" />
+          ) : selectedOption ? (
             <div className="flex items-center gap-2 truncate">
               {selectedOption.icon && <span className="shrink-0">{selectedOption.icon}</span>}
               <span className="text-[var(--color-text-primary)] font-bold truncate">

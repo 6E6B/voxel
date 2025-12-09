@@ -27,3 +27,6 @@ export { updaterApi } from './updater'
 
 // News
 export { newsApi } from './news'
+
+// Account Settings
+export { accountSettingsApi } from './accountSettings'

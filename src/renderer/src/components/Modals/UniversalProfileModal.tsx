@@ -9,6 +9,7 @@ interface UniversalProfileModalProps {
   userId: string | number | null
   selectedAccount: Account | null // Context for making API calls (needs a cookie)
   initialData?: Partial<ExtendedProfile> | null // Optional immediate data
+  onJoinGame?: (placeId: number | string, jobId?: string, userId?: number | string) => void
 }
 
 export interface ExtendedProfile {
@@ -41,7 +42,8 @@ const UniversalProfileModal: React.FC<UniversalProfileModalProps> = ({
   onClose,
   userId,
   selectedAccount,
-  initialData
+  initialData,
+  onJoinGame
 }) => {
   const [activeUserId, setActiveUserId] = useState<string | number | null>(userId)
 
@@ -66,6 +68,7 @@ const UniversalProfileModal: React.FC<UniversalProfileModalProps> = ({
                 onClose={onClose}
                 showCloseButton={false}
                 onSelectProfile={(id) => setActiveUserId(id)}
+                onJoinGame={onJoinGame}
                 initialData={
                   activeUserId === userId && initialData
                     ? {

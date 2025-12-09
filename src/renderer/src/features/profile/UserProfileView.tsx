@@ -152,6 +152,7 @@ export interface ProfileViewProps {
   onClose?: () => void
   showCloseButton?: boolean
   onSelectProfile?: (userId: number) => void
+  onJoinGame?: (placeId: number | string, jobId?: string, userId?: number | string) => void
 }
 
 const UserProfileView: React.FC<ProfileViewProps> = ({
@@ -162,7 +163,8 @@ const UserProfileView: React.FC<ProfileViewProps> = ({
   isOwnAccount,
   onClose,
   showCloseButton = false,
-  onSelectProfile
+  onSelectProfile,
+  onJoinGame
 }) => {
   const [isWearingOpen, setIsWearingOpen] = useState(false)
   const [isOutfitsOpen, setIsOutfitsOpen] = useState(false)
@@ -290,6 +292,7 @@ const UserProfileView: React.FC<ProfileViewProps> = ({
             }}
             hasRawDescription={hasRawDescription}
             rawDescription={rawDescription}
+            onJoinGame={onJoinGame}
           />
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">

@@ -46,11 +46,16 @@ export interface ProfileData {
   gameActivity?: {
     name: string
     placeId: number
+    jobId?: string
   }
 }
 
 export const useProfileData = ({ userId, requestCookie, initialData }: UseProfileDataProps) => {
-  const { data: profilePlatform } = useUserProfilePlatform(userId, requestCookie)
+  const {
+    data: profilePlatform,
+    isError: isPlatformError,
+    isLoading: isPlatformLoading
+  } = useUserProfilePlatform(userId, requestCookie)
   const { data: userPresence } = useUserPresence(userId, requestCookie, true)
 
   const { data: avatarUrl } = useQuery({
@@ -68,11 +73,13 @@ export const useProfileData = ({ userId, requestCookie, initialData }: UseProfil
       ? mapPresenceToStatus(userPresence.userPresenceType)
       : initialData?.status || AccountStatus.Offline
 
+    const resolvedPlaceId = userPresence?.rootPlaceId ?? userPresence?.placeId
     const gameActivity =
-      currentStatus === AccountStatus.InGame && userPresence?.lastLocation && userPresence?.placeId
+      currentStatus === AccountStatus.InGame && userPresence?.lastLocation && resolvedPlaceId
         ? {
             name: userPresence.lastLocation,
-            placeId: userPresence.placeId
+            placeId: resolvedPlaceId,
+            jobId: userPresence.gameId ?? undefined
           }
         : undefined
 
@@ -80,9 +87,17 @@ export const useProfileData = ({ userId, requestCookie, initialData }: UseProfil
       ? new Date(profilePlatform.joinDate).toLocaleDateString()
       : initialData?.joinDate || '-'
 
+    const displayName =
+      profilePlatform?.displayName ||
+      initialData?.displayName ||
+      (isPlatformError ? 'Error loading profile' : 'Loading...')
+
+    const username =
+      profilePlatform?.username || initialData?.username || (isPlatformError ? 'Error' : '...')
+
     return {
-      displayName: profilePlatform?.displayName || initialData?.displayName || 'Loading...',
-      username: profilePlatform?.username || initialData?.username || '...',
+      displayName,
+      username,
       avatarUrl: avatarUrl || initialData?.avatarUrl || '',
       status: currentStatus,
       notes: profilePlatform?.description || initialData?.notes || '',
@@ -99,7 +114,7 @@ export const useProfileData = ({ userId, requestCookie, initialData }: UseProfil
       groupMemberCount: initialData?.groupMemberCount || 0,
       gameActivity
     }
-  }, [profilePlatform, userPresence, initialData, avatarUrl])
+  }, [profilePlatform, userPresence, initialData, avatarUrl, isPlatformError])
 
-  return { profile }
+  return { profile, isLoading: isPlatformLoading, isError: isPlatformError }
 }

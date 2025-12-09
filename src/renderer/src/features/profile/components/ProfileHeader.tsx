@@ -11,6 +11,7 @@ import { ProfileData } from '../hooks/useProfileData'
 import { formatNumber } from '@renderer/utils/numberUtils'
 import { RolimonsBadges } from './RolimonsBadges'
 import { useRolimonsPlayer, ROLIMONS_BADGES } from '@renderer/features/avatar/api/useRolimons'
+import { Button } from '@renderer/components/UI/buttons/Button'
 
 interface ProfileHeaderProps {
   userId: number
@@ -22,6 +23,7 @@ interface ProfileHeaderProps {
   onSocialStatClick: (type: 'friends' | 'followers' | 'following') => void
   hasRawDescription: boolean
   rawDescription: string
+  onJoinGame?: (placeId: number | string, jobId?: string, userId?: number | string) => void
 }
 
 export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
@@ -33,7 +35,8 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   onAvatarClick,
   onSocialStatClick,
   hasRawDescription,
-  rawDescription
+  rawDescription,
+  onJoinGame
 }) => {
   const [isAvatarHovered, setIsAvatarHovered] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
@@ -228,7 +231,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
             </Avatar>
             <div className="absolute bottom-2 right-6 translate-x-[32%] translate-y-[32%]">
               <span
-                className={`block w-6 h-6 md:w-7 md:h-7 rounded-full border-[4px] border-[var(--color-app-bg)] shadow-[0_0_12px_rgba(0,0,0,0.35)] ${getStatusColor(profile.status)}`}
+                className={`block w-4 h-4 md:w-5 md:h-5 rounded-full ring-1 ring-[var(--color-surface-strong)] shadow-[0_0_12px_rgba(0,0,0,0.35)] ${getStatusColor(profile.status)}`}
               />
             </div>
           </div>
@@ -331,11 +334,26 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
 
             {/* Game Activity - shown above bio when in game */}
             {profile.gameActivity && (
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-lg max-w-fit">
-                <Gamepad2 size={14} className="text-emerald-400 shrink-0" />
-                <span className="text-sm text-emerald-300 font-medium truncate max-w-[300px]">
-                  Playing {profile.gameActivity.name}
-                </span>
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-lg max-w-fit">
+                  <Gamepad2 size={14} className="text-emerald-400 shrink-0" />
+                  <span className="text-sm text-emerald-300 font-medium truncate max-w-[300px]">
+                    Playing {profile.gameActivity.name}
+                  </span>
+                </div>
+                {onJoinGame && (
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    className="h-9 px-3 gap-2 bg-emerald-500/90 text-white border border-emerald-400/50 hover:bg-emerald-500"
+                    onClick={() =>
+                      onJoinGame(profile.gameActivity.placeId, profile.gameActivity.jobId, userId)
+                    }
+                  >
+                    <Gamepad2 size={16} className="shrink-0" />
+                    <span>Join game</span>
+                  </Button>
+                )}
               </div>
             )}
 

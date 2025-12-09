@@ -37,7 +37,8 @@ export const SIDEBAR_TAB_DEFINITIONS: SidebarTabDefinition[] = [
   { id: 'Inventory', label: 'Inventory', icon: Package, section: 'explore' },
   { id: 'Install', label: 'Install', icon: HardDrive, section: 'system' },
   { id: 'Logs', label: 'Logs', icon: ScrollText, section: 'system' },
-  { id: 'Settings', label: 'Settings', icon: SettingsIcon, section: 'system', locked: true }
+  { id: 'Settings', label: 'App Settings', icon: SettingsIcon, section: 'system', locked: true },
+  { id: 'AccountSettings', label: 'Roblox Settings', icon: SettingsIcon, section: 'profile' }
 ]
 
 export const SIDEBAR_TAB_DEFINITION_MAP: Record<TabId, SidebarTabDefinition | undefined> =

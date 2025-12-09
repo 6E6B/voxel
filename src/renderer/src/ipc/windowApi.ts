@@ -40,8 +40,29 @@ import type {
   TransactionTypeEnum,
   UpdateState,
   UpdateActionResult,
-  UserProfileResponse
+  UserProfileResponse,
+  VoiceSettings
 } from '../../../shared/ipc-schemas/index'
+import type {
+  AccountSettingsJson,
+  UserSettingsAndOptions,
+  CombinedAccountSettings,
+  PrivacyLevel,
+  TradePrivacy,
+  TradeValue,
+  ContentRestrictionLevel,
+  RedeemPromoCodeResponse,
+  DescriptionResponse,
+  GenderResponse,
+  BirthdateResponse,
+  PromotionChannelsResponse,
+  StarCodeAffiliateResponse
+} from '../../../shared/ipc-schemas/accountSettings'
+
+export interface UpdateSettingResult {
+  success: boolean
+  error?: string
+}
 
 export interface AccountApi {
   validateCookie: (cookie: string) => Promise<UserSummary>
@@ -50,6 +71,7 @@ export interface AccountApi {
   getAssetContent: (url: string) => Promise<string>
   fetchAccountStats: (cookie: string) => Promise<AccountStats>
   getAccountStatus: (cookie: string) => Promise<Presence | null>
+  getVoiceSettings: (cookie: string) => Promise<VoiceSettings>
   getBatchAccountStatuses: (cookies: string[]) => Promise<BatchAccountStatus>
   getUserPresence: (cookie: string, userId: number) => Promise<Presence | null>
   getAccounts: () => Promise<Account[]>
@@ -741,6 +763,69 @@ export interface NewsApi {
   }
 }
 
+export interface StarCodeAffiliateResult {
+  success: boolean
+  affiliate?: StarCodeAffiliateResponse
+  error?: string
+}
+
+export interface AccountSettingsApi {
+  // GET methods
+  getAccountSettingsJson: (cookie: string) => Promise<AccountSettingsJson>
+  getUserSettingsAndOptions: (cookie: string) => Promise<UserSettingsAndOptions>
+  getCombinedAccountSettings: (cookie: string) => Promise<CombinedAccountSettings>
+  getThemeTypes: (cookie: string) => Promise<string[]>
+  // UPDATE methods
+  updateInventoryPrivacy: (
+    cookie: string,
+    privacyLevel: PrivacyLevel
+  ) => Promise<UpdateSettingResult>
+  updateTradePrivacy: (cookie: string, tradePrivacy: TradePrivacy) => Promise<UpdateSettingResult>
+  updateTradeValue: (cookie: string, tradeValue: TradeValue) => Promise<UpdateSettingResult>
+  updateAppChatPrivacy: (
+    cookie: string,
+    appChatPrivacy: PrivacyLevel
+  ) => Promise<UpdateSettingResult>
+  updateGameChatPrivacy: (
+    cookie: string,
+    gameChatPrivacy: PrivacyLevel
+  ) => Promise<UpdateSettingResult>
+  updatePrivacy: (cookie: string, phoneDiscovery: PrivacyLevel) => Promise<UpdateSettingResult>
+  updateTheme: (cookie: string, userId: number, themeType: string) => Promise<UpdateSettingResult>
+  updateContentRestriction: (
+    cookie: string,
+    level: ContentRestrictionLevel
+  ) => Promise<UpdateSettingResult>
+  sendVerificationEmail: (cookie: string, freeItem?: boolean) => Promise<UpdateSettingResult>
+  redeemPromoCode: (cookie: string, code: string) => Promise<RedeemPromoCodeResponse>
+  // Account Information API methods
+  getDescription: (cookie: string) => Promise<DescriptionResponse>
+  updateDescription: (cookie: string, description: string) => Promise<UpdateSettingResult>
+  getGender: (cookie: string) => Promise<GenderResponse>
+  updateGender: (cookie: string, gender: string) => Promise<UpdateSettingResult>
+  getBirthdate: (cookie: string) => Promise<BirthdateResponse>
+  updateBirthdate: (
+    cookie: string,
+    birthMonth: number,
+    birthDay: number,
+    birthYear: number
+  ) => Promise<UpdateSettingResult>
+  getPromotionChannels: (cookie: string) => Promise<PromotionChannelsResponse>
+  updatePromotionChannels: (
+    cookie: string,
+    channels: {
+      facebook?: string
+      twitter?: string
+      youtube?: string
+      twitch?: string
+      promotionChannelsVisibilityPrivacy?: string
+    }
+  ) => Promise<UpdateSettingResult>
+  getStarCodeAffiliate: (cookie: string) => Promise<StarCodeAffiliateResponse | null>
+  addStarCodeAffiliate: (cookie: string, code: string) => Promise<StarCodeAffiliateResult>
+  removeStarCodeAffiliate: (cookie: string) => Promise<UpdateSettingResult>
+}
+
 export type WindowApi = AccountApi &
   FavoritesApi &
   SettingsApi &
@@ -759,4 +844,5 @@ export type WindowApi = AccountApi &
   TransactionsApi &
   UpdaterApi &
   CatalogDatabaseApi &
-  NewsApi
+  NewsApi &
+  AccountSettingsApi

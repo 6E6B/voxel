@@ -72,9 +72,9 @@ export const Tabs: React.FC<TabsProps> = ({
               key={tab.id}
               onMouseDown={() => onTabChange(tab.id)}
               className={cn(
-                'flex-1 py-3 text-sm font-medium transition-colors flex items-center justify-center gap-3 relative z-10 hover:bg-[var(--color-surface-hover)] active:bg-[var(--color-surface-muted)]',
+                'flex-1 py-4 text-sm font-medium transition-colors flex items-center justify-center gap-2 relative z-10 hover:bg-[var(--color-surface-hover)] active:bg-[var(--color-surface-muted)]',
                 isActive
-                  ? 'bg-[var(--color-surface-muted)] text-[var(--color-text-primary)]'
+                  ? 'text-[var(--color-text-primary)]'
                   : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]',
                 tabClassName
               )}

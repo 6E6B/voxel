@@ -451,7 +451,7 @@ const CatalogTab = ({ onItemSelect, onCreatorSelect, cookie }: CatalogTabProps) 
 
         <div className="flex-1 flex flex-col min-w-0">
           {/* Toolbar */}
-          <div className="shrink-0 h-[72px] bg-neutral-950 border-b border-neutral-800 z-20 flex items-center justify-between px-6 gap-4">
+          <div className="shrink-0 h-[72px] bg-[var(--color-surface-strong)] border-b border-[var(--color-border)] z-20 flex items-center justify-between px-6 gap-4">
             <div className="flex items-center gap-4 flex-1">
               <h1 className="text-xl font-bold text-white">Catalog</h1>
 

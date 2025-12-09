@@ -9,7 +9,8 @@ export const queryKeys = {
     all: ['accounts'] as const,
     list: () => [...queryKeys.accounts.all, 'list'] as const,
     statuses: (cookies: string[]) => [...queryKeys.accounts.all, 'statuses', cookies] as const,
-    stats: (cookie: string) => [...queryKeys.accounts.all, 'stats', cookie] as const
+    stats: (cookie: string) => [...queryKeys.accounts.all, 'stats', cookie] as const,
+    voice: (cookie: string) => [...queryKeys.accounts.all, 'voice', cookie] as const
   },
 
   // Settings

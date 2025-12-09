@@ -8,6 +8,7 @@ import { registerCatalogHandlers } from '../catalog/CatalogController'
 import { registerCatalogDatabaseHandlers } from '../catalog/CatalogDatabaseController'
 import { registerGroupHandlers } from '../groups/GroupController'
 import { registerTransactionHandlers } from '../transactions/TransactionController'
+import { registerAccountSettingsHandlers } from '../accountSettings/AccountSettingsController'
 
 /**
  * Main Roblox controller that registers all Roblox-related IPC handlers.
@@ -24,4 +25,5 @@ export const registerRobloxHandlers = (): void => {
   registerCatalogDatabaseHandlers()
   registerGroupHandlers()
   registerTransactionHandlers()
+  registerAccountSettingsHandlers()
 }

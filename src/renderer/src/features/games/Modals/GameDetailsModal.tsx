@@ -108,7 +108,7 @@ const GameDetailsModal: React.FC<GameDetailsModalProps> = ({
   game,
   account
 }) => {
-  const [displayedGame, setDisplayedGame] = useState<Game | null>(null)
+  const [displayedGame, setDisplayedGame] = useState<Game | null>(game)
   const [thumbnails, setThumbnails] = useState<string[]>([])
   const [carouselIndex, setCarouselIndex] = useState(0)
   const [activeTab, setActiveTab] = useState<'info' | 'servers' | 'store'>('info')
@@ -265,7 +265,8 @@ const GameDetailsModal: React.FC<GameDetailsModalProps> = ({
   })
 
   // Filter to only show passes that are for sale
-  const gamePassesForSale = gamePassesData?.gamePasses?.filter((p: GamePass) => p.isForSale) || []
+  const gamePassesForSale =
+    gamePassesData?.gamePasses?.filter((p: GamePass) => p.isForSale && p.productId !== null) || []
   const hasGamePasses = gamePassesForSale.length > 0
 
   const voteMutation = useMutation({
@@ -507,10 +508,10 @@ const GameDetailsModal: React.FC<GameDetailsModalProps> = ({
                         </button>
                       )}
                       {canCarouselLeft && (
-                        <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-neutral-950 to-transparent z-10" />
+                        <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-neutral-950/40 to-transparent z-10" />
                       )}
                       {canCarouselRight && (
-                        <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-neutral-950 to-transparent z-10" />
+                        <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-neutral-950/40 to-transparent z-10" />
                       )}
                     </>
                   )}
@@ -888,6 +889,22 @@ const GameDetailsModal: React.FC<GameDetailsModalProps> = ({
         onClose={() => setIsProfileModalOpen(false)}
         userId={selectedCreatorId}
         selectedAccount={account || null}
+        onJoinGame={(placeId, jobId, userId) => {
+          if (!placeId) return
+          const placeTarget = typeof placeId === 'number' ? placeId.toString() : placeId
+
+          if (jobId) {
+            onLaunch({ method: JoinMethod.JobId, target: `${placeTarget}:${jobId}` })
+            return
+          }
+
+          if (userId) {
+            onLaunch({ method: JoinMethod.Friend, target: `${userId}:${placeTarget}` })
+            return
+          }
+
+          onLaunch({ method: JoinMethod.PlaceId, target: placeTarget })
+        }}
       />
 
       <GroupDetailsModal
@@ -937,6 +954,10 @@ const GamePassCard: React.FC<{
 
   const handleOpenConfirm = () => {
     if (isOwned) return
+    if (pass.productId === null) {
+      showNotification('This game pass is unavailable for purchase right now', 'warning')
+      return
+    }
     if (pass.price === null) {
       showNotification('This game pass is not currently for sale', 'warning')
       return
@@ -950,7 +971,7 @@ const GamePassCard: React.FC<{
   }
 
   const handleConfirmPurchase = async () => {
-    if (!account?.cookie || pass.price === null) return
+    if (!account?.cookie || pass.price === null || pass.productId === null) return
 
     setIsPurchasing(true)
     setPurchaseError(null)

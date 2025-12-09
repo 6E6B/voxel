@@ -12,6 +12,7 @@ export const accountApi = {
     invoke('fetch-account-stats', S.accountStatsSchema, cookie),
   getAccountStatus: (cookie: string) =>
     invoke('get-account-status', S.presenceSchema.nullable(), cookie),
+  getVoiceSettings: (cookie: string) => invoke('get-voice-settings', S.voiceSettingsSchema, cookie),
   getBatchAccountStatuses: (cookies: string[]) =>
     invoke('get-batch-account-statuses', S.batchAccountStatusSchema, cookies),
   getAccounts: () => invoke('get-accounts', z.array(S.accountSchema)),

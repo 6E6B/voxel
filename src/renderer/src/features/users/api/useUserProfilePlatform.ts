@@ -78,11 +78,21 @@ export function useUserProfilePlatform(userId: number, cookie: string, enabled: 
   return useQuery({
     queryKey: queryKeys.userProfile.platform(userId),
     queryFn: async (): Promise<ProfilePlatformData> => {
-      const response = await window.api.getUserProfile(cookie, userId)
+      // Add a timeout to the renderer-side promise to prevent indefinite loading
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('Request timed out')), 15000)
+      })
+
+      const response = await Promise.race([
+        window.api.getUserProfile(cookie, userId),
+        timeoutPromise
+      ])
+
       return transformProfileResponse(response)
     },
     enabled: enabled && !!userId && !!cookie,
-    staleTime: 60 * 1000
+    staleTime: 60 * 1000,
+    retry: 2
   })
 }
 

@@ -8,6 +8,7 @@ import {
   usernameHistorySchema,
   userPresenceResponseSchema,
   userProfileResponseSchema,
+  voiceSettingsSchema,
   type UserProfileResponse
 } from '@shared/ipc-schemas/user'
 import { avatarHeadshotSchema } from '@shared/ipc-schemas/avatar'
@@ -177,6 +178,13 @@ export class RobloxUserService {
       return result.userPresences[0]
     }
     return null
+  }
+
+  static async getVoiceSettings(cookie: string) {
+    return request(voiceSettingsSchema, {
+      url: 'https://voice.roblox.com/v1/settings',
+      cookie
+    })
   }
 
   /**
