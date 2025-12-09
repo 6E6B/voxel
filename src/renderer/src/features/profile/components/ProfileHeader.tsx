@@ -115,6 +115,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     const safeBadgesHeight = badgesHeight || Math.max(32 * badgeRows + 24, 48)
     return spacerHeightPx + safeBadgesHeight
   }, [hasBadges, spacerHeightPx, badgesHeight, badgeRows, effectiveInfoHeight])
+  const gameActivity = profile.gameActivity
 
   return (
     <motion.div
@@ -333,12 +334,12 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
             </div>
 
             {/* Game Activity - shown above bio when in game */}
-            {profile.gameActivity && (
+            {gameActivity && (
               <div className="flex flex-wrap items-center gap-3">
                 <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-lg max-w-fit">
                   <Gamepad2 size={14} className="text-emerald-400 shrink-0" />
                   <span className="text-sm text-emerald-300 font-medium truncate max-w-[300px]">
-                    Playing {profile.gameActivity.name}
+                    Playing {gameActivity.name}
                   </span>
                 </div>
                 {onJoinGame && (
@@ -347,7 +348,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                     variant="secondary"
                     className="h-9 px-3 gap-2 bg-emerald-500/90 text-white border border-emerald-400/50 hover:bg-emerald-500"
                     onClick={() =>
-                      onJoinGame(profile.gameActivity.placeId, profile.gameActivity.jobId, userId)
+                      onJoinGame(gameActivity.placeId, gameActivity.jobId, userId)
                     }
                   >
                     <Gamepad2 size={16} className="shrink-0" />

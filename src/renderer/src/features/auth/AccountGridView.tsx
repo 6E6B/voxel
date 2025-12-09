@@ -16,6 +16,7 @@ interface AccountGridViewProps {
   onMenuOpen: (e: React.MouseEvent, id: string) => void
   onInfoOpen: (e: React.MouseEvent, account: Account) => void
   onMoveAccount?: (fromId: string, toId: string) => void
+  voiceBanInfo?: Record<string, { message: string; endsAt?: number }>
 }
 
 const AccountGridView = ({
@@ -24,7 +25,8 @@ const AccountGridView = ({
   onToggleSelect,
   onMenuOpen,
   onInfoOpen,
-  onMoveAccount
+  onMoveAccount,
+  voiceBanInfo
 }: AccountGridViewProps) => {
   const handleDragStart = (e: React.DragEvent, id: string) => {
     e.dataTransfer.setData('text/plain', id)
@@ -101,7 +103,14 @@ const AccountGridView = ({
                   {account.displayName}
                 </h3>
                 <p className="text-sm text-neutral-500 mb-5 truncate w-full">@{account.username}</p>
-                <StatusBadge status={account.status} />
+                <div className="flex flex-col items-center gap-1">
+                  <StatusBadge status={account.status} />
+                  {voiceBanInfo?.[account.id] && (
+                    <span className="text-xs text-red-400 text-center">
+                      {voiceBanInfo[account.id].message}
+                    </span>
+                  )}
+                </div>
 
                 <div className="w-full mt-6 pt-5 border-t border-neutral-800/50 flex items-center justify-between text-sm">
                   <span className="font-mono text-neutral-500 text-[15px]">{account.userId}</span>

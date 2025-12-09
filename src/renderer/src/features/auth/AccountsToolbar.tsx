@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import type { JSX } from 'react'
 import { Grid, List, UserPlus, Users, Gamepad2, Wifi, WifiOff, Wrench, User } from 'lucide-react'
 import { AccountStatus } from '@renderer/types'
 import { Button } from '@renderer/components/UI/buttons/Button'

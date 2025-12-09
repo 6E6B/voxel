@@ -31,6 +31,7 @@ interface AccountListViewProps {
   onInfoOpen: (e: React.MouseEvent, account: Account) => void
   onMoveAccount?: (fromId: string, toId: string) => void
   allowMultipleInstances: boolean
+  voiceBanInfo?: Record<string, { message: string; endsAt?: number }>
 }
 
 const AccountListView = ({
@@ -43,7 +44,8 @@ const AccountListView = ({
   onMenuOpen,
   onInfoOpen,
   onMoveAccount,
-  allowMultipleInstances
+  allowMultipleInstances,
+  voiceBanInfo
 }: AccountListViewProps) => {
   const handleDragStart = (e: React.DragEvent, id: string) => {
     e.dataTransfer.setData('text/plain', id)
@@ -223,7 +225,14 @@ const AccountListView = ({
                 </div>
               </td>
               <td className="px-3 md:px-6 py-3 md:py-4 whitespace-nowrap">
-                <StatusBadge status={account.status} />
+                <div className="flex flex-col gap-1">
+                  <StatusBadge status={account.status} />
+                  {voiceBanInfo?.[account.id] && (
+                    <span className="text-xs text-red-400">
+                      {voiceBanInfo[account.id].message}
+                    </span>
+                  )}
+                </div>
               </td>
               <td className="hidden md:table-cell px-6 py-4">
                 <div className="text-sm text-neutral-500 min-w-[100px] break-words group-hover:text-neutral-400">

@@ -46,7 +46,7 @@ import { useSetSelectedGame } from '@renderer/stores/useUIStore'
 
 interface FriendsTabProps {
   selectedAccount: Account | null
-  onFriendJoin: (placeId: string, jobId?: string, userId?: string) => void
+  onFriendJoin: (placeId: string | number, jobId?: string, userId?: string | number) => void
   onFriendsCountChange?: (count: number) => void
 }
 

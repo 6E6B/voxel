@@ -501,7 +501,7 @@ const App: React.FC = () => {
     }
   }
 
-  const handleFriendJoin = (placeId: string | number, jobId?: string, userId?: string) => {
+  const handleFriendJoin = (placeId: string | number, jobId?: string, userId?: string | number) => {
     const placeTarget = typeof placeId === 'number' ? placeId.toString() : placeId
     let config: JoinConfig
     if (userId) {

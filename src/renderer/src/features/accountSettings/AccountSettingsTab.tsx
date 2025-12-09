@@ -23,11 +23,7 @@ import {
   FileText,
   Star,
   Share2,
-  Cake,
-  Twitter,
-  Youtube,
-  Twitch,
-  Facebook
+  Cake
 } from 'lucide-react'
 import { Account } from '../../types'
 import { cn } from '../../lib/utils'
@@ -318,21 +314,6 @@ const AccountSettingsTab: React.FC<AccountSettingsTabProps> = ({ account }) => {
     staleTime: 1000 * 60 * 5
   })
 
-  const updatePromotionChannels = useMutation({
-    mutationFn: async (channels: {
-      facebook?: string
-      twitter?: string
-      youtube?: string
-      twitch?: string
-      promotionChannelsVisibilityPrivacy?: string
-    }) => {
-      if (!account?.cookie) throw new Error('No cookie')
-      return window.api.updatePromotionChannels(account.cookie, channels)
-    },
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ['promotion-channels', account?.id] })
-  })
-
   // Star Code Affiliate
   const { data: starCodeData } = useQuery({
     queryKey: ['star-code-affiliate', account?.id],
@@ -361,18 +342,6 @@ const AccountSettingsTab: React.FC<AccountSettingsTabProps> = ({ account }) => {
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: ['star-code-affiliate', account?.id] })
   })
-
-  // Gender display helper
-  const getGenderLabel = (gender: number): string => {
-    switch (gender) {
-      case 2:
-        return 'Male'
-      case 3:
-        return 'Female'
-      default:
-        return 'Not Specified'
-    }
-  }
 
   // Birthdate display helper
   const formatBirthdate = (month: number, day: number, year: number): string => {
