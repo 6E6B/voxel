@@ -97,7 +97,11 @@ export const installApi = {
   removeActiveInstall: () => invoke('remove-active-install', z.void()),
   getActiveInstallPath: () => invoke('get-active-install-path', z.string().nullable()),
   detectDefaultInstallations: () =>
-    invoke('detect-default-installations', S.detectedInstallationsSchema)
+    invoke('detect-default-installations', S.detectedInstallationsSchema),
+  installFont: (installPath: string, fontPath: string) =>
+    invoke('install-font', z.void(), installPath, fontPath),
+  installCursor: (installPath: string, cursorPath: string) =>
+    invoke('install-cursor', z.void(), installPath, cursorPath)
 }
 
 // ============================================================================

@@ -46,7 +46,7 @@ const themes: Record<ThemeName, ThemeDefinition> = {
   dark: {
     name: 'dark',
     colors: {
-      appBackground: '#050505',
+      appBackground: '#0c0c10',
       surface: '#0c0c10',
       surfaceStrong: '#111118',
       surfaceMuted: '#15151d',

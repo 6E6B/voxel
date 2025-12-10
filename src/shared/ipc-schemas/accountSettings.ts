@@ -211,6 +211,16 @@ export const contentRestrictionLevelValues = ['NoRestrictions', 'Teen', 'PreTeen
 
 export type ContentRestrictionLevel = (typeof contentRestrictionLevelValues)[number]
 
+// Online status privacy levels (for whoCanSeeMyOnlineStatus / join privacy)
+export const onlineStatusPrivacyValues = [
+  'NoOne',
+  'Friends',
+  'FriendsFollowingAndFollowers',
+  'AllUsers'
+] as const
+
+export type OnlineStatusPrivacy = (typeof onlineStatusPrivacyValues)[number]
+
 // Update request schemas
 export const updateInventoryPrivacyRequestSchema = z.object({
   inventoryPrivacy: z.enum(privacyLevelValues)

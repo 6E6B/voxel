@@ -36,7 +36,7 @@ export const HorizontalCarousel: React.FC<HorizontalCarouselProps> = ({
       {(title || (showControls && hasChildren)) && (
         <div className="flex items-center justify-between mb-4">
           {title && (
-            <h3 className="text-sm font-medium text-white flex items-center gap-2">
+            <h3 className="text-lg font-semibold text-white flex items-center gap-2">
               {title}
               {titleExtra}
             </h3>

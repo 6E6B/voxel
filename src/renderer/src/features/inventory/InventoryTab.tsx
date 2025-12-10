@@ -384,7 +384,6 @@ const InventoryTab = ({ account }: InventoryTabProps) => {
                 onChange={setSearchQuery}
                 placeholder="Search inventory..."
                 containerClassName="w-64"
-                className="bg-neutral-900 border-neutral-800"
               />
 
               <div className="h-6 w-[1px] bg-neutral-800 mx-1" />

@@ -356,7 +356,6 @@ const GamesTab = ({ onGameSelect }: GamesTabProps) => {
   const [searchQuery, setSearchQuery] = useState('')
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('')
   const [selectedSortId, setSelectedSortId] = useState<string | null>(null)
-  const [showFavorites, setShowFavorites] = useState(false)
 
   const [favoriteGameBurstKeys, setFavoriteGameBurstKeys] = useState<Record<string, number>>({})
   const favoriteGameBurstTimeouts = useRef<Map<string, number>>(new Map())
@@ -381,24 +380,21 @@ const GamesTab = ({ onGameSelect }: GamesTabProps) => {
 
   // Determine which query to use based on mode
   const isSearchMode = debouncedSearchQuery.trim().length > 0
-  const isFavoritesMode = showFavorites
 
   // Games in sort (default mode)
   const { data: sortGames = [], isLoading: isSortLoading } = useGamesInSort(
-    !isSearchMode && !isFavoritesMode ? selectedSortId : null,
+    !isSearchMode ? selectedSortId : null,
     sessionId
   )
 
   // Search results
   const { data: searchGames = [], isLoading: isSearchLoading } = useSearchGames(
-    !isFavoritesMode ? debouncedSearchQuery : '',
+    debouncedSearchQuery,
     sessionId
   )
 
   // Favorite games
-  const { data: favoriteGames = [], isLoading: isFavoritesLoading } = useGamesByPlaceIds(
-    isFavoritesMode ? favorites : []
-  )
+  const { data: favoriteGames = [], isLoading: isFavoritesLoading } = useGamesByPlaceIds(favorites)
 
   // Recently played games (requires at least one stored account with a cookie)
   const { data: recentlyPlayedGames = [], isLoading: isRecentLoading } =
@@ -406,25 +402,13 @@ const GamesTab = ({ onGameSelect }: GamesTabProps) => {
 
   // Compute final games list
   const games = useMemo(() => {
-    if (isFavoritesMode) {
-      // Filter favorites by search if searching while in favorites mode
-      if (debouncedSearchQuery.trim()) {
-        const lowerQuery = debouncedSearchQuery.toLowerCase()
-        return favoriteGames.filter((g) => g.name.toLowerCase().includes(lowerQuery))
-      }
-      return favoriteGames
-    }
     if (isSearchMode) {
       return searchGames
     }
     return sortGames
-  }, [isFavoritesMode, isSearchMode, favoriteGames, searchGames, sortGames, debouncedSearchQuery])
+  }, [isSearchMode, searchGames, sortGames])
 
-  const isRecommendedLoading = isFavoritesMode
-    ? isFavoritesLoading
-    : isSearchMode
-      ? isSearchLoading
-      : isSortLoading
+  const isRecommendedLoading = isSearchMode ? isSearchLoading : isSortLoading
 
   const sortOptions: DropdownOption[] = useMemo(() => {
     return sorts.map((sort) => ({
@@ -521,7 +505,7 @@ const GamesTab = ({ onGameSelect }: GamesTabProps) => {
 
   return (
     <TooltipProvider>
-      <div className="flex flex-col h-full bg-neutral-950">
+      <div className="flex flex-col h-full bg-[var(--color-surface)]">
         <div className="shrink-0 h-[72px] bg-[var(--color-surface-strong)] border-b border-[var(--color-border)] z-20 flex items-center justify-between px-6">
           <div className="flex items-center gap-4">
             <h1 className="text-xl font-bold text-white">Games</h1>
@@ -553,7 +537,7 @@ const GamesTab = ({ onGameSelect }: GamesTabProps) => {
             )}
 
             {/* Sort Selector */}
-            {!showFavorites && sorts.length > 0 && (
+            {sorts.length > 0 && (
               <CustomDropdown
                 options={sortOptions}
                 value={selectedSortId}
@@ -562,39 +546,6 @@ const GamesTab = ({ onGameSelect }: GamesTabProps) => {
                 className="w-44"
               />
             )}
-
-            {/* Favorites Toggle */}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant={showFavorites ? 'default' : 'outline'}
-                  size="default"
-                  onClick={() => setShowFavorites(!showFavorites)}
-                  className={
-                    showFavorites
-                      ? 'gap-2 bg-yellow-500/20 text-yellow-400 border-yellow-500/30 hover:bg-yellow-500/30'
-                      : 'gap-2 text-neutral-400'
-                  }
-                  aria-pressed={showFavorites}
-                  aria-label="Toggle favorite games view"
-                >
-                  <Star size={16} className={showFavorites ? 'fill-current' : ''} />
-                  <span>Favorites</span>
-                  {favorites.length > 0 && (
-                    <span
-                      className={`text-xs px-1.5 py-0.5 rounded-full ${
-                        showFavorites
-                          ? 'bg-yellow-500/30 text-yellow-300'
-                          : 'bg-neutral-800 text-neutral-400'
-                      }`}
-                    >
-                      {favorites.length}
-                    </span>
-                  )}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>{showFavorites ? 'Show all games' : 'Show favorites'}</TooltipContent>
-            </Tooltip>
 
             {/* Search Input */}
             <SearchInput
@@ -607,31 +558,12 @@ const GamesTab = ({ onGameSelect }: GamesTabProps) => {
         </div>
 
         {/* Active Filters */}
-        {(showFavorites || isSearchMode) && (
+        {isSearchMode && (
           <div className="flex flex-wrap items-center gap-2 px-6 py-3 border-t border-neutral-800 bg-neutral-900/20">
             <span className="text-xs font-medium text-neutral-500 uppercase tracking-wider mr-2">
               Active Filters:
             </span>
             <AnimatePresence>
-              {showFavorites && (
-                <motion.div
-                  key="favorites-filter"
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-yellow-500/10 border border-yellow-500/20 text-xs text-yellow-400 group"
-                >
-                  <Star size={12} className="fill-current" />
-                  <span className="font-medium">Favorites</span>
-                  <span>{favorites.length} games</span>
-                  <button
-                    onClick={() => setShowFavorites(false)}
-                    className="p-0.5 rounded-full hover:bg-yellow-500/20 transition-colors ml-1"
-                  >
-                    <X size={12} />
-                  </button>
-                </motion.div>
-              )}
               {isSearchMode && (
                 <motion.div
                   key="search-filter"
@@ -651,79 +583,120 @@ const GamesTab = ({ onGameSelect }: GamesTabProps) => {
                 </motion.div>
               )}
             </AnimatePresence>
-
-            {showFavorites && isSearchMode && (
-              <button
-                onClick={() => {
-                  setShowFavorites(false)
-                  handleClearSearch()
-                }}
-                className="text-xs text-neutral-500 hover:text-neutral-300 underline decoration-neutral-700 underline-offset-2 ml-2 transition-colors"
-              >
-                Clear all
-              </button>
-            )}
           </div>
         )}
 
         <div className="flex-1 overflow-y-auto p-6 scrollbar-thin">
           <div className="flex flex-col gap-10">
-            <section>
-              {isRecentLoading ? (
-                <div className="flex gap-3 overflow-x-auto scrollbar-none pb-2">
-                  {Array.from({ length: 8 }).map((_, idx) => (
-                    <GameCardSkeleton key={`recent-skel-${idx}`} />
-                  ))}
-                </div>
-              ) : recentlyPlayedGames.length === 0 ? (
-                <EmptyState
-                  icon={Gamepad2}
-                  title="No recent games yet"
-                  description="Play a game to see it show up here."
-                  variant="minimal"
-                />
-              ) : (
-                <HorizontalCarousel
-                  title="Recently Played"
-                  titleExtra={
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-neutral-900 border border-neutral-800 text-neutral-400">
-                      {recentlyPlayedGames.length}
-                    </span>
-                  }
-                >
-                  {recentlyPlayedGames.map((game, index) => (
-                    <div key={game.id || `recent-${index}`} className="w-[220px] shrink-0">
-                      <GameCard
-                        game={game}
-                        onGameSelect={onGameSelect}
-                        onContextMenu={(e, currentGame) => {
-                          e.preventDefault()
-                          setActiveContextMenu({
-                            id: currentGame.id,
-                            placeId: currentGame.placeId,
-                            universeId: currentGame.universeId,
-                            isFavorite: Boolean(
-                              currentGame.placeId && favorites.includes(currentGame.placeId)
-                            ),
-                            x: e.clientX,
-                            y: e.clientY
-                          })
-                        }}
-                        formatPlayerCount={formatPlayerCount}
-                        isFavorite={Boolean(game.placeId && favorites.includes(game.placeId))}
-                        favoriteBurst={Boolean(game.placeId && favoriteGameBurstKeys[game.placeId])}
-                      />
+            {/* Favorites Section */}
+            {(isFavoritesLoading || favoriteGames.length > 0) && (
+              <>
+                <section>
+                  {isFavoritesLoading ? (
+                    <div className="flex gap-3 overflow-x-auto scrollbar-none pb-2">
+                      {Array.from({ length: 8 }).map((_, idx) => (
+                        <GameCardSkeleton key={`fav-skel-${idx}`} />
+                      ))}
                     </div>
-                  ))}
-                </HorizontalCarousel>
-              )}
-            </section>
+                  ) : (
+                    <HorizontalCarousel
+                      title="Favorites"
+                      titleExtra={
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-neutral-900 border border-neutral-800 text-neutral-400">
+                          {favoriteGames.length}
+                        </span>
+                      }
+                    >
+                      {favoriteGames.map((game, index) => (
+                        <div key={game.id || `fav-${index}`} className="w-[220px] shrink-0">
+                          <GameCard
+                            game={game}
+                            onGameSelect={onGameSelect}
+                            onContextMenu={(e, currentGame) => {
+                              e.preventDefault()
+                              setActiveContextMenu({
+                                id: currentGame.id,
+                                placeId: currentGame.placeId,
+                                universeId: currentGame.universeId,
+                                isFavorite: Boolean(
+                                  currentGame.placeId && favorites.includes(currentGame.placeId)
+                                ),
+                                x: e.clientX,
+                                y: e.clientY
+                              })
+                            }}
+                            formatPlayerCount={formatPlayerCount}
+                            isFavorite={true}
+                            favoriteBurst={Boolean(
+                              game.placeId && favoriteGameBurstKeys[game.placeId]
+                            )}
+                          />
+                        </div>
+                      ))}
+                    </HorizontalCarousel>
+                  )}
+                </section>
+                <div className="h-px bg-neutral-800" />
+              </>
+            )}
+
+            {/* Recently Played Section */}
+            {(isRecentLoading || recentlyPlayedGames.length > 0) && (
+              <>
+                <section>
+                  {isRecentLoading ? (
+                    <div className="flex gap-3 overflow-x-auto scrollbar-none pb-2">
+                      {Array.from({ length: 8 }).map((_, idx) => (
+                        <GameCardSkeleton key={`recent-skel-${idx}`} />
+                      ))}
+                    </div>
+                  ) : (
+                    <HorizontalCarousel
+                      title="Recently Played"
+                      titleExtra={
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-neutral-900 border border-neutral-800 text-neutral-400">
+                          {recentlyPlayedGames.length}
+                        </span>
+                      }
+                    >
+                      {recentlyPlayedGames.map((game, index) => (
+                        <div key={game.id || `recent-${index}`} className="w-[220px] shrink-0">
+                          <GameCard
+                            game={game}
+                            onGameSelect={onGameSelect}
+                            onContextMenu={(e, currentGame) => {
+                              e.preventDefault()
+                              setActiveContextMenu({
+                                id: currentGame.id,
+                                placeId: currentGame.placeId,
+                                universeId: currentGame.universeId,
+                                isFavorite: Boolean(
+                                  currentGame.placeId && favorites.includes(currentGame.placeId)
+                                ),
+                                x: e.clientX,
+                                y: e.clientY
+                              })
+                            }}
+                            formatPlayerCount={formatPlayerCount}
+                            isFavorite={Boolean(game.placeId && favorites.includes(game.placeId))}
+                            favoriteBurst={Boolean(
+                              game.placeId && favoriteGameBurstKeys[game.placeId]
+                            )}
+                          />
+                        </div>
+                      ))}
+                    </HorizontalCarousel>
+                  )}
+                </section>
+                <div className="h-px bg-neutral-800" />
+              </>
+            )}
 
             <section>
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <h2 className="text-lg font-semibold text-white">
-                    {showFavorites ? 'Favorites' : isSearchMode ? 'Results' : 'Recommended'}
+                    {isSearchMode ? 'Results' : 'Recommended'}
                   </h2>
                   {!isRecommendedLoading && (
                     <span className="text-xs px-2 py-0.5 rounded-full bg-neutral-900 border border-neutral-800 text-neutral-400">

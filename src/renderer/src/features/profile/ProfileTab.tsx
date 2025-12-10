@@ -14,14 +14,14 @@ const ProfileTab: React.FC<ProfileTabProps> = memo(
 
     if (!account.userId || !account.cookie) {
       return (
-        <div className="flex items-center justify-center h-full text-neutral-500">
+        <div className="flex items-center justify-center h-full text-neutral-500 bg-[var(--color-surface)]">
           Account data missing
         </div>
       )
     }
 
     return (
-      <div className="absolute inset-0 flex flex-col w-full h-full bg-[var(--color-app-bg)] overflow-hidden font-sans">
+      <div className="absolute inset-0 flex flex-col w-full h-full bg-[var(--color-surface)] overflow-hidden font-sans text-[var(--color-text-secondary)]">
         <UserProfileView
           userId={account.userId}
           requestCookie={account.cookie}

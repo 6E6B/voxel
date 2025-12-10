@@ -51,6 +51,9 @@ export const accountSettingsApi = {
   updateContentRestriction: (cookie: string, level: S.ContentRestrictionLevel) =>
     invoke('update-content-restriction', updateResultSchema, cookie, level),
 
+  updateOnlineStatusPrivacy: (cookie: string, privacy: S.OnlineStatusPrivacy) =>
+    invoke('update-online-status-privacy', updateResultSchema, cookie, privacy),
+
   sendVerificationEmail: (cookie: string, freeItem?: boolean) =>
     invoke('send-verification-email', updateResultSchema, cookie, freeItem),
 

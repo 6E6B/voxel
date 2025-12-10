@@ -22,7 +22,8 @@ import {
   transactionsApi,
   updaterApi,
   newsApi,
-  accountSettingsApi
+  accountSettingsApi,
+  discordRPCApi
 } from './api'
 
 // Platform info
@@ -54,7 +55,8 @@ const api = {
   ...transactionsApi,
   ...updaterApi,
   ...newsApi,
-  ...accountSettingsApi
+  ...accountSettingsApi,
+  ...discordRPCApi
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

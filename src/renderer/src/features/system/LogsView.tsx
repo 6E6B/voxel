@@ -21,6 +21,7 @@ import {
   RefreshCw,
   ExternalLink
 } from 'lucide-react'
+import { SearchInput } from '@renderer/components/UI/inputs/SearchInput'
 import { Virtuoso } from 'react-virtuoso'
 import { useClickOutside } from '../../hooks/useClickOutside'
 import ConfirmModal from '@renderer/components/UI/dialogs/ConfirmModal'
@@ -371,7 +372,7 @@ const LogsTab: React.FC = () => {
   }, [selectedLogMeta?.universeId])
 
   return (
-    <div className="flex flex-col h-full bg-[var(--color-app-bg)] text-[var(--color-text-secondary)]">
+    <div className="flex flex-col h-full bg-[var(--color-surface)] text-[var(--color-text-secondary)]">
       <div className="shrink-0 h-[72px] bg-[var(--color-surface-strong)] border-b border-[var(--color-border)] flex items-center justify-between px-6 z-20">
         <h1 className="text-xl font-bold text-[var(--color-text-primary)]">Logs</h1>
         <div className="flex items-center gap-3">
@@ -403,18 +404,12 @@ const LogsTab: React.FC = () => {
             </TooltipTrigger>
             <TooltipContent>Toggle 5s background refresh</TooltipContent>
           </Tooltip>
-          <div className="relative w-64">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search size={16} className="text-neutral-500" />
-            </div>
-            <input
-              type="text"
-              placeholder="Search logs..."
-              value={logSearchQuery}
-              onChange={(e) => setLogSearchQuery(e.target.value)}
-              className="block w-full pl-10 pr-4 py-2 bg-neutral-900 border border-neutral-800 rounded-lg text-neutral-200 placeholder-neutral-600 focus:outline-none focus:ring-1 focus:ring-neutral-700 focus:border-neutral-700 text-sm"
-            />
-          </div>
+          <SearchInput
+            value={logSearchQuery}
+            onChange={setLogSearchQuery}
+            placeholder="Search logs..."
+            containerClassName="w-64"
+          />
         </div>
       </div>
 

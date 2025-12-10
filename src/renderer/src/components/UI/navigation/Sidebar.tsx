@@ -7,7 +7,6 @@ import {
   LogOut,
   ChevronUp,
   Heart,
-  Settings2,
   Ticket
 } from 'lucide-react'
 import { Account, TabId } from '@renderer/types'
@@ -34,6 +33,31 @@ import {
   sanitizeSidebarOrder
 } from '@shared/navigation'
 import { SIDEBAR_TAB_DEFINITION_MAP, SidebarTabDefinition } from '@renderer/constants/sidebarTabs'
+import RobloxLogo from '@assets/svg/Roblox.svg'
+
+const RobloxSettingsIcon = ({
+  size = 18,
+  className = ''
+}: {
+  size?: number
+  className?: string
+}) => {
+  const style: React.CSSProperties = {
+    width: size,
+    height: size
+  }
+
+  return (
+    <img
+      src={RobloxLogo}
+      alt="Roblox"
+      aria-hidden
+      className={`inline-block ${className}`}
+      style={style}
+      draggable={false}
+    />
+  )
+}
 
 // Bottom Profile Card Component with dropdown menu
 interface ProfileCardProps {
@@ -72,53 +96,62 @@ const ProfileCard = ({
     setIsDropdownOpen(false)
   }
 
-  const dropdownItems = [
-    {
-      icon: ArrowRightLeft,
-      label: 'Transactions',
-      onClick: () => {
-        onTransactionsClick()
-        setIsDropdownOpen(false)
+  const dropdownGroups = [
+    // Roblox Account Actions
+    [
+      {
+        icon: ArrowRightLeft,
+        label: 'Transactions',
+        onClick: () => {
+          onTransactionsClick()
+          setIsDropdownOpen(false)
+        }
+      },
+      {
+        icon: Ticket,
+        label: 'Redeem Code',
+        onClick: () => {
+          setIsRedeemOpen(true)
+          setIsDropdownOpen(false)
+        }
+      },
+      {
+        icon: RobloxSettingsIcon,
+        label: 'Roblox Settings',
+        onClick: () => {
+          onRobloxSettingsClick()
+          setIsDropdownOpen(false)
+        }
       }
-    },
-    {
-      icon: Settings2,
-      label: 'Roblox Settings',
-      onClick: () => {
-        onRobloxSettingsClick()
-        setIsDropdownOpen(false)
+    ],
+    // App Actions
+    [
+      {
+        icon: Settings,
+        label: 'App Settings',
+        onClick: () => {
+          onSettingsClick()
+          setIsDropdownOpen(false)
+        }
+      },
+      {
+        icon: Heart,
+        label: 'Credits',
+        onClick: () => {
+          setIsCreditsOpen(true)
+          setIsDropdownOpen(false)
+        }
       }
-    },
-    {
-      icon: Settings,
-      label: 'App Settings',
-      onClick: () => {
-        onSettingsClick()
-        setIsDropdownOpen(false)
+    ],
+    // Session Actions
+    [
+      {
+        icon: LogOut,
+        label: 'Sign out',
+        onClick: handleSignOut,
+        danger: true
       }
-    },
-    {
-      icon: Heart,
-      label: 'Credits',
-      onClick: () => {
-        setIsCreditsOpen(true)
-        setIsDropdownOpen(false)
-      }
-    },
-    {
-      icon: Ticket,
-      label: 'Redeem Code',
-      onClick: () => {
-        setIsRedeemOpen(true)
-        setIsDropdownOpen(false)
-      }
-    },
-    {
-      icon: LogOut,
-      label: 'Sign out',
-      onClick: handleSignOut,
-      danger: true
-    }
+    ]
   ]
 
   // Collapsed state - just show avatar with tooltip
@@ -151,7 +184,7 @@ const ProfileCard = ({
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 8, scale: 0.95 }}
                     transition={{ duration: 0.15, ease: 'easeOut' }}
-                    className="absolute bottom-full left-3 mb-2 w-48 bg-[var(--color-surface-strong)] border border-[var(--color-border)] rounded-xl shadow-2xl z-50 overflow-hidden"
+                    className="absolute bottom-full left-3 mb-2 w-56 bg-[var(--color-surface-strong)] border border-[var(--color-border)] rounded-xl shadow-2xl z-50 overflow-hidden"
                   >
                     {/* Mini profile header */}
                     <div className="p-3 border-b border-[var(--color-border)]">
@@ -180,19 +213,28 @@ const ProfileCard = ({
                       </div>
                     </div>
                     <div className="p-1.5">
-                      {dropdownItems.map((item, index) => (
-                        <button
-                          key={index}
-                          onClick={item.onClick}
-                          className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm rounded-lg transition-colors ${
-                            item.danger
-                              ? 'text-red-400 hover:bg-red-500/10 hover:text-red-300'
-                              : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]'
-                          }`}
+                      {dropdownGroups.map((group, groupIndex) => (
+                        <div
+                          key={groupIndex}
+                          className={
+                            groupIndex > 0 ? 'mt-1 pt-1 border-t border-[var(--color-border)]' : ''
+                          }
                         >
-                          <item.icon size={16} />
-                          <span className="font-medium">{item.label}</span>
-                        </button>
+                          {group.map((item, index) => (
+                            <button
+                              key={index}
+                              onClick={item.onClick}
+                              className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm rounded-lg transition-colors ${
+                                item.danger
+                                  ? 'text-red-400 hover:bg-red-500/10 hover:text-red-300'
+                                  : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]'
+                              }`}
+                            >
+                              <item.icon size={16} />
+                              <span className="font-medium">{item.label}</span>
+                            </button>
+                          ))}
+                        </div>
                       ))}
                     </div>
                   </motion.div>
@@ -220,19 +262,28 @@ const ProfileCard = ({
             className="absolute bottom-full left-3 right-3 mb-2 bg-[var(--color-surface-strong)] border border-[var(--color-border)] rounded-xl shadow-2xl z-50 overflow-hidden"
           >
             <div className="p-1.5">
-              {dropdownItems.map((item, index) => (
-                <button
-                  key={index}
-                  onClick={item.onClick}
-                  className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-sm rounded-lg transition-colors ${
-                    item.danger
-                      ? 'text-red-400 hover:bg-red-500/10 hover:text-red-300'
-                      : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]'
-                  }`}
+              {dropdownGroups.map((group, groupIndex) => (
+                <div
+                  key={groupIndex}
+                  className={
+                    groupIndex > 0 ? 'mt-1 pt-1 border-t border-[var(--color-border)]' : ''
+                  }
                 >
-                  <item.icon size={16} />
-                  <span className="font-medium">{item.label}</span>
-                </button>
+                  {group.map((item, index) => (
+                    <button
+                      key={index}
+                      onClick={item.onClick}
+                      className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-sm rounded-lg transition-colors ${
+                        item.danger
+                          ? 'text-red-400 hover:bg-red-500/10 hover:text-red-300'
+                          : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]'
+                      }`}
+                    >
+                      <item.icon size={16} />
+                      <span className="font-medium">{item.label}</span>
+                    </button>
+                  ))}
+                </div>
               ))}
             </div>
           </motion.div>

@@ -46,6 +46,7 @@
   --color-surface-strong: #111118;
   --color-surface-muted: #15151d;
   --color-surface-hover: #1b1b23;
+  --color-titlebar: #15151d;
   --color-border: #1f1f26;
   --color-border-strong: #292933;
   --color-border-subtle: rgba(255, 255, 255, 0.06);
@@ -67,6 +68,7 @@
   --color-surface-strong: #f8f9fb;
   --color-surface-muted: #f0f2f7;
   --color-surface-hover: #eaedf5;
+  --color-titlebar: #ffffff;
   --color-border: #dce1eb;
   --color-border-strong: #c8d0e0;
   --color-border-subtle: rgba(15, 23, 42, 0.08);
@@ -101,6 +103,7 @@
 .bg-neutral-800\/60 {
   background-color: var(--color-surface-hover) !important;
 }
+
 .bg-neutral-800\/80,
 .bg-neutral-800\/90,
 .bg-neutral-700,
@@ -133,6 +136,7 @@
 .border-neutral-600\/80 {
   border-color: var(--color-border) !important;
 }
+
 .border-neutral-700\/30,
 .border-neutral-600\/30,
 .border-neutral-500\/30 {
@@ -205,6 +209,7 @@ pre {
     0% {
       transform: translateX(-100%);
     }
+
     100% {
       transform: translateX(100%);
     }
@@ -215,6 +220,7 @@ pre {
     100% {
       opacity: 1;
     }
+
     50% {
       opacity: 0.7;
     }
@@ -222,8 +228,8 @@ pre {
 }
 
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 3px;
+  height: 3px;
 }
 
 ::-webkit-scrollbar-track {
@@ -240,7 +246,6 @@ pre {
 }
 
 body {
-  /* Firefox scrollbar colors */
   scrollbar-color: var(--color-border-strong) var(--color-surface-muted);
   scrollbar-width: thin;
 }
@@ -287,7 +292,6 @@ body {
   animation: profile-swap 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* View Transition API - scoped to tab content to keep snapshots lightweight */
 :root,
 body {
   view-transition-name: none;
@@ -326,6 +330,7 @@ body {
     transform: translateY(0) scale(1);
     filter: blur(0px);
   }
+
   to {
     opacity: 0;
     transform: translateY(16px) scale(0.985);
@@ -339,6 +344,7 @@ body {
     transform: translateY(10px) scale(1.01);
     filter: blur(6px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);

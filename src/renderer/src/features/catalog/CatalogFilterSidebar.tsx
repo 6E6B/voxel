@@ -246,7 +246,7 @@ export const CatalogFilterSidebar = ({
                 onClick={() => onSalesTypeChange(option.value)}
                 className={`w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-sm transition-all border ${
                   salesType === option.value
-                    ? 'bg-[var(--color-surface-hover)] border-[var(--color-border-strong)] text-[var(--color-text-primary)] font-medium shadow-[0_10px_30px_rgba(0,0,0,0.22)]'
+                    ? 'bg-[rgba(var(--accent-color-rgb),0.1)] border-transparent text-[var(--accent-color)] font-medium'
                     : 'border-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-hover)] hover:border-[var(--color-border-strong)]'
                 }`}
               >

@@ -34,6 +34,7 @@ import {
 import type { ChangeEvent } from 'react'
 import UniversalProfileModal from '@renderer/components/Modals/UniversalProfileModal'
 import { GroupDetailsPanel } from './components/GroupDetailsPanel'
+import AccessoryDetailsModal from '@renderer/features/avatar/Modals/AccessoryDetailsModal'
 
 interface GroupsTabProps {
   selectedAccount: Account | null
@@ -136,6 +137,11 @@ const GroupsTab = ({ selectedAccount }: GroupsTabProps) => {
 
   // Profile modal state
   const [profileUserId, setProfileUserId] = useState<number | null>(null)
+  const [selectedStoreItem, setSelectedStoreItem] = useState<{
+    id: number
+    name: string
+    imageUrl?: string
+  } | null>(null)
 
   // Sidebar resize state
   const [sidebarWidth, setSidebarWidth] = useState(320) // default to 80 * 4
@@ -447,6 +453,7 @@ const GroupsTab = ({ selectedAccount }: GroupsTabProps) => {
               isPending={activeTab === 'pending'}
               userRole={selectedGroupMembership?.role}
               onViewProfile={(userId) => setProfileUserId(userId)}
+              onStoreItemSelect={(item) => setSelectedStoreItem(item)}
             />
           </div>
         )}
@@ -459,6 +466,18 @@ const GroupsTab = ({ selectedAccount }: GroupsTabProps) => {
         userId={profileUserId}
         selectedAccount={selectedAccount}
         initialData={null}
+      />
+
+      <AccessoryDetailsModal
+        isOpen={!!selectedStoreItem}
+        onClose={() => setSelectedStoreItem(null)}
+        assetId={selectedStoreItem?.id || null}
+        account={selectedAccount}
+        initialData={
+          selectedStoreItem
+            ? { name: selectedStoreItem.name, imageUrl: selectedStoreItem.imageUrl || '' }
+            : undefined
+        }
       />
     </TooltipProvider>
   )

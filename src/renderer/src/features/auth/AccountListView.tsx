@@ -1,5 +1,5 @@
-import React, { forwardRef, useMemo, useContext, createContext } from 'react'
-import { Copy, Info } from 'lucide-react'
+import React, { forwardRef, useMemo, useContext, createContext, useState } from 'react'
+import { Copy, Info, Check } from 'lucide-react'
 import { Account } from '@renderer/types'
 import CustomCheckbox from '@renderer/components/UI/buttons/CustomCheckbox'
 import StatusBadge from '@renderer/components/UI/display/StatusBadge'
@@ -32,6 +32,26 @@ interface AccountListViewProps {
   onMoveAccount?: (fromId: string, toId: string) => void
   allowMultipleInstances: boolean
   voiceBanInfo?: Record<string, { message: string; endsAt?: number }>
+}
+
+const CopyUserIdButton = ({ userId }: { userId: string }) => {
+  const [copied, setCopied] = useState(false)
+
+  const handleCopy = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    navigator.clipboard.writeText(userId)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  return (
+    <button
+      onClick={handleCopy}
+      className="pressable ml-2 text-neutral-600 opacity-0 group-hover/id:opacity-100 hover:text-neutral-300 transition-all"
+    >
+      {copied ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
+    </button>
+  )
 }
 
 const AccountListView = ({
@@ -213,24 +233,14 @@ const AccountListView = ({
               <td className="hidden md:table-cell px-6 py-4 whitespace-nowrap">
                 <div className="flex items-center group/id">
                   <span className="text-[15px] text-neutral-500 font-mono">{account.userId}</span>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      navigator.clipboard.writeText(account.userId)
-                    }}
-                    className="pressable ml-2 text-neutral-600 opacity-0 group-hover/id:opacity-100 hover:text-neutral-300 transition-all"
-                  >
-                    <Copy size={14} />
-                  </button>
+                  <CopyUserIdButton userId={account.userId} />
                 </div>
               </td>
               <td className="px-3 md:px-6 py-3 md:py-4 whitespace-nowrap">
-                <div className="flex flex-col gap-1">
+                <div className="flex flex-col items-start gap-1">
                   <StatusBadge status={account.status} />
                   {voiceBanInfo?.[account.id] && (
-                    <span className="text-xs text-red-400">
-                      {voiceBanInfo[account.id].message}
-                    </span>
+                    <span className="text-xs text-red-400">{voiceBanInfo[account.id].message}</span>
                   )}
                 </div>
               </td>

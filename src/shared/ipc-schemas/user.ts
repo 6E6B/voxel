@@ -294,7 +294,7 @@ export const profileHeaderSchema = z.object({
   isPremium: z.boolean().optional(),
   isVerified: z.boolean().optional(),
   isRobloxAdmin: z.boolean().optional(),
-  counts: profileHeaderCountsSchema.optional(),
+  counts: profileHeaderCountsSchema.nullable().optional(),
   names: profileHeaderNamesSchema.optional(),
   contextualInformation: z
     .object({

@@ -38,7 +38,7 @@ export const CollectionsSection: React.FC<CollectionsSectionProps> = ({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5, delay: 0.25 }}
-      className="bg-[var(--color-surface-strong)] border border-[var(--color-border)] rounded-xl p-5 shadow-[var(--shadow-lg)]/40"
+      className="bg-[var(--color-surface-strong)] border border-[var(--color-border)] rounded-[var(--radius-xl)] p-5 shadow-[var(--shadow-lg)]/40"
     >
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-bold text-[var(--color-text-primary)]">Collections</h3>
@@ -147,7 +147,7 @@ const CollectionItemCard: React.FC<CollectionItemCardProps> = ({
 
   return (
     <div
-      className="group relative aspect-square bg-[var(--color-surface-strong)] border border-[var(--color-border)] rounded-xl overflow-hidden cursor-pointer transition-all hover:border-[var(--color-border-strong)] hover:shadow-lg isolate"
+      className="group relative aspect-square bg-[var(--color-surface-strong)] border border-[var(--color-border)] rounded-[var(--radius-lg)] overflow-hidden cursor-pointer transition-all hover:border-[var(--color-border-strong)] hover:shadow-lg isolate"
       onClick={() => onItemClick({ id: item.id, name: item.name, imageUrl: item.imageUrl })}
     >
       <div
@@ -225,7 +225,7 @@ const CollectionItemCard: React.FC<CollectionItemCardProps> = ({
           </Tooltip>
         )}
       </div>
-      <div className="absolute inset-x-0 bottom-0 z-10 w-full translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out rounded-b-xl">
+      <div className="absolute inset-x-0 bottom-0 z-10 w-full translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out rounded-b-[var(--radius-lg)]">
         <div
           className="absolute inset-0 pointer-events-none"
           style={{

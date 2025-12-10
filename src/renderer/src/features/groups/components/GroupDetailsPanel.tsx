@@ -345,6 +345,7 @@ export interface GroupDetailsPanelProps {
   isPending?: boolean
   userRole?: { name: string; rank: number }
   onViewProfile?: (userId: number) => void
+  onStoreItemSelect?: (item: { id: number; name: string; imageUrl?: string }) => void
   /** Custom empty state message when no group is selected */
   emptyStateMessage?: string
   /** Whether to show the leave/cancel buttons */
@@ -359,6 +360,7 @@ export const GroupDetailsPanel = ({
   isPending,
   userRole,
   onViewProfile,
+  onStoreItemSelect,
   emptyStateMessage = 'Select a group',
   showActions = true,
   tabLayoutId = 'groupDetailsTabIndicator'
@@ -895,6 +897,15 @@ export const GroupDetailsPanel = ({
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                       {storeItems.map((item: GroupStoreResponse['data'][0], index: number) => {
                         const handleItemClick = () => {
+                          if (onStoreItemSelect) {
+                            onStoreItemSelect({
+                              id: item.id,
+                              name: item.name,
+                              imageUrl: storeThumbnails[item.id]
+                            })
+                            return
+                          }
+
                           // If creator is a User, open their profile, otherwise open catalog page
                           if (
                             item.creatorType === 'User' &&

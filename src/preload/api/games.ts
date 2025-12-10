@@ -26,6 +26,8 @@ export const gamesApi = {
     invoke('get-games-by-universe-ids', z.array(z.any()), universeIds),
   getGameThumbnail16x9: (universeId: number) =>
     invoke('get-game-thumbnail-16x9', z.array(z.string()), universeId),
+  getGameIconThumbnail: (universeId: number) =>
+    invoke('get-game-icon-thumbnail', z.string().nullable(), universeId),
   searchGames: (query: string, sessionId?: string) =>
     invoke('search-games', z.array(z.any()), query, sessionId),
   getRecentlyPlayedGames: (sessionId?: string) =>

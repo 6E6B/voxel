@@ -56,7 +56,8 @@ import type {
   GenderResponse,
   BirthdateResponse,
   PromotionChannelsResponse,
-  StarCodeAffiliateResponse
+  StarCodeAffiliateResponse,
+  OnlineStatusPrivacy
 } from '../../../shared/ipc-schemas/accountSettings'
 
 export interface UpdateSettingResult {
@@ -129,6 +130,7 @@ export interface SettingsApi {
   removeCustomFont: (family: string) => Promise<void>
   getActiveFont: () => Promise<string | null>
   setActiveFont: (family: string | null) => Promise<void>
+  selectFontFile: () => Promise<string | null>
   // Secure PIN verification - auth state managed in main process
   verifyPin: (pin: string) => Promise<{
     success: boolean
@@ -218,6 +220,7 @@ export interface GamesApi {
   getRegionFromAddress: (address: string) => Promise<string>
   getRegionsBatch: (addresses: string[]) => Promise<RegionLookup>
   getGameThumbnail16x9: (universeId: number) => Promise<string[]>
+  getGameIconThumbnail: (universeId: number) => Promise<string | null>
   getGameSocialLinks: (universeId: number) => Promise<any[]>
   voteOnGame: (placeId: number, vote: boolean | null) => Promise<any>
   getGamePasses: (universeId: number) => Promise<GamePassesResponse>
@@ -340,6 +343,8 @@ export interface InstallationsApi {
   setActiveInstall: (installPath: string) => Promise<void>
   removeActiveInstall: () => Promise<void>
   getActiveInstallPath: () => Promise<string | null>
+  installFont: (installPath: string, fontPath: string) => Promise<void>
+  installCursor: (installPath: string, cursorPath: string) => Promise<void>
 }
 
 export interface FlagsApi {
@@ -796,6 +801,10 @@ export interface AccountSettingsApi {
     cookie: string,
     level: ContentRestrictionLevel
   ) => Promise<UpdateSettingResult>
+  updateOnlineStatusPrivacy: (
+    cookie: string,
+    privacy: OnlineStatusPrivacy
+  ) => Promise<UpdateSettingResult>
   sendVerificationEmail: (cookie: string, freeItem?: boolean) => Promise<UpdateSettingResult>
   redeemPromoCode: (cookie: string, code: string) => Promise<RedeemPromoCodeResponse>
   // Account Information API methods
@@ -826,6 +835,26 @@ export interface AccountSettingsApi {
   removeStarCodeAffiliate: (cookie: string) => Promise<UpdateSettingResult>
 }
 
+// Discord Rich Presence types
+export interface DiscordPresenceState {
+  isEnabled: boolean
+  isConnected: boolean
+  currentGame: {
+    name: string
+    placeId: string
+    thumbnailUrl?: string
+  } | null
+  currentTab: string | null
+}
+
+export interface DiscordRPCApi {
+  enableDiscordRPC: () => Promise<boolean>
+  disableDiscordRPC: () => Promise<void>
+  getDiscordRPCState: () => Promise<DiscordPresenceState>
+  setDiscordRPCTab: (tabId: string | null) => Promise<void>
+  isDiscordRPCEnabled: () => Promise<boolean>
+}
+
 export type WindowApi = AccountApi &
   FavoritesApi &
   SettingsApi &
@@ -845,4 +874,5 @@ export type WindowApi = AccountApi &
   UpdaterApi &
   CatalogDatabaseApi &
   NewsApi &
-  AccountSettingsApi
+  AccountSettingsApi &
+  DiscordRPCApi

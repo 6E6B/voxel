@@ -17,7 +17,8 @@ import {
   type GenderResponse,
   type BirthdateResponse,
   type PromotionChannelsResponse,
-  type StarCodeAffiliateResponse
+  type StarCodeAffiliateResponse,
+  type OnlineStatusPrivacy
 } from '@shared/ipc-schemas/accountSettings'
 
 const ACCOUNT_SETTINGS_API_URL = 'https://accountsettings.roblox.com/v1'
@@ -293,6 +294,31 @@ export class AccountSettingsService {
         'X-CSRF-TOKEN': csrfToken
       },
       body: JSON.stringify({ contentRestrictionLevel })
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      return { success: false, error: errorData.errors?.[0]?.message || response.statusText }
+    }
+    return { success: true }
+  }
+
+  /**
+   * Updates the user's online status privacy setting (who can see when you're online / join you)
+   */
+  static async updateOnlineStatusPrivacy(
+    cookie: string,
+    whoCanSeeMyOnlineStatus: OnlineStatusPrivacy
+  ): Promise<{ success: boolean; error?: string }> {
+    const csrfToken = await getCsrfToken(cookie)
+    const response = await fetch(`${USER_SETTINGS_API_URL}?_rosealRequest=`, {
+      method: 'POST',
+      headers: {
+        Cookie: `.ROBLOSECURITY=${cookie}`,
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': csrfToken
+      },
+      body: JSON.stringify({ whoCanSeeMyOnlineStatus })
     })
 
     if (!response.ok) {

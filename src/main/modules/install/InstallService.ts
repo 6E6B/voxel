@@ -12,7 +12,6 @@ import { deployHistorySchema } from '@shared/ipc-schemas/user'
 
 const streamPipeline = promisify(pipeline)
 
-// Types for detected installations
 export interface DetectedInstallation {
   path: string
   version: string
@@ -20,7 +19,6 @@ export interface DetectedInstallation {
   exePath: string
 }
 
-// Constants
 const AWS_MIRROR = 'https://setup-aws.rbxcdn.com'
 const DEPLOY_HISTORY_URL = 'https://setup.rbxcdn.com/DeployHistory.txt'
 
@@ -421,6 +419,72 @@ export class RobloxInstallService {
     } catch (e) {
       console.error('Failed to write FFlags', e)
       throw e
+    }
+  }
+
+  static async installFont(installPath: string, fontPath: string): Promise<void> {
+    if (!fs.existsSync(fontPath)) {
+      throw new Error('Font file not found: ' + fontPath)
+    }
+
+    const fontsDir = path.join(installPath, 'content', 'fonts')
+    if (!fs.existsSync(fontsDir)) {
+      if (process.platform === 'darwin') {
+        const macFontsDir = path.join(installPath, 'Contents', 'Resources', 'content', 'fonts')
+        if (fs.existsSync(macFontsDir)) {
+          await this.replaceFontsInDir(macFontsDir, fontPath)
+          return
+        }
+      }
+      throw new Error('Roblox fonts directory not found in ' + installPath)
+    }
+
+    await this.replaceFontsInDir(fontsDir, fontPath)
+  }
+
+  private static async replaceFontsInDir(fontsDir: string, sourceFontPath: string): Promise<void> {
+    const targetFonts = [
+      'Arial.ttf',
+      'SourceSansPro-Regular.ttf',
+      'SourceSansPro-Bold.ttf',
+      'SourceSansPro-Light.ttf',
+      'SourceSansPro-SemiBold.ttf'
+    ]
+
+    for (const target of targetFonts) {
+      await fs.promises.copyFile(sourceFontPath, path.join(fontsDir, target))
+    }
+  }
+
+  static async installCursor(installPath: string, cursorPath: string): Promise<void> {
+    if (!fs.existsSync(cursorPath)) {
+      throw new Error('Cursor file not found: ' + cursorPath)
+    }
+
+    let cursorDir = path.join(installPath, 'content', 'textures', 'Cursors', 'KeyboardMouse')
+
+    if (process.platform === 'darwin') {
+      const macCursorDir = path.join(
+        installPath,
+        'Contents',
+        'Resources',
+        'content',
+        'textures',
+        'Cursors',
+        'KeyboardMouse'
+      )
+      if (fs.existsSync(macCursorDir)) {
+        cursorDir = macCursorDir
+      }
+    }
+
+    if (!fs.existsSync(cursorDir)) {
+      throw new Error('Roblox cursor directory not found in ' + installPath)
+    }
+
+    const targets = ['ArrowCursor.png', 'ArrowFarCursor.png']
+    for (const target of targets) {
+      await fs.promises.copyFile(cursorPath, path.join(cursorDir, target))
     }
   }
 

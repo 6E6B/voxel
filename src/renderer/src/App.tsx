@@ -1,5 +1,6 @@
 /// <reference path="./window.d.ts" />
 import React, { useState, useMemo, useRef, useEffect, useCallback, lazy, Suspense } from 'react'
+import notificationIcon from '../../../resources/build/icons/256x256.png'
 import { AnimatePresence } from 'framer-motion'
 import { Search } from 'lucide-react'
 import { Account, AccountStatus, JoinMethod } from './types'
@@ -257,6 +258,13 @@ const App: React.FC = () => {
     }
   }, [activeTab, setActiveTabState, visibleSidebarTabs])
 
+  // Update Discord RPC when tab changes
+  useEffect(() => {
+    window.api.setDiscordRPCTab(activeTab).catch(() => {
+      // Silently ignore if RPC is not enabled
+    })
+  }, [activeTab])
+
   const [commandPaletteAccessory, setCommandPaletteAccessory] = useState<{
     id: number
     name: string
@@ -407,14 +415,14 @@ const App: React.FC = () => {
                         if (Notification.permission === 'granted') {
                           new Notification('Server Location', {
                             body: `Connected to server in ${region}`,
-                            icon: undefined // Could add an app icon here
+                            icon: notificationIcon
                           })
                         } else if (Notification.permission !== 'denied') {
                           Notification.requestPermission().then((permission) => {
                             if (permission === 'granted') {
                               new Notification('Server Location', {
                                 body: `Connected to server in ${region}`,
-                                icon: undefined
+                                icon: notificationIcon
                               })
                             }
                           })
@@ -639,7 +647,7 @@ const App: React.FC = () => {
       <main className="flex-1 flex flex-col min-w-0 bg-[var(--color-surface)] h-full relative overflow-hidden text-[var(--color-text-secondary)]">
         {/* Title Bar spacer */}
         <div
-          className="h-[45px] bg-[var(--color-surface)] flex-shrink-0 w-full border-b border-[var(--color-border)] flex items-center justify-end"
+          className="h-[45px] bg-[var(--color-titlebar)] flex-shrink-0 w-full border-b border-[var(--color-border)] flex items-center justify-end"
           style={
             {
               WebkitAppRegion: 'drag',

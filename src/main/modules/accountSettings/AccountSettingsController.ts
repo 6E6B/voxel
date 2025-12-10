@@ -5,7 +5,8 @@ import {
   privacyLevelValues,
   tradePrivacyValues,
   tradeValueValues,
-  contentRestrictionLevelValues
+  contentRestrictionLevelValues,
+  onlineStatusPrivacyValues
 } from '@shared/ipc-schemas/accountSettings'
 
 /**
@@ -91,6 +92,14 @@ export const registerAccountSettingsHandlers = (): void => {
     z.tuple([z.string(), z.enum(contentRestrictionLevelValues)]),
     async (_, cookie, contentRestrictionLevel) => {
       return AccountSettingsService.updateContentRestriction(cookie, contentRestrictionLevel)
+    }
+  )
+
+  handle(
+    'update-online-status-privacy',
+    z.tuple([z.string(), z.enum(onlineStatusPrivacyValues)]),
+    async (_, cookie, onlineStatusPrivacy) => {
+      return AccountSettingsService.updateOnlineStatusPrivacy(cookie, onlineStatusPrivacy)
     }
   )
 

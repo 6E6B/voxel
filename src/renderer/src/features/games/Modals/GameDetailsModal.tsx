@@ -70,7 +70,7 @@ interface GameDetailsModalProps {
   onLaunch: (config: { method: JoinMethod; target: string }) => void
   game: Game | null
   account?: Account | null
-  onViewServers?: (placeId: string) => void // Kept for compatibility but unused
+  onViewServers?: (placeId: string) => void
 }
 
 const CAROUSEL_INTERVAL = 5000

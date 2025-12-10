@@ -9,6 +9,7 @@ import { RobloxGameService } from './GameService'
 import { RobloxLauncherService } from '../install/LauncherService'
 import { storageService } from '../system/StorageService'
 import { downloadFileToPath } from '../core/utils/downloadUtils'
+import { gameSessionService } from './GameSessionService'
 
 /**
  * Registers game-related IPC handlers
@@ -16,6 +17,10 @@ import { downloadFileToPath } from '../core/utils/downloadUtils'
 export const registerGameHandlers = (): void => {
   handle('get-game-thumbnail-16x9', z.tuple([z.number()]), async (_, universeId) => {
     return RobloxGameService.getGameThumbnail16x9(universeId)
+  })
+
+  handle('get-game-icon-thumbnail', z.tuple([z.number()]), async (_, universeId) => {
+    return RobloxGameService.getGameIconThumbnail(universeId)
   })
 
   handle('get-game-sorts', z.tuple([z.string().optional()]), async (_, sessionId) => {
@@ -162,7 +167,19 @@ export const registerGameHandlers = (): void => {
     ]),
     async (_, cookieRaw, placeId, jobId, friendId, installPath) => {
       const cookie = RobloxAuthService.extractCookie(cookieRaw)
-      return RobloxLauncherService.launchGame(cookie, placeId, jobId, friendId, installPath)
+      const result = await RobloxLauncherService.launchGame(
+        cookie,
+        placeId,
+        jobId,
+        friendId,
+        installPath
+      )
+
+      if (result.success) {
+        gameSessionService.startSession(placeId)
+      }
+
+      return result
     }
   )
 

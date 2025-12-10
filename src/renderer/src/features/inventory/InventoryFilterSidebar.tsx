@@ -205,21 +205,23 @@ export const InventoryFilterSidebar = ({
               onClick={() => onSortOrderChange('Desc')}
               className={`w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-sm transition-all border ${
                 sortOrder === 'Desc'
-                  ? 'bg-[var(--color-surface-hover)] border-[var(--color-border-strong)] text-[var(--color-text-primary)] font-medium shadow-[0_10px_30px_rgba(0,0,0,0.22)]'
+                  ? 'bg-[rgba(var(--accent-color-rgb),0.1)] border-transparent text-[var(--accent-color)] font-medium'
                   : 'border-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-hover)] hover:border-[var(--color-border-strong)]'
               }`}
             >
               <span>Newest First</span>
+              {sortOrder === 'Desc' && <Check size={14} />}
             </button>
             <button
               onClick={() => onSortOrderChange('Asc')}
               className={`w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-sm transition-all border ${
                 sortOrder === 'Asc'
-                  ? 'bg-[var(--color-surface-hover)] border-[var(--color-border-strong)] text-[var(--color-text-primary)] font-medium shadow-[0_10px_30px_rgba(0,0,0,0.22)]'
+                  ? 'bg-[rgba(var(--accent-color-rgb),0.1)] border-transparent text-[var(--accent-color)] font-medium'
                   : 'border-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-hover)] hover:border-[var(--color-border-strong)]'
               }`}
             >
               <span>Oldest First</span>
+              {sortOrder === 'Asc' && <Check size={14} />}
             </button>
           </div>
         </FilterSection>

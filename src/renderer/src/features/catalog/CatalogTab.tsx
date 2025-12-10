@@ -133,7 +133,6 @@ const CatalogSearchBar = forwardRef<CatalogSearchBarRef, CatalogSearchBarProps>(
             }
           }}
           onClear={handleClear}
-          className="bg-neutral-900 border-neutral-800"
         />
 
         <AnimatePresence>

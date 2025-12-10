@@ -179,7 +179,8 @@ app.whenReady().then(async () => {
       updaterController,
       newsController,
       storageModule,
-      pinModule
+      pinModule,
+      discordRPCModule
     ] = await Promise.all([
       import('./modules/core/RobloxHandler'),
       import('./modules/system/StorageController'),
@@ -187,7 +188,8 @@ app.whenReady().then(async () => {
       import('./modules/updater/UpdaterController'),
       import('./modules/news/NewsController'),
       import('./modules/system/StorageService'),
-      import('./modules/system/PinService')
+      import('./modules/system/PinService'),
+      import('./modules/discord/DiscordRPCController')
     ])
 
     registerRobloxHandlers = robloxHandler.registerRobloxHandlers
@@ -204,7 +206,8 @@ app.whenReady().then(async () => {
       registerLogsHandlers,
       registerUpdaterHandlers,
       registerNewsHandlers,
-      pinService
+      pinService,
+      registerDiscordRPCHandlers: discordRPCModule.registerDiscordRPCHandlers
     }
   }
 
@@ -221,6 +224,7 @@ app.whenReady().then(async () => {
   loadedModules.registerStorageHandlers()
   loadedModules.registerLogsHandlers()
   loadedModules.registerNewsHandlers()
+  loadedModules.registerDiscordRPCHandlers()
 
   // Initialize PIN service (loads persisted lockout state)
   loadedModules.pinService.initialize()

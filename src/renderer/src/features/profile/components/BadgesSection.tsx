@@ -26,7 +26,7 @@ const BadgeGrid: React.FC<{ badges: Badge[]; isLoading: boolean }> = ({ badges, 
         : badges.map((badge) => (
             <Tooltip key={badge.id}>
               <TooltipTrigger asChild>
-                <div className="group relative aspect-square bg-[var(--color-surface-strong)] border border-[var(--color-border)] rounded-xl overflow-hidden cursor-pointer transition-all hover:border-[var(--color-border-strong)] hover:shadow-lg isolate">
+                <div className="group relative aspect-square bg-[var(--color-surface-strong)] border border-[var(--color-border)] rounded-[var(--radius-lg)] overflow-hidden cursor-pointer transition-all hover:border-[var(--color-border-strong)] hover:shadow-lg isolate">
                   <div className="w-full h-full p-4 flex items-center justify-center bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-[var(--color-surface-hover)] to-transparent">
                     <img
                       src={badge.imageUrl}
@@ -34,7 +34,7 @@ const BadgeGrid: React.FC<{ badges: Badge[]; isLoading: boolean }> = ({ badges, 
                       className="w-full h-full object-contain drop-shadow-lg transform group-hover:scale-110 transition-transform duration-300"
                     />
                   </div>
-                  <div className="absolute inset-x-0 bottom-0 z-10 w-full translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out rounded-b-xl overflow-hidden">
+                  <div className="absolute inset-x-0 bottom-0 z-10 w-full translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out rounded-b-[var(--radius-lg)] overflow-hidden">
                     <div
                       className="absolute inset-0 pointer-events-none"
                       style={{
@@ -79,7 +79,7 @@ export const BadgesSection: React.FC<BadgesSectionProps> = ({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.3 }}
-          className="bg-[var(--color-surface-strong)] border border-[var(--color-border)] rounded-xl p-5 shadow-[var(--shadow-lg)]/40"
+          className="bg-[var(--color-surface-strong)] border border-[var(--color-border)] rounded-[var(--radius-xl)] p-5 shadow-[var(--shadow-lg)]/40"
         >
           <div className="mb-4">
             <h3 className="text-lg font-bold text-[var(--color-text-primary)] flex items-center gap-2">
@@ -97,7 +97,7 @@ export const BadgesSection: React.FC<BadgesSectionProps> = ({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.35 }}
-          className="bg-[var(--color-surface-strong)] border border-[var(--color-border)] rounded-xl p-5 shadow-[var(--shadow-lg)]/40"
+          className="bg-[var(--color-surface-strong)] border border-[var(--color-border)] rounded-[var(--radius-xl)] p-5 shadow-[var(--shadow-lg)]/40"
         >
           <div className="mb-4">
             <h3 className="text-lg font-bold text-[var(--color-text-primary)] flex items-center gap-2">

@@ -347,9 +347,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                     size="sm"
                     variant="secondary"
                     className="h-9 px-3 gap-2 bg-emerald-500/90 text-white border border-emerald-400/50 hover:bg-emerald-500"
-                    onClick={() =>
-                      onJoinGame(gameActivity.placeId, gameActivity.jobId, userId)
-                    }
+                    onClick={() => onJoinGame(gameActivity.placeId, gameActivity.jobId, userId)}
                   >
                     <Gamepad2 size={16} className="shrink-0" />
                     <span>Join game</span>

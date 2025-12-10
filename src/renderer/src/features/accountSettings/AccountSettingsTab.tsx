@@ -32,7 +32,8 @@ import CustomDropdown, { DropdownOption } from '../../components/UI/menus/Custom
 import type {
   PrivacyLevel,
   TradePrivacy,
-  TradeValue
+  TradeValue,
+  OnlineStatusPrivacy
 } from '../../../../shared/ipc-schemas/accountSettings'
 
 interface AccountSettingsTabProps {
@@ -69,6 +70,13 @@ const THEME_OPTIONS: DropdownOption[] = [
   { value: 'Light', label: 'Light' }
 ]
 
+const ONLINE_STATUS_PRIVACY_OPTIONS: DropdownOption[] = [
+  { value: 'NoOne', label: 'No One' },
+  { value: 'Friends', label: 'Friends' },
+  { value: 'FriendsFollowingAndFollowers', label: 'Friends, Following & Followers' },
+  { value: 'AllUsers', label: 'Everyone' }
+]
+
 const formatDays = (days: number): string => {
   const years = Math.floor(days / 365)
   const remainingDays = days % 365
@@ -95,7 +103,7 @@ const SettingBadge: React.FC<{
 }> = ({ enabled, label }) => (
   <span
     className={cn(
-      'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium',
+      'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-sm font-medium',
       enabled
         ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
         : 'bg-neutral-800/50 text-neutral-500 border border-neutral-700/50'
@@ -112,7 +120,7 @@ const SettingValue: React.FC<{
 }> = ({ value, variant = 'default' }) => (
   <span
     className={cn(
-      'text-sm font-medium',
+      'text-base font-medium',
       variant === 'accent' ? 'text-[var(--accent-color)]' : 'text-white'
     )}
   >
@@ -138,8 +146,8 @@ const SettingCard: React.FC<{
         {icon}
       </div>
       <div className="flex-1 min-w-0">
-        <h4 className="text-sm font-medium text-white mb-0.5">{title}</h4>
-        {description && <p className="text-xs text-neutral-500 mb-3">{description}</p>}
+        <h4 className="text-base font-medium text-white mb-0.5">{title}</h4>
+        {description && <p className="text-sm text-neutral-500 mb-3">{description}</p>}
         <div className="space-y-2">{children}</div>
       </div>
     </div>
@@ -151,7 +159,7 @@ const SettingRow: React.FC<{
   children: React.ReactNode
 }> = ({ label, children }) => (
   <div className="flex items-center justify-between py-1.5 border-b border-neutral-800/30 last:border-0">
-    <span className="text-xs text-neutral-400">{label}</span>
+    <span className="text-sm text-neutral-400">{label}</span>
     <div className="flex items-center gap-2">{children}</div>
   </div>
 )
@@ -228,6 +236,14 @@ const AccountSettingsTab: React.FC<AccountSettingsTabProps> = ({ account }) => {
     mutationFn: async (privacy: PrivacyLevel) => {
       if (!account?.cookie) throw new Error('No cookie')
       return window.api.updatePrivacy(account.cookie, privacy)
+    },
+    onSuccess: invalidateSettings
+  })
+
+  const updateOnlineStatusPrivacy = useMutation({
+    mutationFn: async (privacy: OnlineStatusPrivacy) => {
+      if (!account?.cookie) throw new Error('No cookie')
+      return window.api.updateOnlineStatusPrivacy(account.cookie, privacy)
     },
     onSuccess: invalidateSettings
   })
@@ -372,7 +388,7 @@ const AccountSettingsTab: React.FC<AccountSettingsTabProps> = ({ account }) => {
   }
 
   return (
-    <div className="flex flex-col h-full bg-[var(--color-app-bg)] text-[var(--color-text-secondary)]">
+    <div className="flex flex-col h-full bg-[var(--color-surface)] text-[var(--color-text-secondary)]">
       {/* Header */}
       <div className="shrink-0 h-[72px] bg-[var(--color-surface-strong)] border-b border-[var(--color-border)] flex items-center justify-between px-6">
         <div className="flex items-center gap-3">
@@ -380,13 +396,13 @@ const AccountSettingsTab: React.FC<AccountSettingsTabProps> = ({ account }) => {
           {accountSettings && (
             <div className="flex items-center gap-2">
               {accountSettings.IsPremium && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-sm font-medium bg-amber-500/15 text-amber-400 border border-amber-500/30">
                   <Crown size={12} />
                   Premium
                 </span>
               )}
               {accountSettings.IsAdmin && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-red-500/15 text-red-400 border border-red-500/30">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-sm font-medium bg-red-500/15 text-red-400 border border-red-500/30">
                   <Shield size={12} />
                   Admin
                 </span>
@@ -450,7 +466,7 @@ const AccountSettingsTab: React.FC<AccountSettingsTabProps> = ({ account }) => {
           {error && (
             <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400">
               <p className="text-sm font-medium">Failed to load account settings</p>
-              <p className="text-xs mt-1 opacity-70">{(error as Error).message}</p>
+              <p className="text-sm mt-1 opacity-70">{(error as Error).message}</p>
             </div>
           )}
 
@@ -477,7 +493,7 @@ const AccountSettingsTab: React.FC<AccountSettingsTabProps> = ({ account }) => {
                         <SettingValue value={accountSettings.DisplayName} />
                       </SettingRow>
                       <SettingRow label="User ID">
-                        <span className="text-xs text-neutral-300 font-mono">
+                        <span className="text-sm text-neutral-300 font-mono">
                           {accountSettings.UserId}
                         </span>
                       </SettingRow>
@@ -505,18 +521,18 @@ const AccountSettingsTab: React.FC<AccountSettingsTabProps> = ({ account }) => {
                             .map((name, i) => (
                               <span
                                 key={i}
-                                className="text-xs px-1.5 py-0.5 bg-neutral-800 rounded text-neutral-400"
+                                className="text-sm px-1.5 py-0.5 bg-neutral-800 rounded text-neutral-400"
                               >
                                 {name}
                               </span>
                             ))}
                           {!accountSettings.PreviousUserNames && (
-                            <span className="text-xs text-neutral-500">None</span>
+                            <span className="text-sm text-neutral-500">None</span>
                           )}
                         </div>
                       </SettingRow>
                       <SettingRow label="Robux for Username Change">
-                        <span className="text-xs text-neutral-300 font-mono">
+                        <span className="text-sm text-neutral-300 font-mono">
                           {accountSettings.RobuxRemainingForUsernameChange} R$
                         </span>
                       </SettingRow>
@@ -528,7 +544,7 @@ const AccountSettingsTab: React.FC<AccountSettingsTabProps> = ({ account }) => {
                       description="Email and phone settings"
                     >
                       <SettingRow label="Email">
-                        <span className="text-xs text-neutral-300">
+                        <span className="text-sm text-neutral-300">
                           {accountSettings.UserEmail}
                         </span>
                       </SettingRow>
@@ -542,7 +558,7 @@ const AccountSettingsTab: React.FC<AccountSettingsTabProps> = ({ account }) => {
                             <button
                               onClick={() => sendVerificationEmail.mutate()}
                               disabled={sendVerificationEmail.isPending}
-                              className="text-xs px-2 py-1 bg-[var(--accent-color)]/20 text-[var(--accent-color)] rounded hover:bg-[var(--accent-color)]/30 transition-colors"
+                              className="text-sm px-2 py-1 bg-[var(--accent-color)]/20 text-[var(--accent-color)] rounded hover:bg-[var(--accent-color)]/30 transition-colors"
                             >
                               {sendVerificationEmail.isPending ? 'Sending...' : 'Send Email'}
                             </button>
@@ -596,7 +612,7 @@ const AccountSettingsTab: React.FC<AccountSettingsTabProps> = ({ account }) => {
                       </SettingRow>
                       <SettingRow label="Birthdate">
                         {birthdateData ? (
-                          <span className="text-xs text-neutral-300">
+                          <span className="text-sm text-neutral-300">
                             {formatBirthdate(
                               birthdateData.birthMonth,
                               birthdateData.birthDay,
@@ -604,7 +620,7 @@ const AccountSettingsTab: React.FC<AccountSettingsTabProps> = ({ account }) => {
                             )}
                           </span>
                         ) : (
-                          <span className="text-xs text-neutral-500">Not set</span>
+                          <span className="text-sm text-neutral-500">Not set</span>
                         )}
                       </SettingRow>
                       <SettingRow label="Birthdate Locked">
@@ -623,7 +639,7 @@ const AccountSettingsTab: React.FC<AccountSettingsTabProps> = ({ account }) => {
                           value={editingDescription ?? descriptionData?.description ?? ''}
                           onChange={(e) => setEditingDescription(e.target.value)}
                           placeholder="Enter your profile description..."
-                          className="w-full h-20 px-3 py-2 text-xs bg-neutral-800/50 border border-neutral-700/50 rounded-lg text-neutral-200 placeholder-neutral-500 focus:outline-none focus:border-[var(--accent-color)]/50 resize-none"
+                          className="w-full h-20 px-3 py-2 text-sm bg-neutral-800/50 border border-neutral-700/50 rounded-lg text-neutral-200 placeholder-neutral-500 focus:outline-none focus:border-[var(--accent-color)]/50 resize-none"
                         />
                         <div className="flex items-center gap-2">
                           {editingDescription !== null &&
@@ -632,25 +648,25 @@ const AccountSettingsTab: React.FC<AccountSettingsTabProps> = ({ account }) => {
                                 <button
                                   onClick={() => updateDescription.mutate(editingDescription)}
                                   disabled={updateDescription.isPending}
-                                  className="text-xs px-3 py-1.5 bg-[var(--accent-color)]/20 text-[var(--accent-color)] rounded hover:bg-[var(--accent-color)]/30 transition-colors disabled:opacity-50"
+                                  className="text-sm px-3 py-1.5 bg-[var(--accent-color)]/20 text-[var(--accent-color)] rounded hover:bg-[var(--accent-color)]/30 transition-colors disabled:opacity-50"
                                 >
                                   {updateDescription.isPending ? 'Saving...' : 'Save'}
                                 </button>
                                 <button
                                   onClick={() => setEditingDescription(null)}
                                   disabled={updateDescription.isPending}
-                                  className="text-xs px-3 py-1.5 bg-neutral-700/50 text-neutral-400 rounded hover:bg-neutral-700/70 transition-colors disabled:opacity-50"
+                                  className="text-sm px-3 py-1.5 bg-neutral-700/50 text-neutral-400 rounded hover:bg-neutral-700/70 transition-colors disabled:opacity-50"
                                 >
                                   Cancel
                                 </button>
                               </>
                             )}
                           {updateDescription.isSuccess && editingDescription === null && (
-                            <span className="text-xs text-emerald-400">Saved!</span>
+                            <span className="text-sm text-emerald-400">Saved!</span>
                           )}
                         </div>
                         {updateDescription.isError && (
-                          <p className="text-xs text-red-400">Failed to update description</p>
+                          <p className="text-sm text-red-400">Failed to update description</p>
                         )}
                       </div>
                     </SettingCard>
@@ -661,27 +677,27 @@ const AccountSettingsTab: React.FC<AccountSettingsTabProps> = ({ account }) => {
                       description="Your promotion channels"
                     >
                       <SettingRow label="Facebook">
-                        <span className="text-xs text-neutral-300 truncate max-w-[150px]">
+                        <span className="text-sm text-neutral-300 truncate max-w-[150px]">
                           {promotionChannelsData?.facebook || 'Not set'}
                         </span>
                       </SettingRow>
                       <SettingRow label="Twitter/X">
-                        <span className="text-xs text-neutral-300 truncate max-w-[150px]">
+                        <span className="text-sm text-neutral-300 truncate max-w-[150px]">
                           {promotionChannelsData?.twitter || 'Not set'}
                         </span>
                       </SettingRow>
                       <SettingRow label="YouTube">
-                        <span className="text-xs text-neutral-300 truncate max-w-[150px]">
+                        <span className="text-sm text-neutral-300 truncate max-w-[150px]">
                           {promotionChannelsData?.youtube || 'Not set'}
                         </span>
                       </SettingRow>
                       <SettingRow label="Twitch">
-                        <span className="text-xs text-neutral-300 truncate max-w-[150px]">
+                        <span className="text-sm text-neutral-300 truncate max-w-[150px]">
                           {promotionChannelsData?.twitch || 'Not set'}
                         </span>
                       </SettingRow>
                       <SettingRow label="Visibility">
-                        <span className="text-xs text-neutral-300">
+                        <span className="text-sm text-neutral-300">
                           {promotionChannelsData?.promotionChannelsVisibilityPrivacy
                             ?.replace(/([A-Z])/g, ' $1')
                             .trim() || 'Not set'}
@@ -697,30 +713,30 @@ const AccountSettingsTab: React.FC<AccountSettingsTabProps> = ({ account }) => {
                       {starCodeData ? (
                         <>
                           <SettingRow label="Creator">
-                            <span className="text-xs text-[var(--accent-color)] font-medium">
+                            <span className="text-sm text-[var(--accent-color)] font-medium">
                               {starCodeData.name}
                             </span>
                           </SettingRow>
                           <SettingRow label="Code">
-                            <span className="text-xs text-neutral-300 font-mono">
+                            <span className="text-sm text-neutral-300 font-mono">
                               {starCodeData.code}
                             </span>
                           </SettingRow>
                           <button
                             onClick={() => removeStarCodeAffiliate.mutate()}
                             disabled={removeStarCodeAffiliate.isPending}
-                            className="mt-2 text-xs px-3 py-1.5 bg-red-500/20 text-red-400 rounded hover:bg-red-500/30 transition-colors disabled:opacity-50"
+                            className="mt-2 text-sm px-3 py-1.5 bg-red-500/20 text-red-400 rounded hover:bg-red-500/30 transition-colors disabled:opacity-50"
                           >
                             {removeStarCodeAffiliate.isPending ? 'Removing...' : 'Remove Affiliate'}
                           </button>
                         </>
                       ) : (
                         <div className="space-y-2">
-                          <p className="text-xs text-neutral-500">No star code affiliate set</p>
+                          <p className="text-sm text-neutral-500">No star code affiliate set</p>
                           <input
                             type="text"
                             placeholder="Enter star code..."
-                            className="w-full px-3 py-1.5 text-xs bg-neutral-800/50 border border-neutral-700/50 rounded text-neutral-200 placeholder-neutral-500 focus:outline-none focus:border-[var(--accent-color)]/50"
+                            className="w-full px-3 py-1.5 text-sm bg-neutral-800/50 border border-neutral-700/50 rounded text-neutral-200 placeholder-neutral-500 focus:outline-none focus:border-[var(--accent-color)]/50"
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') {
                                 const input = e.currentTarget
@@ -732,7 +748,7 @@ const AccountSettingsTab: React.FC<AccountSettingsTabProps> = ({ account }) => {
                             }}
                           />
                           {addStarCodeAffiliate.isError && (
-                            <p className="text-xs text-red-400">Invalid star code</p>
+                            <p className="text-sm text-red-400">Invalid star code</p>
                           )}
                         </div>
                       )}
@@ -764,9 +780,14 @@ const AccountSettingsTab: React.FC<AccountSettingsTabProps> = ({ account }) => {
                           disabled={!accountSettings.CanHideInventory}
                         />
                       </SettingRow>
-                      <SettingRow label="Online Status">
-                        <SettingValue
+                      <SettingRow label="Online Status (Join Privacy)">
+                        <CustomDropdown
                           value={userSettings.whoCanSeeMyOnlineStatus?.currentValue || 'Friends'}
+                          options={ONLINE_STATUS_PRIVACY_OPTIONS}
+                          onChange={(v) =>
+                            updateOnlineStatusPrivacy.mutate(v as OnlineStatusPrivacy)
+                          }
+                          isLoading={updateOnlineStatusPrivacy.isPending}
                         />
                       </SettingRow>
                       <SettingRow label="Social Networks">
@@ -973,7 +994,7 @@ const AccountSettingsTab: React.FC<AccountSettingsTabProps> = ({ account }) => {
                       </SettingRow>
                       {userSettings.doNotDisturbTimeWindow && (
                         <SettingRow label="Time Window">
-                          <span className="text-xs text-neutral-300">
+                          <span className="text-sm text-neutral-300">
                             {formatTimeWindow(
                               userSettings.doNotDisturbTimeWindow.currentValue.startTimeMinutes,
                               userSettings.doNotDisturbTimeWindow.currentValue.endTimeMinutes
@@ -1050,7 +1071,7 @@ const AccountSettingsTab: React.FC<AccountSettingsTabProps> = ({ account }) => {
                       description="Current session details"
                     >
                       <SettingRow label="IP Address">
-                        <span className="text-xs text-neutral-300 font-mono">
+                        <span className="text-sm text-neutral-300 font-mono">
                           {accountSettings.ClientIpAddress}
                         </span>
                       </SettingRow>

@@ -274,7 +274,7 @@ const UserProfileView: React.FC<ProfileViewProps> = ({
 
   return (
     <div
-      className="relative flex flex-col w-full h-full bg-[var(--color-app-bg)] overflow-hidden font-sans"
+      className="relative flex flex-col w-full h-full bg-[var(--color-surface)] overflow-hidden font-sans"
       onContextMenu={handleContextMenu}
     >
       <div className="flex-1 overflow-y-auto scrollbar-thin p-6">

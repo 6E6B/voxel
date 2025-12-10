@@ -48,6 +48,36 @@ export class RobloxGameService {
     }
   }
 
+  /**
+   * Get game icon thumbnail (square icon - better for Discord RPC)
+   */
+  static async getGameIconThumbnail(universeId: number): Promise<string | null> {
+    try {
+      const thumbResult = await request(
+        z.object({
+          data: z.array(
+            z.object({
+              targetId: z.number().optional(),
+              state: z.string().optional(),
+              imageUrl: z.string().nullable().optional()
+            })
+          )
+        }),
+        {
+          url: `https://thumbnails.roblox.com/v1/games/icons?universeIds=${universeId}&size=512x512&format=Png&isCircular=false`
+        }
+      )
+
+      if (thumbResult.data && thumbResult.data.length > 0 && thumbResult.data[0].imageUrl) {
+        return thumbResult.data[0].imageUrl
+      }
+      return null
+    } catch (e) {
+      console.error('Failed to fetch game icon thumbnail', e)
+      return null
+    }
+  }
+
   static async getGameSorts(sessionId: string = randomUUID()) {
     const result = await request(gameSortsSchema, {
       url: `https://apis.roblox.com/explore-api/v1/get-sorts?sessionId=${sessionId}&gameSortsContext=GamesDefaultSorts`
@@ -165,6 +195,17 @@ export class RobloxGameService {
   private static async hydrateGames(universeIds: number[], initialData: any[]) {
     if (universeIds.length === 0) return []
 
+    const orderedUniverseIds: number[] = []
+    const seenUniverseIds = new Set<number>()
+
+    for (const id of universeIds) {
+      if (typeof id !== 'number' || seenUniverseIds.has(id)) continue
+      seenUniverseIds.add(id)
+      orderedUniverseIds.push(id)
+    }
+
+    if (orderedUniverseIds.length === 0) return []
+
     const chunk = (arr: any[], size: number) =>
       Array.from({ length: Math.ceil(arr.length / size) }, (_, i) =>
         arr.slice(i * size, i * size + size)
@@ -173,7 +214,7 @@ export class RobloxGameService {
     let detailsMap: Record<number, GameDetails> = {}
 
     try {
-      const chunks = chunk(universeIds, 50)
+      const chunks = chunk(orderedUniverseIds, 50)
 
       for (const ids of chunks) {
         try {
@@ -197,7 +238,7 @@ export class RobloxGameService {
     let thumbnailsMap: Record<number, string> = {}
 
     try {
-      const chunks = chunk(universeIds, 50)
+      const chunks = chunk(orderedUniverseIds, 50)
       for (const ids of chunks) {
         try {
           const thumbResult = await request(z.object({ data: z.array(gameThumbnailSchema) }), {
@@ -222,7 +263,7 @@ export class RobloxGameService {
     let votesMap: Record<number, { up: number; down: number }> = {}
     if (initialData.length === 0) {
       try {
-        const chunks = chunk(universeIds, 50)
+        const chunks = chunk(orderedUniverseIds, 50)
         for (const ids of chunks) {
           try {
             const votesResult = await request(z.object({ data: z.array(gameVoteSchema) }), {
@@ -245,27 +286,31 @@ export class RobloxGameService {
     }
 
     if (initialData.length === 0) {
-      initialData = Object.values(detailsMap).map((d) => ({
-        universeId: d.id,
-        name: d.name,
-        playerCount: d.playing,
-        totalVisits: d.visits,
-        description: d.description,
-        totalUpVotes: 0,
-        totalDownVotes: 0
-      }))
+      initialData = orderedUniverseIds
+        .map((id) => {
+          const d = detailsMap[id]
+          if (!d) return null
+
+          return {
+            universeId: d.id,
+            name: d.name,
+            playerCount: d.playing,
+            totalVisits: d.visits,
+            description: d.description,
+            totalUpVotes: 0,
+            totalDownVotes: 0
+          }
+        })
+        .filter(Boolean)
     }
 
     return initialData.map((g: any) => {
       const d = detailsMap[g.universeId]
       const thumb = thumbnailsMap[g.universeId]
 
-      // Derive lightweight metadata when upstream does not provide explicit fields.
-      // Age rating is not exposed here; treat "All" genre as "All Ages", otherwise unknown.
       const ageRating = d?.genre === 'All' || d?.isAllGenre ? 'All Ages' : 'Not rated'
-      // Roblox APIs used here do not expose device info; default to PC.
+
       const supportedDevices = ['PC']
-      // Voice chat support not available from this endpoint.
       const supportsVoiceChat = null
 
       return {
@@ -299,7 +344,7 @@ export class RobloxGameService {
   static async getGamesByPlaceIds(placeIds: string[], cookie?: string) {
     if (!placeIds || placeIds.length === 0) return []
 
-    let universeIds: number[] = []
+    const placeIdToUniverseId: Record<string, number> = {}
 
     const chunk = (arr: any[], size: number) =>
       Array.from({ length: Math.ceil(arr.length / size) }, (_, i) =>
@@ -317,8 +362,8 @@ export class RobloxGameService {
           })
           if (result) {
             result.forEach((item) => {
-              if (item.universeId) {
-                universeIds.push(item.universeId)
+              if (item.placeId && item.universeId) {
+                placeIdToUniverseId[String(item.placeId)] = item.universeId
               }
             })
           }
@@ -329,7 +374,19 @@ export class RobloxGameService {
       return []
     }
 
-    return this.hydrateGames(universeIds, [])
+    const orderedUniverseIds: number[] = []
+    const seenUniverseIds = new Set<number>()
+
+    for (const placeId of placeIds) {
+      const universeId = placeIdToUniverseId[placeId]
+      if (typeof universeId !== 'number' || seenUniverseIds.has(universeId)) continue
+      seenUniverseIds.add(universeId)
+      orderedUniverseIds.push(universeId)
+    }
+
+    if (orderedUniverseIds.length === 0) return []
+
+    return this.hydrateGames(orderedUniverseIds, [])
   }
 
   static async getUniverseIdFromPlaceId(placeId: number, cookie?: string): Promise<number | null> {
@@ -437,7 +494,7 @@ export class RobloxGameService {
       )
       let region = 'Unknown'
       if (geoResult && geoResult.status === 'success') {
-        region = `${geoResult.countryCode},${geoResult.regionName || geoResult.region}`
+        region = `${geoResult.countryCode}, ${geoResult.regionName || geoResult.region}`
       }
       return region
     } catch (e) {

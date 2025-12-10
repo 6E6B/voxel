@@ -82,6 +82,18 @@ export const registerInstallHandlers = (): void => {
     }
   )
 
+  handle('install-font', z.tuple([z.string(), z.string()]), async (_, installPath, fontPath) => {
+    return RobloxInstallService.installFont(installPath, fontPath)
+  })
+
+  handle(
+    'install-cursor',
+    z.tuple([z.string(), z.string()]),
+    async (_, installPath, cursorPath) => {
+      return RobloxInstallService.installCursor(installPath, cursorPath)
+    }
+  )
+
   handle('set-active-install', z.tuple([z.string()]), async (_, installPath) => {
     return RobloxInstallService.setActive(installPath)
   })

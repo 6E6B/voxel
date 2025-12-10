@@ -30,3 +30,6 @@ export { newsApi } from './news'
 
 // Account Settings
 export { accountSettingsApi } from './accountSettings'
+
+// Discord RPC
+export { discordRPCApi } from './discordRPC'
