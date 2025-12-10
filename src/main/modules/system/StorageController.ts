@@ -118,8 +118,6 @@ export const registerStorageHandlers = (): void => {
     storageService.setWindowHeight(height)
   })
 
-  // PIN verification handler - PIN is verified in main process, never sent to renderer
-  // This handler automatically marks PIN as verified on success in main process
   handle(
     'verify-pin',
     z.tuple([
@@ -133,12 +131,10 @@ export const registerStorageHandlers = (): void => {
     }
   )
 
-  // Check if PIN is currently verified (auth state check)
   handle('is-pin-verified', z.tuple([]), async () => {
     return storageService.isPinCurrentlyVerified()
   })
 
-  // Set PIN handler - requires current PIN if one is already set
   handle(
     'set-pin',
     z.tuple([
@@ -162,12 +158,10 @@ export const registerStorageHandlers = (): void => {
     }
   )
 
-  // Get PIN lockout status (for showing lockout on app start)
   handle('get-pin-lockout-status', z.tuple([]), async () => {
     return storageService.getPinLockoutStatus()
   })
 
-  // Custom fonts handlers
   handle('get-custom-fonts', z.tuple([]), async () => {
     return storageService.getCustomFonts()
   })

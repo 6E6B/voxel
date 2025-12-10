@@ -1,5 +1,6 @@
 import * as THREE from 'three'
-import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js'
+import { spawn, move } from 'multithreading'
+import { SerializedObject, SerializedGroup, SerializedMesh } from './AvatarParser'
 
 const textureLoader = new THREE.TextureLoader()
 
@@ -126,9 +127,37 @@ const fetchManifestUrl = async (
   }
 }
 
-/**
- * Loads an OBJ model from a manifest and applies materials
- */
+const reconstructObject = (data: SerializedObject): THREE.Object3D => {
+  if (data.type === 'Mesh') {
+    const meshData = data as SerializedMesh
+    const geometry = new THREE.BufferGeometry()
+
+    geometry.setAttribute('position', new THREE.BufferAttribute(meshData.geometry.position, 3))
+    if (meshData.geometry.normal) {
+      geometry.setAttribute('normal', new THREE.BufferAttribute(meshData.geometry.normal, 3))
+    }
+    if (meshData.geometry.uv) {
+      geometry.setAttribute('uv', new THREE.BufferAttribute(meshData.geometry.uv, 2))
+    }
+    if (meshData.geometry.index) {
+      geometry.setIndex(new THREE.BufferAttribute(meshData.geometry.index, 1))
+    }
+
+    const material = new THREE.MeshStandardMaterial({ name: meshData.materialName })
+    const mesh = new THREE.Mesh(geometry, material)
+    mesh.name = meshData.name
+    mesh.castShadow = true
+    mesh.receiveShadow = true
+    return mesh
+  } else {
+    const groupData = data as SerializedGroup
+    const group = new THREE.Group()
+    group.name = groupData.name
+    groupData.children.forEach((child) => group.add(reconstructObject(child)))
+    return group
+  }
+}
+
 const loadFromManifest = async (
   manifestUrl: string,
   objectName: string
@@ -154,8 +183,73 @@ const loadFromManifest = async (
   if (!objTextResponse.ok) throw new Error(`Failed to load OBJ: ${objTextResponse.status}`)
   const objText = await objTextResponse.text()
 
-  const objLoader = new OBJLoader()
-  const object = objLoader.parse(objText)
+  const handle = spawn(move(objText), async (text) => {
+    const THREE = await import('three')
+    const { OBJLoader } = await import('three/examples/jsm/loaders/OBJLoader.js')
+
+    const parseObjAndCenter = (objText: string) => {
+      const loader = new OBJLoader()
+      const object = loader.parse(objText)
+
+      // Center
+      const box = new THREE.Box3().setFromObject(object)
+      const center = new THREE.Vector3()
+      box.getCenter(center)
+
+      // Translate geometries
+      const translateGeometry = (geometry: THREE.BufferGeometry) => {
+        geometry.translate(-center.x, -center.y, -center.z)
+      }
+
+      const serialize = (obj: THREE.Object3D): any => {
+        // @ts-ignore
+        if (obj.isMesh) {
+          // @ts-ignore
+          const mesh = obj as THREE.Mesh
+          const geo = mesh.geometry
+
+          translateGeometry(geo)
+
+          let index: Uint16Array | Uint32Array | null = null
+          if (geo.index) {
+            index = geo.index.array as Uint16Array | Uint32Array
+          }
+
+          return {
+            type: 'Mesh',
+            name: mesh.name,
+            geometry: {
+              position: geo.attributes.position.array as Float32Array,
+              normal: geo.attributes.normal ? (geo.attributes.normal.array as Float32Array) : null,
+              uv: geo.attributes.uv ? (geo.attributes.uv.array as Float32Array) : null,
+              index
+            },
+            materialName: Array.isArray(mesh.material)
+              ? mesh.material[0].name
+              : (mesh.material as THREE.Material).name
+          }
+        } else {
+          return {
+            type: 'Group',
+            name: obj.name,
+            children: obj.children.map(serialize)
+          }
+        }
+      }
+
+      return serialize(object)
+    }
+
+    return parseObjAndCenter(text)
+  })
+
+  const result = await handle.join()
+
+  if (!result.ok) {
+    throw new Error(String((result as any).error))
+  }
+
+  const object = reconstructObject(result.value)
   object.name = objectName
 
   object.traverse((child: any) => {
@@ -174,19 +268,7 @@ const loadFromManifest = async (
     }
   })
 
-  // Calculate the bounding box center of the entire object
-  const box = new THREE.Box3().setFromObject(object)
-  const center = new THREE.Vector3()
-  box.getCenter(center)
-
-  // Center each mesh's geometry so rotation happens around the true center
-  object.traverse((child: any) => {
-    if (child.isMesh && child.geometry) {
-      child.geometry.translate(-center.x, -center.y, -center.z)
-    }
-  })
-
-  // Reset object position since we moved the geometry
+  // Geometry is already centered by worker logic
   object.position.set(0, 0, 0)
   object.rotation.y = Math.PI
 

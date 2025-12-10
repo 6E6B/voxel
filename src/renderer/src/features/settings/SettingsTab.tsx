@@ -16,8 +16,7 @@ import {
   ChevronDown,
   Eye,
   EyeOff,
-  RotateCcw,
-  FileUp
+  RotateCcw
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import Color from 'color'
@@ -151,9 +150,6 @@ const SettingsTab: React.FC<SettingsTabProps> = ({ accounts, settings, onUpdateS
   const [newFontFamily, setNewFontFamily] = useState('')
   const [fontError, setFontError] = useState<string | null>(null)
   const [isAddingFont, setIsAddingFont] = useState(false)
-  const [pendingFontFile, setPendingFontFile] = useState<{ family: string; url: string } | null>(
-    null
-  )
   const queryClient = useQueryClient()
   const setAppUnlocked = useSetAppUnlocked()
 
@@ -209,7 +205,6 @@ const SettingsTab: React.FC<SettingsTabProps> = ({ accounts, settings, onUpdateS
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['customFonts'] })
       setNewFontFamily('')
-      setPendingFontFile(null)
       setFontError(null)
     },
     onError: (error: Error) => {
@@ -245,7 +240,7 @@ const SettingsTab: React.FC<SettingsTabProps> = ({ accounts, settings, onUpdateS
       return
     }
 
-    if (!pendingFontFile && !isValidGoogleFontFamily(trimmedFamily)) {
+    if (!isValidGoogleFontFamily(trimmedFamily)) {
       setFontError('Invalid font family name. Use only letters, numbers, and spaces.')
       return
     }
@@ -260,26 +255,12 @@ const SettingsTab: React.FC<SettingsTabProps> = ({ accounts, settings, onUpdateS
     setFontError(null)
 
     try {
-      const url = pendingFontFile ? pendingFontFile.url : getGoogleFontUrl(trimmedFamily)
+      const url = getGoogleFontUrl(trimmedFamily)
       await addFontMutation.mutateAsync({ family: trimmedFamily, url })
     } catch {
       setFontError('Failed to load font. Make sure the font name is correct.')
     } finally {
       setIsAddingFont(false)
-    }
-  }
-
-  const handleImportFont = async () => {
-    try {
-      const result = await window.api.selectFontFile()
-      if (result) {
-        setPendingFontFile(result)
-        setNewFontFamily(result.family)
-        setFontError(null)
-      }
-    } catch (error) {
-      console.error('Failed to import font file:', error)
-      setFontError('Failed to import font file')
     }
   }
 
@@ -810,14 +791,6 @@ const SettingsTab: React.FC<SettingsTabProps> = ({ accounts, settings, onUpdateS
                       placeholder="Enter Google Font name (e.g., Roboto)"
                       className="flex-1 bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2 text-sm text-white placeholder:text-neutral-600 focus:border-[var(--accent-color)] focus:outline-none"
                     />
-                    <button
-                      onClick={handleImportFont}
-                      disabled={isAddingFont}
-                      className="px-3 py-2 bg-neutral-800 text-neutral-300 rounded-lg text-sm font-medium hover:bg-neutral-700 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      title="Upload font file"
-                    >
-                      <FileUp size={16} />
-                    </button>
                     <button
                       onClick={handleAddFont}
                       disabled={isAddingFont || !newFontFamily.trim()}

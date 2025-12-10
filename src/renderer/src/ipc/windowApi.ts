@@ -130,7 +130,6 @@ export interface SettingsApi {
   removeCustomFont: (family: string) => Promise<void>
   getActiveFont: () => Promise<string | null>
   setActiveFont: (family: string | null) => Promise<void>
-  selectFontFile: () => Promise<string | null>
   // Secure PIN verification - auth state managed in main process
   verifyPin: (pin: string) => Promise<{
     success: boolean

@@ -238,73 +238,187 @@ export class RobloxInstallService {
       const total = pkgs.length
       const concurrency = 8
 
+      completed = 0
+      const queue = [...pkgs]
+
+      const { spawn, move } = await import('multithreading')
+
       const processPackage = async (pkg: string) => {
         const url = base + pkg
         const zipPath = path.join(installPath, pkg)
         const rootDir = roots[pkg]
 
-        await this.downloadFile(url, zipPath)
-
-        if (rootDir !== undefined) {
-          const targetExtractPath = rootDir === '' ? installPath : path.join(installPath, rootDir)
-          if (!fs.existsSync(targetExtractPath)) {
-            fs.mkdirSync(targetExtractPath, { recursive: true })
-          }
-          await this.extractZip(zipPath, targetExtractPath)
-
-          let attempts = 0
-          while (attempts < 3) {
-            try {
-              await fs.promises.unlink(zipPath)
-              break
-            } catch (e: any) {
-              attempts++
-              if (attempts >= 3) {
-                console.warn(`Failed to delete ${zipPath} after 3 attempts:`, e)
-              } else {
-                await new Promise((r) => setTimeout(r, 500))
-              }
-            }
-          }
+        // Pass all necessary data to the worker
+        const workerData = {
+          url,
+          zipPath,
+          installPath,
+          rootDir,
+          pkg
         }
+
+        return spawn(move(workerData), async (data) => {
+          const fs = await import('fs')
+          const path = await import('path')
+          const { pipeline } = await import('stream')
+          const { promisify } = await import('util')
+          const https = await import('https')
+          const yauzl = await import('yauzl')
+
+          const streamPipeline = promisify(pipeline)
+
+          const downloadFile = (url: string, dest: string): Promise<void> => {
+            return new Promise((resolve, reject) => {
+              const dir = path.dirname(dest)
+              if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
+
+              const file = fs.createWriteStream(dest)
+
+              const request = https.get(url, (response) => {
+                if (response.statusCode !== 200) {
+                  reject(new Error(`Failed to download ${url}: ${response.statusCode}`))
+                  return
+                }
+                response.pipe(file)
+                file.on('finish', () => {
+                  file.close(() => resolve())
+                })
+              })
+
+              request.on('error', (err) => {
+                fs.unlink(dest, () => {})
+                reject(err)
+              })
+            })
+          }
+
+          const extractZip = (zipPath: string, extractPath: string): Promise<void> => {
+            const normalizedRoot = path.resolve(extractPath)
+            const rootWithSep = normalizedRoot.endsWith(path.sep)
+              ? normalizedRoot
+              : normalizedRoot + path.sep
+
+            return new Promise((resolve, reject) => {
+              let finished = false
+              const finish = (err?: Error) => {
+                if (finished) return
+                finished = true
+                if (err) reject(err)
+                else resolve()
+              }
+
+              yauzl.open(
+                zipPath,
+                { lazyEntries: true, validateEntrySizes: false, decodeStrings: false },
+                (err, zipFile) => {
+                  if (err || !zipFile) {
+                    finish(err ?? new Error(`Failed to open zip ${zipPath}`))
+                    return
+                  }
+
+                  const openReadStream = (entry: any) =>
+                    new Promise<NodeJS.ReadableStream>((resolveStream, rejectStream) => {
+                      zipFile.openReadStream(entry, (streamErr, readStream) => {
+                        if (streamErr || !readStream) {
+                          rejectStream(streamErr ?? new Error(`Failed to open stream`))
+                        } else {
+                          resolveStream(readStream)
+                        }
+                      })
+                    })
+
+                  const processEntry = async (entry: any) => {
+                    let fileName = entry.fileName
+                    if (Buffer.isBuffer(fileName)) {
+                      const isUtf8 = (entry.generalPurposeBitFlag & 0x800) !== 0
+                      fileName = fileName.toString(isUtf8 ? 'utf8' : 'latin1')
+                    }
+                    const fileNameStr = fileName as string
+                    const sanitizedName = fileNameStr.replace(/^([/\\])+/, '')
+                    if (!sanitizedName) {
+                      zipFile.readEntry()
+                      return
+                    }
+
+                    const normalizedEntryPath = path.resolve(normalizedRoot, sanitizedName)
+                    if (
+                      normalizedEntryPath !== normalizedRoot &&
+                      !normalizedEntryPath.startsWith(rootWithSep)
+                    ) {
+                      // escape
+                    } else {
+                      if (fileNameStr.endsWith('/') || fileNameStr.endsWith('\\')) {
+                        await fs.promises.mkdir(normalizedEntryPath, { recursive: true })
+                      } else {
+                        await fs.promises.mkdir(path.dirname(normalizedEntryPath), {
+                          recursive: true
+                        })
+                        const readStream = await openReadStream(entry)
+                        const writeStream = fs.createWriteStream(normalizedEntryPath)
+                        await streamPipeline(readStream, writeStream)
+                      }
+                    }
+                    zipFile.readEntry()
+                  }
+
+                  zipFile.on('entry', (entry) => {
+                    processEntry(entry).catch(finish)
+                  })
+                  zipFile.on('end', () => finish())
+                  zipFile.on('error', (err) => finish(err))
+                  zipFile.readEntry()
+                }
+              )
+            })
+          }
+
+          await downloadFile(data.url, data.zipPath)
+
+          if (data.rootDir !== undefined) {
+            const targetExtractPath =
+              data.rootDir === '' ? data.installPath : path.join(data.installPath, data.rootDir)
+            if (!fs.existsSync(targetExtractPath)) {
+              fs.mkdirSync(targetExtractPath, { recursive: true })
+            }
+            await extractZip(data.zipPath, targetExtractPath)
+
+            // Cleanup
+            try {
+              await fs.promises.unlink(data.zipPath)
+            } catch {}
+          }
+
+          return { success: true, pkg: data.pkg }
+        })
       }
 
-      completed = 0
-      const queue = [...pkgs]
-      const activeWorkers: Promise<void>[] = []
+      const activeWorkers: Promise<any>[] = []
 
-      if (queue.length === 1) {
-        await processPackage(queue[0])
-        onProgress('Complete', 100)
-        return true
+      // Initial fill
+      while (queue.length > 0 && activeWorkers.length < concurrency) {
+        const pkg = queue.shift()!
+        const workerPromise = processPackage(pkg).then((handle) => handle.join())
+        // We need to track the promise itself to remove it from the pool
+        const trackedPromise = workerPromise.then(() => {
+          activeWorkers.splice(activeWorkers.indexOf(trackedPromise), 1)
+          completed++
+          onProgress('Installing...', Math.floor((completed / total) * 100), pkg)
+        })
+        activeWorkers.push(trackedPromise)
       }
 
-      while (queue.length > 0 || activeWorkers.length > 0) {
+      // Replenish
+      while (activeWorkers.length > 0) {
+        await Promise.race(activeWorkers)
         while (queue.length > 0 && activeWorkers.length < concurrency) {
           const pkg = queue.shift()!
-          const worker = (async () => {
-            await processPackage(pkg)
+          const workerPromise = processPackage(pkg).then((handle) => handle.join())
+          const trackedPromise = workerPromise.then(() => {
+            activeWorkers.splice(activeWorkers.indexOf(trackedPromise), 1)
             completed++
             onProgress('Installing...', Math.floor((completed / total) * 100), pkg)
-          })()
-
-          activeWorkers.push(worker)
-
-          worker
-            .catch((err) => {
-              console.error(`Failed to process package ${pkg}`, err)
-              throw err
-            })
-            .finally(() => {
-              const idx = activeWorkers.indexOf(worker)
-              if (idx > -1) {
-                activeWorkers.splice(idx, 1)
-              }
-            })
-        }
-
-        if (activeWorkers.length > 0) {
-          await Promise.race(activeWorkers)
+          })
+          activeWorkers.push(trackedPromise)
         }
       }
 

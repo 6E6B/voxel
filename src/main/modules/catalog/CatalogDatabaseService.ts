@@ -206,14 +206,9 @@ class CatalogDatabaseService {
     return this.db!
   }
 
-  /**
-   * Build and export the FlexSearch catalog index in a worker thread.
-   * This keeps the heavy better-sqlite3 read off the Electron main thread.
-   */
   async getExportedIndex(): Promise<CatalogIndexExport> {
     if (this.indexPromise) return this.indexPromise
 
-    // Ensure DB exists before handing work to the worker
     if (!fs.existsSync(this.dbPath)) {
       const result = await this.downloadDatabase()
       if (!result.success) {
@@ -221,126 +216,94 @@ class CatalogDatabaseService {
       }
     }
 
-    const workerCode = `
-      const { parentPort } = require('node:worker_threads');
-      const Database = require('better-sqlite3');
-      const FlexSearch = require('flexsearch');
+    const dbPath = this.dbPath
 
-      const INDEX_VERSION = 1;
+    this.indexPromise = (async () => {
+      const { spawn, move } = await import('multithreading')
 
-      function computeHash(rows) {
-        if (!rows || rows.length === 0) return 'empty';
-        const first = rows[0]?.AssetId ?? 0;
-        const last = rows[rows.length - 1]?.AssetId ?? 0;
-        return \`v1_\${rows.length}_\${first}_\${last}\`;
-      }
+      const handle = spawn(move(dbPath), async (dbPath) => {
+        const Database = await import('better-sqlite3')
+        const FlexSearch = await import('flexsearch')
 
-      function exportIndex(index, hash, catalogItems) {
-        const exportedData = {};
-        index.export((key, data) => {
-          if (data !== undefined) {
-            exportedData[key] = data;
-          }
-        });
+        const INDEX_VERSION = 1
 
-        return {
-          version: INDEX_VERSION,
-          catalogHash: hash,
-          catalogIndex: exportedData,
-          catalogItems: Array.from(catalogItems.entries())
-        };
-      }
-
-      parentPort.on('message', (msg) => {
-        if (!msg || msg.type !== 'BUILD_INDEX') return;
-        try {
-          const db = new Database(msg.dbPath, { readonly: true });
-          const rows = db
-            .prepare(\`
-              SELECT 
-                AssetId,
-                Name,
-                COALESCE(Description, '') as Description,
-                COALESCE(AssetTypeId, 0) as AssetTypeId,
-                COALESCE(IsLimited, 0) as IsLimited,
-                COALESCE(IsLimitedUnique, 0) as IsLimitedUnique,
-                COALESCE(PriceInRobux, 0) as PriceInRobux,
-                COALESCE(IsForSale, 0) as IsForSale,
-                COALESCE(Sales, 0) as Sales
-              FROM items
-              ORDER BY AssetId
-            \`)
-            .all();
-
-          const IndexCtor = FlexSearch.Index || FlexSearch;
-          const index = new IndexCtor({ tokenize: 'forward', cache: 100 });
-          const catalogItems = new Map();
-
-          for (const row of rows) {
-            const item = {
-              AssetId: row.AssetId,
-              Name: row.Name,
-              Description: row.Description ?? '',
-              AssetTypeId: row.AssetTypeId ?? 0,
-              IsLimited: !!row.IsLimited,
-              IsLimitedUnique: !!row.IsLimitedUnique,
-              PriceInRobux: row.PriceInRobux ?? 0,
-              IsForSale: !!row.IsForSale,
-              Sales: row.Sales ?? 0
-            };
-
-            catalogItems.set(item.AssetId, item);
-            index.add(item.AssetId, item.Name);
-          }
-
-          const hash = computeHash(rows);
-          const exported = exportIndex(index, hash, catalogItems);
-
-          parentPort.postMessage({ type: 'INDEX_READY', data: exported });
-        } catch (err) {
-          parentPort.postMessage({
-            type: 'ERROR',
-            error: err instanceof Error ? err.message : String(err)
-          });
+        function computeHash(rows: any[]) {
+          if (!rows || rows.length === 0) return 'empty'
+          const first = rows[0]?.AssetId ?? 0
+          const last = rows[rows.length - 1]?.AssetId ?? 0
+          return `v1_${rows.length}_${first}_${last}`
         }
-      });
-    `
 
-    this.indexPromise = new Promise<CatalogIndexExport>((resolve, reject) => {
-      const worker = new Worker(workerCode, { eval: true })
+        function exportIndex(index: any, hash: string, catalogItems: Map<number, any>) {
+          const exportedData: Record<string, any> = {}
+          index.export((key: string, data: any) => {
+            if (data !== undefined) {
+              exportedData[key] = data
+            }
+          })
 
-      const cleanup = () => {
-        worker.removeAllListeners()
-        worker.terminate()
-      }
-
-      worker.once('message', (message: any) => {
-        if (message?.type === 'INDEX_READY') {
-          try {
-            const parsed = catalogIndexExportSchema.parse(message.data)
-            cleanup()
-            resolve(parsed)
-          } catch (parseError) {
-            cleanup()
-            reject(parseError)
+          return {
+            version: INDEX_VERSION,
+            catalogHash: hash,
+            catalogIndex: exportedData,
+            catalogItems: Array.from(catalogItems.entries())
           }
-        } else if (message?.type === 'ERROR') {
-          cleanup()
-          reject(new Error(message.error || 'Catalog index worker error'))
         }
+
+        const db = new Database.default(dbPath, { readonly: true })
+        const rows = db
+          .prepare(
+            `
+            SELECT 
+              AssetId,
+              Name,
+              COALESCE(Description, '') as Description,
+              COALESCE(AssetTypeId, 0) as AssetTypeId,
+              COALESCE(IsLimited, 0) as IsLimited,
+              COALESCE(IsLimitedUnique, 0) as IsLimitedUnique,
+              COALESCE(PriceInRobux, 0) as PriceInRobux,
+              COALESCE(IsForSale, 0) as IsForSale,
+              COALESCE(Sales, 0) as Sales
+            FROM items
+            ORDER BY AssetId
+          `
+          )
+          .all()
+
+        const IndexCtor = FlexSearch.Index || FlexSearch.default.Index || FlexSearch.default
+        const index = new IndexCtor({ tokenize: 'forward', cache: 100 })
+        const catalogItems = new Map()
+
+        for (const r of rows) {
+          const row = r as any
+          const item = {
+            AssetId: row.AssetId,
+            Name: row.Name,
+            Description: row.Description ?? '',
+            AssetTypeId: row.AssetTypeId ?? 0,
+            IsLimited: !!row.IsLimited,
+            IsLimitedUnique: !!row.IsLimitedUnique,
+            PriceInRobux: row.PriceInRobux ?? 0,
+            IsForSale: !!row.IsForSale,
+            Sales: row.Sales ?? 0
+          }
+
+          catalogItems.set(item.AssetId, item)
+          index.add(item.AssetId, item.Name)
+        }
+
+        const hash = computeHash(rows)
+        return exportIndex(index, hash, catalogItems)
       })
 
-      worker.once('error', (err) => {
-        cleanup()
-        reject(err)
-      })
+      const result = await handle.join()
+      if (!result.ok) {
+        throw new Error(String((result as any).error))
+      }
 
-      worker.postMessage({ type: 'BUILD_INDEX', dbPath: this.dbPath })
-    }).catch((err) => {
-      // Allow retry on next call after a failure
-      this.indexPromise = null
-      throw err
-    }) as Promise<CatalogIndexExport>
+      const { catalogIndexExportSchema } = await import('@shared/ipc-schemas/avatar')
+      return catalogIndexExportSchema.parse(result.value)
+    })()
 
     return this.indexPromise
   }

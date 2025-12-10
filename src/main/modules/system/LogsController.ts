@@ -4,9 +4,7 @@ import fs from 'fs/promises'
 import { existsSync } from 'fs'
 import { spawn } from 'child_process'
 import { z } from 'zod'
-
-const LOGS_DIR = path.join(process.env.LOCALAPPDATA || '', 'Roblox', 'logs')
-
+// LogMetadata defined locally to avoid import issues
 interface LogMetadata {
   filename: string
   path: string
@@ -21,54 +19,7 @@ interface LogMetadata {
   serverIp?: string
 }
 
-const parseLogContent = (content: string): Partial<LogMetadata> => {
-  const metadata: Partial<LogMetadata> = {}
-
-  const timestampMatch = content.match(/^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z)/m)
-  if (timestampMatch) {
-    metadata.timestamp = timestampMatch[1]
-  }
-
-  const channelMatch = content.match(/\[FLog::ClientRunInfo\] The channel is (\w+)/)
-  if (channelMatch) {
-    metadata.channel = channelMatch[1]
-  }
-
-  const versionMatchA = content.match(/"version":"([\d\.]+)"/)
-  const versionMatchB = content.match(/Server Prefix: ([\d\.]+)_/)
-  const versionMatchC = content.match(/userAgent: Roblox\/[^/]+\/([\d\.]+)/)
-
-  if (versionMatchA) metadata.version = versionMatchA[1]
-  else if (versionMatchB) metadata.version = versionMatchB[1]
-  else if (versionMatchC) metadata.version = versionMatchC[1]
-
-  const jobIdMatchA = content.match(/! Joining game '([0-9a-f-]{36})'/)
-  const jobIdMatchB = content.match(/game_\d+_\d+_([0-9a-f-]{36})_/)
-
-  if (jobIdMatchA) metadata.jobId = jobIdMatchA[1]
-  else if (jobIdMatchB) metadata.jobId = jobIdMatchB[1]
-
-  const universeIdMatch = content.match(/universeid:(\d+)/)
-  if (universeIdMatch) {
-    metadata.universeId = universeIdMatch[1]
-  }
-
-  const ipMatchA = content.match(/UDMUX Address = ([\d\.]+)/)
-  const ipMatchB = content.match(/Connection accepted from ([\d\.]+)/)
-  const ipMatchC = content.match(/Connecting to UDMUX server ([\d\.]+)/)
-
-  if (ipMatchA) metadata.serverIp = ipMatchA[1]
-  else if (ipMatchB) metadata.serverIp = ipMatchB[1]
-  else if (ipMatchC) metadata.serverIp = ipMatchC[1]
-
-  const placeIdMatchA = content.match(/placeid:(\d+)/)
-  const placeIdMatchB = content.match(/place (\d+) at/)
-
-  if (placeIdMatchA) metadata.placeId = placeIdMatchA[1]
-  else if (placeIdMatchB) metadata.placeId = placeIdMatchB[1]
-
-  return metadata
-}
+const LOGS_DIR = path.join(process.env.LOCALAPPDATA || '', 'Roblox', 'logs')
 
 const handle = <T extends any[]>(
   channel: string,
@@ -91,6 +42,8 @@ const logFilenameSchema = z.string().regex(/^[a-zA-Z0-9._-]+\.log$/, 'Invalid lo
 export const registerLogsHandlers = () => {
   handle('get-logs', z.tuple([]), async () => {
     try {
+      const { spawn, move } = await import('multithreading')
+
       if (!process.env.LOCALAPPDATA) {
         console.error('LOCALAPPDATA environment variable not set')
         return []
@@ -104,33 +57,98 @@ export const registerLogsHandlers = () => {
       const files = await fs.readdir(LOGS_DIR)
       const logFiles = files.filter((f) => f.endsWith('.log'))
 
-      const logs: LogMetadata[] = await Promise.all(
+      const logHandles = await Promise.all(
         logFiles.map(async (file) => {
           const filePath = path.join(LOGS_DIR, file)
-          try {
-            const stats = await fs.stat(filePath)
+          const stats = await fs.stat(filePath).catch(() => null)
 
-            const content = await fs.readFile(filePath, 'utf8')
-            const parsed = parseLogContent(content)
+          if (!stats) return null
 
-            return {
-              filename: file,
-              path: filePath,
-              lastModified: stats.mtimeMs,
-              size: stats.size,
-              ...parsed
-            }
-          } catch (err) {
-            console.error(`Error reading log file ${file}:`, err)
-            return {
-              filename: file,
-              path: filePath,
-              lastModified: 0,
-              size: 0
-            }
+          const fileInfo = {
+            filename: file,
+            path: filePath,
+            lastModified: stats.mtimeMs,
+            size: stats.size
           }
+
+          return spawn(move(fileInfo), async (info) => {
+            const fs = await import('fs/promises')
+
+            // Inline parsing logic to avoid relative import issues in bundled worker
+            const parseLogContent = (content: string) => {
+              const metadata: any = {}
+
+              const timestampMatch = content.match(
+                /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z)/m
+              )
+              if (timestampMatch) metadata.timestamp = timestampMatch[1]
+
+              const channelMatch = content.match(/\[FLog::ClientRunInfo\] The channel is (\w+)/)
+              if (channelMatch) metadata.channel = channelMatch[1]
+
+              const versionMatchA = content.match(/"version":"([\d\.]+)"/)
+              const versionMatchB = content.match(/Server Prefix: ([\d\.]+)_/)
+              const versionMatchC = content.match(/userAgent: Roblox\/[^/]+\/([\d\.]+)/)
+
+              if (versionMatchA) metadata.version = versionMatchA[1]
+              else if (versionMatchB) metadata.version = versionMatchB[1]
+              else if (versionMatchC) metadata.version = versionMatchC[1]
+
+              const jobIdMatchA = content.match(/! Joining game '([0-9a-f-]{36})'/)
+              const jobIdMatchB = content.match(/game_\d+_\d+_([0-9a-f-]{36})_/)
+
+              if (jobIdMatchA) metadata.jobId = jobIdMatchA[1]
+              else if (jobIdMatchB) metadata.jobId = jobIdMatchB[1]
+
+              const universeIdMatch = content.match(/universeid:(\d+)/)
+              if (universeIdMatch) metadata.universeId = universeIdMatch[1]
+
+              const ipMatchA = content.match(/UDMUX Address = ([\d\.]+)/)
+              const ipMatchB = content.match(/Connection accepted from ([\d\.]+)/)
+              const ipMatchC = content.match(/Connecting to UDMUX server ([\d\.]+)/)
+
+              if (ipMatchA) metadata.serverIp = ipMatchA[1]
+              else if (ipMatchB) metadata.serverIp = ipMatchB[1]
+              else if (ipMatchC) metadata.serverIp = ipMatchC[1]
+
+              const placeIdMatchA = content.match(/placeid:(\d+)/)
+              const placeIdMatchB = content.match(/place (\d+) at/)
+
+              if (placeIdMatchA) metadata.placeId = placeIdMatchA[1]
+              else if (placeIdMatchB) metadata.placeId = placeIdMatchB[1]
+
+              return metadata
+            }
+
+            try {
+              const content = await fs.readFile(info.path, 'utf8')
+              const parsed = parseLogContent(content)
+
+              return {
+                ...info,
+                ...parsed
+              }
+            } catch (err) {
+              return {
+                ...info,
+                error: String(err)
+              }
+            }
+          })
         })
       )
+
+      const results = await Promise.all(logHandles.filter((h) => h !== null).map((h) => h.join()))
+
+      const logs: LogMetadata[] = results
+        .map((res) => {
+          if (res.ok) {
+            return res.value as LogMetadata
+          }
+          console.error('Worker task failed:', (res as any).error)
+          return null
+        })
+        .filter((l): l is LogMetadata => l !== null)
 
       return logs.sort((a, b) => b.lastModified - a.lastModified)
     } catch (error) {

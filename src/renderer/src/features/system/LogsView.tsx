@@ -3,7 +3,6 @@ import { motion } from 'framer-motion'
 import { createPortal } from 'react-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import {
-  Search,
   Calendar,
   FileText,
   Clock3,
