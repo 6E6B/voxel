@@ -1,8 +1,8 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Package, Search, Loader2, Grid2X2, Grid3X3, X, User } from 'lucide-react'
+import { Package, Loader2, Grid2X2, Grid3X3, User } from 'lucide-react'
 import { VirtuosoGrid } from 'react-virtuoso'
-import { Input } from '@renderer/components/UI/inputs/Input'
+import { SearchInput } from '@renderer/components/UI/inputs/SearchInput'
 import CustomDropdown, { DropdownOption } from '@renderer/components/UI/menus/CustomDropdown'
 import { SkeletonSquareCard } from '@renderer/components/UI/display/SkeletonCard'
 import { EmptyState } from '@renderer/components/UI/feedback/EmptyState'
@@ -360,26 +360,12 @@ const PlayerInventorySheet = ({
               />
 
               {/* Search */}
-              <div className="relative flex-1 min-w-[200px]">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Search size={16} className="text-neutral-500" />
-                </div>
-                <Input
-                  type="text"
-                  placeholder="Search inventory..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 bg-neutral-900 border-neutral-800"
-                />
-                {searchQuery && (
-                  <button
-                    onClick={() => setSearchQuery('')}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                  >
-                    <X size={14} className="text-neutral-500 hover:text-white" />
-                  </button>
-                )}
-              </div>
+              <SearchInput
+                value={searchQuery}
+                onChange={setSearchQuery}
+                placeholder="Search inventory..."
+                containerClassName="flex-1 min-w-[200px]"
+              />
 
               {/* View Mode Toggle */}
               <div className="flex bg-neutral-900 rounded-lg p-1 border border-neutral-800">

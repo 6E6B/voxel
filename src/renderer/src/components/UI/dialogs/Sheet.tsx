@@ -42,6 +42,7 @@ const Sheet: React.FC<SheetProps> = ({ isOpen, onClose, children, className }) =
   const constraintsRef = React.useRef<HTMLDivElement>(null)
   const sheetRef = React.useRef<HTMLDivElement>(null)
   const prevIsOpenRef = React.useRef(false)
+  const fallbackTimerRef = React.useRef<NodeJS.Timeout | null>(null)
 
   // Handle open/close transitions and sheet stack management
   React.useEffect(() => {
@@ -49,12 +50,10 @@ const Sheet: React.FC<SheetProps> = ({ isOpen, onClose, children, className }) =
     prevIsOpenRef.current = isOpen
 
     if (isOpen && !wasOpen) {
-      // Opening: immediately show container, defer content
       openSheetsCount++
       setIsVisible(true)
       document.body.style.overflow = 'hidden'
       document.body.setAttribute('data-sheet-open', 'true')
-
       // Defer heavy content rendering to allow animation to start smoothly
       const contentTimer = setTimeout(() => {
         setShouldRenderContent(true)
@@ -78,6 +77,23 @@ const Sheet: React.FC<SheetProps> = ({ isOpen, onClose, children, className }) =
     }
     return undefined
   }, [isOpen])
+
+  // if the deferred timer fails, force-enable content shortly after open.
+  React.useEffect(() => {
+    if (!isOpen || shouldRenderContent) return
+    if (fallbackTimerRef.current) clearTimeout(fallbackTimerRef.current)
+
+    fallbackTimerRef.current = setTimeout(() => {
+      setShouldRenderContent(true)
+    }, 200)
+
+    return () => {
+      if (fallbackTimerRef.current) {
+        clearTimeout(fallbackTimerRef.current)
+        fallbackTimerRef.current = null
+      }
+    }
+  }, [isOpen, shouldRenderContent])
 
   // Cleanup on unmount
   React.useEffect(() => {

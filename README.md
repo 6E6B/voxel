@@ -71,8 +71,6 @@ Download the latest binary from [Releases](https://github.com/6E6B/voxel/release
 | Platform    | Filename                |
 | :---------- | :---------------------- |
 | **Windows** | `voxel-x.x.x-setup.exe` |
-| **macOS**   | `voxel-x.x.x.dmg`       |
-| **Linux**   | `voxel-x.x.x.AppImage`  |
 
 ## Build from Source
 
@@ -90,5 +88,5 @@ npm install
 npm run dev
 
 # Build
-npm run build:win   # or build:mac, build:linux
+npm run build:win
 ```
