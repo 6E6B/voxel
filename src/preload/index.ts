@@ -71,10 +71,8 @@ if (process.contextIsolated) {
     console.error(error)
   }
 } else {
-  // @ts-ignore (define in dts)
-  window.electron = electronAPI
-  // @ts-ignore (define in dts)
-  window.api = api
-  // @ts-ignore (define in dts)
-  window.platform = platform
+  // In non-context-isolated mode, assign directly to window
+  ;(window as any).electron = electronAPI
+  ;(window as any).api = api
+  ;(window as any).platform = platform
 }

@@ -105,9 +105,45 @@ export const EconomyChart: React.FC<EconomyChartProps> = ({
   // Calculate statistics
   const statistics = useMemo(() => calculateStatistics(filteredData), [filteredData])
 
+  // Zoom controls
+  const handleZoomIn = useCallback(() => {
+    if (chartRef.current) {
+      const timeScale = chartRef.current.timeScale()
+      const currentRange = timeScale.getVisibleRange()
+      if (currentRange) {
+        const center = ((currentRange.from as number) + (currentRange.to as number)) / 2
+        const newHalfRange = ((currentRange.to as number) - (currentRange.from as number)) / 4
+        timeScale.setVisibleRange({
+          from: (center - newHalfRange) as Time,
+          to: (center + newHalfRange) as Time
+        })
+      }
+    }
+  }, [])
+
+  const handleZoomOut = useCallback(() => {
+    if (chartRef.current) {
+      const timeScale = chartRef.current.timeScale()
+      const currentRange = timeScale.getVisibleRange()
+      if (currentRange) {
+        const center = ((currentRange.from as number) + (currentRange.to as number)) / 2
+        const newHalfRange = (currentRange.to as number) - (currentRange.from as number)
+        timeScale.setVisibleRange({
+          from: (center - newHalfRange) as Time,
+          to: (center + newHalfRange) as Time
+        })
+      }
+    }
+  }, [])
+
+  const handleResetView = useCallback(() => {
+    chartRef.current?.timeScale().fitContent()
+  }, [])
+
   // Initialize chart
   useEffect(() => {
-    if (!chartContainerRef.current || filteredData.length < 2) return
+    const container = chartContainerRef.current
+    if (!container || filteredData.length < 2) return
 
     if (chartRef.current) {
       chartRef.current.remove()
@@ -117,7 +153,7 @@ export const EconomyChart: React.FC<EconomyChartProps> = ({
       volumeSeriesRef.current = null
     }
 
-    const chart = createChart(chartContainerRef.current, {
+    const chart = createChart(container, {
       layout: {
         background: { type: ColorType.Solid, color: 'transparent' },
         textColor: '#a3a3a3',
@@ -259,16 +295,16 @@ export const EconomyChart: React.FC<EconomyChartProps> = ({
 
     // Resize handling
     const handleResize = () => {
-      if (chartContainerRef.current && chartRef.current) {
+      if (chartRef.current) {
         chartRef.current.applyOptions({
-          width: chartContainerRef.current.clientWidth,
-          height: chartContainerRef.current.clientHeight
+          width: container.clientWidth,
+          height: container.clientHeight
         })
       }
     }
 
     const resizeObserver = new ResizeObserver(handleResize)
-    resizeObserver.observe(chartContainerRef.current)
+    resizeObserver.observe(container)
 
     // Keyboard shortcuts
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -307,12 +343,12 @@ export const EconomyChart: React.FC<EconomyChartProps> = ({
       }
     }
 
-    chartContainerRef.current.addEventListener('keydown', handleKeyDown)
-    chartContainerRef.current.tabIndex = 0
+    container.addEventListener('keydown', handleKeyDown)
+    container.tabIndex = 0
 
     return () => {
       resizeObserver.disconnect()
-      chartContainerRef.current?.removeEventListener('keydown', handleKeyDown)
+      container.removeEventListener('keydown', handleKeyDown)
       if (chartRef.current) {
         chartRef.current.remove()
         chartRef.current = null
@@ -321,42 +357,7 @@ export const EconomyChart: React.FC<EconomyChartProps> = ({
         volumeSeriesRef.current = null
       }
     }
-  }, [filteredData, showMA, maData, showVolume, color, height])
-
-  // Zoom controls
-  const handleZoomIn = useCallback(() => {
-    if (chartRef.current) {
-      const timeScale = chartRef.current.timeScale()
-      const currentRange = timeScale.getVisibleRange()
-      if (currentRange) {
-        const center = ((currentRange.from as number) + (currentRange.to as number)) / 2
-        const newHalfRange = ((currentRange.to as number) - (currentRange.from as number)) / 4
-        timeScale.setVisibleRange({
-          from: (center - newHalfRange) as Time,
-          to: (center + newHalfRange) as Time
-        })
-      }
-    }
-  }, [])
-
-  const handleZoomOut = useCallback(() => {
-    if (chartRef.current) {
-      const timeScale = chartRef.current.timeScale()
-      const currentRange = timeScale.getVisibleRange()
-      if (currentRange) {
-        const center = ((currentRange.from as number) + (currentRange.to as number)) / 2
-        const newHalfRange = (currentRange.to as number) - (currentRange.from as number)
-        timeScale.setVisibleRange({
-          from: (center - newHalfRange) as Time,
-          to: (center + newHalfRange) as Time
-        })
-      }
-    }
-  }, [])
-
-  const handleResetView = useCallback(() => {
-    chartRef.current?.timeScale().fitContent()
-  }, [])
+  }, [filteredData, showMA, maData, showVolume, color, height, handleZoomIn, handleZoomOut, handleResetView])
 
   // Export handlers
   const handleExportPNG = useCallback(() => {

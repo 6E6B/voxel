@@ -56,7 +56,9 @@ export class RobloxInventoryService {
           if (errorBody.errors?.[0]?.message === 'Invalid asset type.') {
             console.error(`[InventoryV2] Invalid asset types provided: ${assetTypes.join(', ')}`)
           }
-        } catch (e) {}
+        } catch {
+          // Ignore invalid JSON in error body
+        }
       }
       throw error
     }

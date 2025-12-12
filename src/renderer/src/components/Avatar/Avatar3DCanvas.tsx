@@ -70,6 +70,7 @@ const Object3DLoader: React.FC<Object3DLoaderProps> = ({
   // Load the 3D object
   useEffect(() => {
     let cancelled = false
+    const group = groupRef.current
 
     const loadObject = async () => {
       try {
@@ -86,13 +87,13 @@ const Object3DLoader: React.FC<Object3DLoaderProps> = ({
         }
 
         // Clear existing object
-        if (objectRef.current && groupRef.current) {
-          groupRef.current.remove(objectRef.current)
+        if (objectRef.current && group) {
+          group.remove(objectRef.current)
           dispose3DObject(objectRef.current)
         }
 
-        if (groupRef.current) {
-          groupRef.current.add(object)
+        if (group) {
+          group.add(object)
           objectRef.current = object
 
           // Fit camera to object
@@ -126,8 +127,8 @@ const Object3DLoader: React.FC<Object3DLoaderProps> = ({
 
     return () => {
       cancelled = true
-      if (objectRef.current && groupRef.current) {
-        groupRef.current.remove(objectRef.current)
+      if (objectRef.current && group) {
+        group.remove(objectRef.current)
         dispose3DObject(objectRef.current)
         objectRef.current = null
       }

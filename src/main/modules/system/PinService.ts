@@ -473,7 +473,7 @@ class PinService {
         const decryptedJson = safeStorage.decryptString(encryptedBuffer)
         const pinData: PinData = JSON.parse(decryptedJson)
         this.loadLockoutFromPinData(pinData)
-      } catch (error) {
+      } catch {
         // If decryption fails, assume tampering and apply lockout
         return {
           locked: true,

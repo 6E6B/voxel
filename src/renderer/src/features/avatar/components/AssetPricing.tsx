@@ -30,7 +30,7 @@ const PurchaseConfirmDialog: React.FC<{
           <h2 className="text-xl font-bold text-white mb-3">Confirm Purchase</h2>
           <p className="text-neutral-300 text-sm leading-relaxed mb-6">
             Are you sure you want to buy{' '}
-            <span className="font-semibold text-white">"{assetName}"</span> for{' '}
+            <span className="font-semibold text-white">&quot;{assetName}&quot;</span> for{' '}
             <span className="inline-flex items-center gap-1 font-semibold text-emerald-400">
               {typeof price === 'number' ? price.toLocaleString() : price}
               {typeof price === 'number' && <RobuxIcon className="w-4 h-4" />}

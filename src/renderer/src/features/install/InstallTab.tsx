@@ -60,14 +60,12 @@ const InstallTab: React.FC = () => {
   })
 
   useEffect(() => {
-    // @ts-ignore
     window.api.getDeployHistory().then(setDeployHistory).catch(console.error)
   }, [setDeployHistory])
 
   useEffect(() => {
     const detectInstallations = async () => {
       try {
-        // @ts-ignore
         const detected = await window.api.detectDefaultInstallations()
         setDetectedInstallations(detected || [])
       } catch (e) {
@@ -79,13 +77,11 @@ const InstallTab: React.FC = () => {
 
   const handleRefresh = async () => {
     try {
-      // @ts-ignore
       await window.api.getDeployHistory().then(setDeployHistory)
-      // @ts-ignore
       const detected = await window.api.detectDefaultInstallations()
       setDetectedInstallations(detected || [])
       showNotification('Refreshed successfully', 'success')
-    } catch (e) {
+    } catch (_e) {
       showNotification('Failed to refresh', 'error')
     }
   }
@@ -153,11 +149,9 @@ const InstallTab: React.FC = () => {
       setInstallProgress({ status, percent: progress, detail: detail || '' })
     }
 
-    // @ts-ignore
     window.electron.ipcRenderer.on('install-progress', onProgress)
 
     try {
-      // @ts-ignore
       const path = await window.api.installRobloxVersion(apiType, version)
 
       if (path) {
@@ -181,7 +175,6 @@ const InstallTab: React.FC = () => {
       console.error(err)
       showNotification('Installation error: ' + err, 'error')
     } finally {
-      // @ts-ignore
       window.electron.ipcRenderer.removeListener('install-progress', onProgress)
       setIsInstalling(false)
     }
@@ -200,7 +193,6 @@ const InstallTab: React.FC = () => {
       confirmText: 'Delete',
       onConfirm: async () => {
         try {
-          // @ts-ignore
           await window.api.uninstallRobloxVersion(install.path)
           showNotification('Installation deleted', 'success')
         } catch (e) {
@@ -249,11 +241,9 @@ const InstallTab: React.FC = () => {
 
     console.log('[InstallTab] Target path:', targetPath)
 
-    // @ts-ignore
     window.electron.ipcRenderer.on('install-progress', onProgress)
 
     try {
-      // @ts-ignore
       const successPath = await window.api.installRobloxVersion(apiType, newVersion, targetPath)
       console.log('[InstallTab] Install success:', successPath)
 
@@ -263,7 +253,6 @@ const InstallTab: React.FC = () => {
           if (isVersionedFolder && targetPath !== install.path) {
             console.log('[InstallTab] Cleaning up old version:', install.path)
             try {
-              // @ts-ignore
               await window.api.uninstallRobloxVersion(install.path)
             } catch (e) {
               console.warn('Failed to cleanup old version', e)
@@ -276,7 +265,6 @@ const InstallTab: React.FC = () => {
           // Refresh detected installations
           console.log('[InstallTab] Refreshing detections')
           try {
-            // @ts-ignore
             const detected = await window.api.detectDefaultInstallations()
             console.log('[InstallTab] Detected:', detected)
             setDetectedInstallations(detected || [])
@@ -298,7 +286,6 @@ const InstallTab: React.FC = () => {
       console.error(e)
       showNotification('Update failed: ' + e, 'error')
     } finally {
-      // @ts-ignore
       window.electron.ipcRenderer.removeListener('install-progress', onProgress)
       setIsVerifying(null)
     }
@@ -312,7 +299,6 @@ const InstallTab: React.FC = () => {
 
     try {
       // Use the install IPC directly to avoid clashing with the app updater API
-      // @ts-ignore
       const result = await window.electron.ipcRenderer.invoke(
         'check-for-updates',
         getApiType(binaryType),
@@ -340,7 +326,6 @@ const InstallTab: React.FC = () => {
   const handleLaunch = async (install: UnifiedInstallation) => {
     showNotification('Launching Roblox...', 'info')
     try {
-      // @ts-ignore
       await window.api.launchRobloxInstall(install.path)
       showNotification('Roblox launched successfully', 'success')
     } catch (e) {
@@ -350,7 +335,6 @@ const InstallTab: React.FC = () => {
 
   const handleOpenLocation = async (install: UnifiedInstallation) => {
     try {
-      // @ts-ignore
       await window.api.openRobloxFolder(install.path)
     } catch (e) {
       showNotification('Failed to open folder: ' + e, 'error')
@@ -375,11 +359,9 @@ const InstallTab: React.FC = () => {
           setInstallProgress({ status, percent: progress, detail: detail || '' })
         }
 
-        // @ts-ignore
         window.electron.ipcRenderer.on('install-progress', onProgress)
 
         try {
-          // @ts-ignore
           await window.api.verifyRobloxFiles(getApiType(binaryType), install.version, install.path)
 
           if (!install.isSystem) {
@@ -392,7 +374,6 @@ const InstallTab: React.FC = () => {
         } catch (e) {
           showNotification('Verification failed: ' + e, 'error')
         } finally {
-          // @ts-ignore
           window.electron.ipcRenderer.removeListener('install-progress', onProgress)
           setIsVerifying(null)
         }

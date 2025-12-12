@@ -274,8 +274,7 @@ const PlayerInventorySheet = ({
   const handleDownloadObj = useCallback(async (assetId: number, assetName: string) => {
     try {
       const result = await (window as any).api.downloadAsset3D(assetId, 'obj', assetName)
-      if (result.success) {
-      }
+      if (!result?.success) console.error('Failed to download OBJ')
     } catch (err) {
       console.error('Failed to download OBJ:', err)
     }
@@ -285,8 +284,7 @@ const PlayerInventorySheet = ({
   const handleDownloadTexture = useCallback(async (assetId: number, assetName: string) => {
     try {
       const result = await (window as any).api.downloadAsset3D(assetId, 'texture', assetName)
-      if (result.success) {
-      }
+      if (!result?.success) console.error('Failed to download texture')
     } catch (err) {
       console.error('Failed to download texture:', err)
     }
@@ -311,8 +309,7 @@ const PlayerInventorySheet = ({
     async (assetId: number, assetName: string) => {
       try {
         const result = await window.api.downloadCatalogTemplate(assetId, assetName, cookie)
-        if (result.success) {
-        } else {
+        if (!result.success) {
           console.error('Failed to download template:', result.message)
         }
       } catch (err) {
@@ -332,7 +329,7 @@ const PlayerInventorySheet = ({
             <div className="p-2 bg-neutral-900 rounded-lg">
               <User className="text-neutral-300" size={20} />
             </div>
-            <SheetTitle>{username}'s Inventory</SheetTitle>
+            <SheetTitle>{`${username}'s Inventory`}</SheetTitle>
           </div>
           <SheetClose />
         </SheetHeader>

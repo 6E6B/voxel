@@ -6,7 +6,11 @@ import { SkeletonUserList } from '../UI/display/SkeletonGrid'
 import { Dialog, DialogContent, DialogClose } from '../UI/dialogs/Dialog'
 import { ErrorMessage } from '../UI/feedback/ErrorMessage'
 import { EmptyState } from '../UI/feedback/EmptyState'
-import { getStatusBorderColor, getStatusColor, mapPresenceToStatus } from '@renderer/utils/statusUtils'
+import {
+  getStatusBorderColor,
+  getStatusColor,
+  mapPresenceToStatus
+} from '@renderer/utils/statusUtils'
 import { AccountStatus } from '@renderer/types'
 
 interface UserListModalProps {
@@ -39,27 +43,6 @@ const UserListModal: React.FC<UserListModalProps> = ({
   const [searchQuery, setSearchQuery] = useState('')
   const [, startTransition] = useTransition()
   const fetchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  useEffect(() => {
-    if (isOpen) {
-      setUsers([])
-      setCursor(null)
-      setHasMore(true)
-      setError(null)
-      setSearchQuery('')
-
-      fetchTimeoutRef.current = setTimeout(() => {
-        fetchUsers(null)
-      }, ANIMATION_DELAY_MS)
-    }
-
-    return () => {
-      if (fetchTimeoutRef.current) {
-        clearTimeout(fetchTimeoutRef.current)
-        fetchTimeoutRef.current = null
-      }
-    }
-  }, [isOpen, userId, type])
 
   const fetchUsers = useCallback(
     async (currentCursor: string | null) => {
@@ -121,6 +104,27 @@ const UserListModal: React.FC<UserListModalProps> = ({
     },
     [requestCookie, userId, type]
   )
+
+  useEffect(() => {
+    if (isOpen) {
+      setUsers([])
+      setCursor(null)
+      setHasMore(true)
+      setError(null)
+      setSearchQuery('')
+
+      fetchTimeoutRef.current = setTimeout(() => {
+        fetchUsers(null)
+      }, ANIMATION_DELAY_MS)
+    }
+
+    return () => {
+      if (fetchTimeoutRef.current) {
+        clearTimeout(fetchTimeoutRef.current)
+        fetchTimeoutRef.current = null
+      }
+    }
+  }, [isOpen, userId, type, fetchUsers])
 
   const filteredUsers = useMemo(() => {
     if (!searchQuery.trim()) return users

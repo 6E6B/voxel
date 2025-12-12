@@ -220,8 +220,7 @@ const AccessoryDetailsModal: React.FC<AccessoryDetailsModalProps> = ({
   const handleDownloadObj = async (assetId: number, assetName: string) => {
     try {
       const result = await (window as any).api.downloadAsset3D(assetId, 'obj', assetName)
-      if (result.success) {
-      }
+      if (!result?.success) console.error('Failed to download OBJ')
     } catch (err) {
       console.error('Failed to download OBJ:', err)
     }
@@ -230,8 +229,7 @@ const AccessoryDetailsModal: React.FC<AccessoryDetailsModalProps> = ({
   const handleDownloadTexture = async (assetId: number, assetName: string) => {
     try {
       const result = await (window as any).api.downloadAsset3D(assetId, 'texture', assetName)
-      if (result.success) {
-      }
+      if (!result?.success) console.error('Failed to download texture')
     } catch (err) {
       console.error('Failed to download texture:', err)
     }
@@ -240,8 +238,7 @@ const AccessoryDetailsModal: React.FC<AccessoryDetailsModalProps> = ({
   const handleDownloadTemplate = async (assetId: number, assetName: string) => {
     try {
       const result = await window.api.downloadCatalogTemplate(assetId, assetName, account?.cookie)
-      if (result.success) {
-      } else {
+      if (!result.success) {
         console.error('Failed to download template:', result.message)
       }
     } catch (err) {

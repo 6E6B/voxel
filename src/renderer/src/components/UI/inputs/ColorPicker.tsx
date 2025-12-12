@@ -153,7 +153,7 @@ export const ColorPicker = ({
   const parseColor = (v: string) => {
     try {
       return Color(v)
-    } catch (e) {
+    } catch {
       return Color('#000000')
     }
   }
@@ -446,8 +446,10 @@ export const ColorPickerEyeDropper = ({
         alert('EyeDropper API not supported in this browser.')
         return
       }
-      // @ts-ignore
-      const eyeDropper = new window.EyeDropper()
+      const EyeDropper = (window as any).EyeDropper as new () => {
+        open: () => Promise<{ sRGBHex: string }>
+      }
+      const eyeDropper = new EyeDropper()
       const result = await eyeDropper.open()
       const color = Color(result.sRGBHex)
       setHue(color.hue())
@@ -528,7 +530,7 @@ export const ColorPickerFormat = ({
       setHue(newColor.hue())
       setSaturation(newColor.saturationl())
       setLightness(newColor.lightness())
-    } catch (e) {
+    } catch {
       // Invalid color, ignore - allow typing
     }
   }
@@ -537,7 +539,7 @@ export const ColorPickerFormat = ({
     // Reset to valid color on blur if invalid
     try {
       Color(hexValue)
-    } catch (e) {
+    } catch {
       setHexValue(color.hex())
     }
   }
@@ -552,7 +554,7 @@ export const ColorPickerFormat = ({
       setHue(newColor.hue())
       setSaturation(newColor.saturationl())
       setLightness(newColor.lightness())
-    } catch (e) {
+    } catch {
       // Invalid value, ignore
     }
   }
@@ -573,7 +575,7 @@ export const ColorPickerFormat = ({
           setLightness(newColor.lightness())
         }
       }
-    } catch (e) {
+    } catch {
       // Invalid value, ignore - allow typing
     }
   }
@@ -590,7 +592,7 @@ export const ColorPickerFormat = ({
           return // Valid
         }
       }
-    } catch (e) {
+    } catch {
       // Invalid
     }
     const rgb = color
@@ -620,7 +622,7 @@ export const ColorPickerFormat = ({
           setLightness(num)
         }
       }
-    } catch (e) {
+    } catch {
       // Invalid value, ignore
     }
   }

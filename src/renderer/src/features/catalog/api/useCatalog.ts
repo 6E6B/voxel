@@ -1,5 +1,5 @@
 import { useQuery, useInfiniteQuery } from '@tanstack/react-query'
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { queryKeys } from '../../../../../shared/queryKeys'
 import type {
   CatalogCategory,
@@ -63,8 +63,21 @@ export function useCatalogThumbnails(
   const thumbnails = useCatalogStore((state) => state.thumbnails)
   const setThumbnails = useSetCatalogThumbnails()
 
-  const itemsNeedingThumbnails = items.filter((item) => thumbnails[item.id] === undefined)
-  const idsToFetch = itemsNeedingThumbnails.map((i) => i.id).sort((a, b) => a - b)
+  const itemsNeedingThumbnails = useMemo(
+    () => items.filter((item) => thumbnails[item.id] === undefined),
+    [items, thumbnails]
+  )
+
+  const idsToFetch = useMemo(
+    () =>
+      itemsNeedingThumbnails
+        .map((i) => i.id)
+        .slice()
+        .sort((a, b) => a - b),
+    [itemsNeedingThumbnails]
+  )
+
+  const idsToFetchKey = useMemo(() => idsToFetch.join(','), [idsToFetch])
 
   const shouldFetch = enabled && itemsNeedingThumbnails.length > 0
 
@@ -138,7 +151,7 @@ export function useCatalogThumbnails(
         setThumbnails({ ...thumbnails, ...failedThumbnails })
       }
     }
-  }, [query.data, query.isError, idsToFetch.join(','), setThumbnails]) // Depend on the IDs string to ensure stable effect
+  }, [query.data, query.isError, idsToFetch, idsToFetchKey, thumbnails, setThumbnails])
 
   return query
 }

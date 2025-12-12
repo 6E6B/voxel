@@ -1,20 +1,7 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react'
-import { applyTheme, availableThemes, getTheme, ThemeDefinition, ThemeName } from './theme'
+import React, { useEffect, useMemo, useState } from 'react'
+import { applyTheme, availableThemes, ThemeName } from './theme'
 import { ThemePreference } from '../types'
-
-type ThemeContextValue = {
-  theme: ThemeDefinition
-  themeName: ThemeName
-  themePreference: ThemePreference
-  setTheme: (name: ThemePreference) => void
-}
-
-const ThemeContext = createContext<ThemeContextValue>({
-  theme: getTheme('dark'),
-  themeName: 'dark',
-  themePreference: 'system',
-  setTheme: () => {}
-})
+import { ThemeContext } from './ThemeContext'
 
 interface ThemeProviderProps {
   initialTheme?: ThemePreference
@@ -65,5 +52,3 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
 }
-
-export const useTheme = () => useContext(ThemeContext)

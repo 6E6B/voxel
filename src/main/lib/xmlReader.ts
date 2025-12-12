@@ -53,7 +53,7 @@ export class Instance {
   }
 
   getDescendants(): Instance[] {
-    let descendants: Instance[] = []
+    const descendants: Instance[] = []
     this.children.forEach((element) => {
       descendants.push(element)
       element.getDescendants().forEach((element) => {
@@ -74,8 +74,8 @@ export class Instance {
 }
 
 export function convertProperties(properties: Properties): PropertiesXML {
-  let grouped: PropertiesXML = {}
-  for (let name in properties) {
+  const grouped: PropertiesXML = {}
+  for (const name in properties) {
     const { value, type } = properties[name]
 
     if (!grouped[type]) {
@@ -95,21 +95,21 @@ export function convertProperties(properties: Properties): PropertiesXML {
 }
 
 export function parseProperties(properties: PropertiesXML): Properties {
-  let parsed: Properties = {}
-  for (let type in properties) {
+  const parsed: Properties = {}
+  for (const type in properties) {
     const props: PropertyXML[] = properties[type]
 
-    for (let i in props) {
+    for (const i in props) {
       const property: PropertyXML = props[i]
       const name = property['$'].name
       let value: any = property._
 
       if (!value && Object.keys(property).length > 1) {
         value = {}
-        let values: any = property
+        const values: any = property
         delete values['$']
 
-        for (let key in values) {
+        for (const key in values) {
           const val = values[key][0]
           if (val) {
             value[key] = val
@@ -130,7 +130,7 @@ export function parseInstance(instance: { [name: string]: any }): Instance {
   result.properties = parseProperties(instance.Properties[0])
   result.referent = referent
   if (instance.Item) {
-    for (let i in instance.Item) {
+    for (const i in instance.Item) {
       parseInstance(instance.Item[i]).setParent(result)
     }
   }
@@ -138,7 +138,7 @@ export function parseInstance(instance: { [name: string]: any }): Instance {
 }
 
 export function convertInstance(instance: Instance): InstanceXML {
-  let converted: InstanceXML = {
+  const converted: InstanceXML = {
     ['$']: { class: instance.class, referent: instance.referent },
     Properties: [convertProperties(instance.properties)],
     Item: []
@@ -154,14 +154,14 @@ export class RobloxXMLParser {
 
   async parse(xmlContent: string) {
     const parsed = await parseStringPromise(xmlContent)
-    for (let i in parsed.roblox.Item) {
+    for (const i in parsed.roblox.Item) {
       parseInstance(parsed.roblox.Item[i]).setParent(this.dataModel)
     }
   }
 
   convertToXML(): string {
     const builder = new Builder()
-    let base: any = { roblox: { ['$']: { version: '4' }, Item: [] } }
+    const base: any = { roblox: { ['$']: { version: '4' }, Item: [] } }
     this.dataModel.children.forEach((element) => {
       base.roblox.Item.push(convertInstance(element))
     })

@@ -5,6 +5,7 @@ import type {
   CaptchaResponse,
   CursorResult,
   DeployHistory,
+  DetectedInstallation,
   DetailedStats,
   ExtendedUserDetails,
   FavoriteItem,
@@ -343,6 +344,7 @@ export interface InstallationsApi {
   getActiveInstallPath: () => Promise<string | null>
   installFont: (installPath: string, fontPath: string) => Promise<void>
   installCursor: (installPath: string, cursorPath: string) => Promise<void>
+  detectDefaultInstallations: () => Promise<DetectedInstallation[]>
 }
 
 export interface FlagsApi {

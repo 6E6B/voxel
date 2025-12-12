@@ -132,7 +132,7 @@ const useTruncationCheck = <T extends HTMLElement>(deps: React.DependencyList = 
       resizeObserver?.disconnect()
       window.removeEventListener('resize', updateIsTruncated)
     }
-  }, deps)
+  }, [...deps])
 
   return { ref, isTruncated }
 }

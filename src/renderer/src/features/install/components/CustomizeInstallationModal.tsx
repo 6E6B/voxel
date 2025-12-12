@@ -69,7 +69,6 @@ export const CustomizeInstallationModal: React.FC<CustomizeInstallationModalProp
 
   const loadFFlags = async (targetInstall: UnifiedInstallation) => {
     try {
-      // @ts-ignore
       const flags = await window.api.getFFlags(targetInstall.path)
       setFFlags(flags || {})
     } catch (e) {
@@ -80,19 +79,17 @@ export const CustomizeInstallationModal: React.FC<CustomizeInstallationModalProp
   const handleSaveFFlags = async () => {
     if (!install) return
     try {
-      // @ts-ignore
       await window.api.setFFlags(install.path, fflags)
       showNotification('FFlags saved successfully', 'success')
-    } catch (e) {
+    } catch (_e) {
       showNotification('Failed to save FFlags', 'error')
     }
   }
 
   const handleInstallFont = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!install || !e.target.files?.[0]) return
-    const file = e.target.files[0]
+    const file = e.target.files[0] as File & { path: string }
     try {
-      // @ts-ignore
       await window.api.installFont(install.path, file.path)
       showNotification('Font installed successfully', 'success')
     } catch (err) {
@@ -104,9 +101,8 @@ export const CustomizeInstallationModal: React.FC<CustomizeInstallationModalProp
 
   const handleInstallCursor = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!install || !e.target.files?.[0]) return
-    const file = e.target.files[0]
+    const file = e.target.files[0] as File & { path: string }
     try {
-      // @ts-ignore
       await window.api.installCursor(install.path, file.path)
       showNotification('Cursor installed successfully', 'success')
     } catch (err) {

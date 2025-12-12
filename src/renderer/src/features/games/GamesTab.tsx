@@ -454,9 +454,10 @@ const GamesTab = ({ onGameSelect }: GamesTabProps) => {
   }
 
   useEffect(() => {
+    const timeouts = favoriteGameBurstTimeouts.current
     return () => {
-      favoriteGameBurstTimeouts.current.forEach((timeoutId) => clearTimeout(timeoutId))
-      favoriteGameBurstTimeouts.current.clear()
+      timeouts.forEach((timeoutId) => clearTimeout(timeoutId))
+      timeouts.clear()
     }
   }, [])
 
@@ -573,7 +574,7 @@ const GamesTab = ({ onGameSelect }: GamesTabProps) => {
                   className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[rgba(var(--accent-color-rgb),0.1)] border border-[rgba(var(--accent-color-rgb),0.2)] text-xs text-[var(--accent-color)] group"
                 >
                   <span className="font-medium">Search:</span>
-                  <span>"{debouncedSearchQuery}"</span>
+                  <span>&quot;{debouncedSearchQuery}&quot;</span>
                   <button
                     onClick={handleClearSearch}
                     className="p-0.5 rounded-full hover:bg-[rgba(var(--accent-color-rgb),0.2)] transition-colors ml-1"

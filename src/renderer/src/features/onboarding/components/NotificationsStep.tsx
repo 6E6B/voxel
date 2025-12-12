@@ -63,7 +63,9 @@ const NotificationsStep: React.FC<NotificationsStepProps> = ({ onComplete }) => 
           <Bell className="w-8 h-8 text-neutral-400" />
         </div>
         <h3 className="text-lg font-semibold text-white mb-1">Notifications</h3>
-        <p className="text-sm text-neutral-500">Choose which notifications you'd like to receive</p>
+        <p className="text-sm text-neutral-500">
+          Choose which notifications you&apos;d like to receive
+        </p>
       </div>
 
       <div className="space-y-3">

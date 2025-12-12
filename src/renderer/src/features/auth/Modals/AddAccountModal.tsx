@@ -45,6 +45,8 @@ const AddAccountModal: React.FC<AddAccountModalProps> = ({ isOpen, onClose, onAd
   } | null>(null)
   const [quickLoginStatus, setQuickLoginStatus] = useState<string>('')
   const pollingRef = useRef<NodeJS.Timeout | null>(null)
+  const generateCodeRef = useRef<() => void>(() => {})
+  const stopPollingRef = useRef<() => void>(() => {})
   const [browserLoginStatus, setBrowserLoginStatus] = useState<'idle' | 'waiting' | 'error'>('idle')
   const [browserLoginError, setBrowserLoginError] = useState('')
 
@@ -56,7 +58,7 @@ const AddAccountModal: React.FC<AddAccountModalProps> = ({ isOpen, onClose, onAd
       setBrowserLoginError('')
       setIsCookieBlurred(true)
     } else {
-      stopPolling()
+      stopPollingRef.current()
       setQuickLoginData(null)
       setQuickLoginStatus('')
       setCookie('')
@@ -68,10 +70,10 @@ const AddAccountModal: React.FC<AddAccountModalProps> = ({ isOpen, onClose, onAd
 
   useEffect(() => {
     if (isOpen && method === 'quick' && !quickLoginData && !isLoading) {
-      generateCode()
+      generateCodeRef.current()
     }
-    return () => stopPolling()
-  }, [isOpen, method])
+    return () => stopPollingRef.current()
+  }, [isOpen, method, quickLoginData, isLoading])
 
   useEffect(() => {
     if (method !== 'browser') {
@@ -82,7 +84,7 @@ const AddAccountModal: React.FC<AddAccountModalProps> = ({ isOpen, onClose, onAd
 
   const generateCode = async () => {
     setIsLoading(true)
-    stopPolling()
+    stopPollingRef.current()
     try {
       const data = await window.api.generateQuickLoginCode()
       setQuickLoginData(data)
@@ -101,6 +103,9 @@ const AddAccountModal: React.FC<AddAccountModalProps> = ({ isOpen, onClose, onAd
       pollingRef.current = null
     }
   }
+
+  generateCodeRef.current = generateCode
+  stopPollingRef.current = stopPolling
 
   const startPolling = (code: string, privateKey: string) => {
     stopPolling()
@@ -124,7 +129,7 @@ const AddAccountModal: React.FC<AddAccountModalProps> = ({ isOpen, onClose, onAd
         } else if (result.status === 'CodeInvalid') {
           stopPolling()
           setQuickLoginData(null)
-          generateCode()
+          generateCodeRef.current()
           return
         }
 
@@ -139,6 +144,7 @@ const AddAccountModal: React.FC<AddAccountModalProps> = ({ isOpen, onClose, onAd
 
     pollingRef.current = setTimeout(poll, 3000)
   }
+
 
   const handleQuickLoginComplete = async (code: string, privateKey: string) => {
     setIsLoading(true)
@@ -362,7 +368,7 @@ const AddAccountModal: React.FC<AddAccountModalProps> = ({ isOpen, onClose, onAd
               <div className="bg-[var(--accent-color-faint)] border border-[var(--accent-color-border)] rounded-lg p-4 text-sm text-[var(--color-text-secondary)] flex items-start gap-3">
                 <Info size={18} className="text-[var(--accent-color)] shrink-0 mt-0.5" />
                 <p>
-                  We'll open the official Roblox login page inside a sandboxed window. The
+                  We&apos;ll open the official Roblox login page inside a sandboxed window. The
                   .ROBLOSECURITY cookie will be captured directly from Roblox.
                 </p>
               </div>

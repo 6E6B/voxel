@@ -230,7 +230,7 @@ const BodyScaleEditor: React.FC<BodyScaleEditorProps> = ({
 
       {avatarType === 'R6' && (
         <div className="flex-1 flex items-center justify-center text-neutral-500 text-sm">
-          <p>R6 avatars use classic body proportions and don't support custom scaling.</p>
+          <p>R6 avatars use classic body proportions and don&apos;t support custom scaling.</p>
         </div>
       )}
 

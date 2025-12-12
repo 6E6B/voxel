@@ -1,6 +1,16 @@
 import React, { useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Activity, Calendar, Coins, Heart, History, MapPin, TrendingUp, Users, Clock } from 'lucide-react'
+import {
+  Activity,
+  Calendar,
+  Coins,
+  Heart,
+  History,
+  MapPin,
+  TrendingUp,
+  Users,
+  Clock
+} from 'lucide-react'
 import { ProfileData } from '../hooks/useProfileData'
 import { StatRow } from './StatRow'
 import { SlidingNumber } from '@renderer/components/UI/specialized/SlidingNumber'
@@ -223,7 +233,6 @@ export const ProfileStatsBento: React.FC<ProfileStatsBentoProps> = ({
           )}
         </BentoCard>
       )}
-
     </motion.div>
   )
 }

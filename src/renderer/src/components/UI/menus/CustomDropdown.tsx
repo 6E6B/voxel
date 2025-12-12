@@ -116,7 +116,9 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
                 <div className="flex items-center gap-2.5 min-w-0 flex-1">
                   {option.icon && <span className="shrink-0">{option.icon}</span>}
                   <div className="flex flex-col items-start min-w-0 flex-1 overflow-hidden">
-                    <span className="font-medium truncate w-full">{option.labelNode ?? option.label}</span>
+                    <span className="font-medium truncate w-full">
+                      {option.labelNode ?? option.label}
+                    </span>
                     {(option.subLabelNode || option.subLabel) && (
                       <span
                         className={`text-xs truncate w-full ${value === option.value ? 'text-[var(--color-text-muted)]' : 'text-[var(--color-text-muted)]/80'}`}

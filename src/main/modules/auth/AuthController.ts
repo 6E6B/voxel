@@ -9,16 +9,11 @@ import { RobloxLoginWindowService } from './RobloxLoginWindowService'
  */
 export const registerAuthHandlers = (): void => {
   handle('validate-cookie', z.tuple([z.string()]), async (_, cookieRaw) => {
-    try {
-      const cookie = RobloxAuthService.extractCookie(cookieRaw)
-      RobloxAuthService.validateCookieFormat(cookie)
+    const cookie = RobloxAuthService.extractCookie(cookieRaw)
+    RobloxAuthService.validateCookieFormat(cookie)
 
-      const userData = await RobloxUserService.getAuthenticatedUser(cookie)
-      return userData
-    } catch (error) {
-      // Preserve original error messages where possible for compatibility
-      throw error
-    }
+    const userData = await RobloxUserService.getAuthenticatedUser(cookie)
+    return userData
   })
 
   handle('generate-quick-login-code', z.tuple([]), async () => {

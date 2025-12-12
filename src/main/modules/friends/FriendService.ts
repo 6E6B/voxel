@@ -75,9 +75,9 @@ export class RobloxFriendService {
         arr.slice(i * size, i * size + size)
       )
 
-    let avatars: Record<number, string> = {}
-    let presences: Record<number, any> = {}
-    let userDetails: Record<number, any> = {}
+    const avatars: Record<number, string> = {}
+    const presences: Record<number, any> = {}
+    const userDetails: Record<number, any> = {}
 
     let csrfToken = ''
     if (!options?.skipPresence) {
@@ -226,6 +226,7 @@ export class RobloxFriendService {
    * Get ALL friends (fetches all pages) - use for FriendsTab where all friends are needed
    */
   static async getFriends(cookie: string, userId: number, _forceRefresh: boolean = false) {
+    void _forceRefresh
     let friends: z.infer<typeof friendSchema>[] = []
     let cursor: string | null = null
     const limit = 50

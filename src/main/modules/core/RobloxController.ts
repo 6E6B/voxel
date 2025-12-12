@@ -84,15 +84,11 @@ export const registerRobloxHandlers = (): void => {
   )
 
   handle('validate-cookie', z.tuple([z.string()]), async (_, cookieRaw) => {
-    try {
-      const cookie = RobloxAuthService.extractCookie(cookieRaw)
-      RobloxAuthService.validateCookieFormat(cookie)
+    const cookie = RobloxAuthService.extractCookie(cookieRaw)
+    RobloxAuthService.validateCookieFormat(cookie)
 
-      const userData = await RobloxUserService.getAuthenticatedUser(cookie)
-      return userData
-    } catch (error) {
-      throw error
-    }
+    const userData = await RobloxUserService.getAuthenticatedUser(cookie)
+    return userData
   })
 
   handle('get-avatar-url', z.tuple([z.string()]), async (_, userId) => {

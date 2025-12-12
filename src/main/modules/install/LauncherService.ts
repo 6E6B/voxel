@@ -29,7 +29,7 @@ export class RobloxLauncherService {
           .split('\n')
           .filter((line) => line.includes('RobloxPlayerBeta.exe')).length
       }
-    } catch (error) {
+    } catch {
       return 0
     }
   }

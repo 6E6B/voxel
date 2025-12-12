@@ -53,7 +53,7 @@ export const createAccountsCommands: CommandFactory = (callbacks) => [
         if (result) {
           callbacks.showNotification(`✓ Account valid: ${result.displayName}`, 'success')
         }
-      } catch (e: any) {
+      } catch {
         callbacks.showNotification('✗ Account invalid or banned', 'error')
       }
     }

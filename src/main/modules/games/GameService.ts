@@ -211,7 +211,7 @@ export class RobloxGameService {
         arr.slice(i * size, i * size + size)
       )
 
-    let detailsMap: Record<number, GameDetails> = {}
+    const detailsMap: Record<number, GameDetails> = {}
 
     try {
       const chunks = chunk(orderedUniverseIds, 50)
@@ -235,7 +235,7 @@ export class RobloxGameService {
       console.error('Failed to fetch game details', e)
     }
 
-    let thumbnailsMap: Record<number, string> = {}
+    const thumbnailsMap: Record<number, string> = {}
 
     try {
       const chunks = chunk(orderedUniverseIds, 50)
@@ -260,7 +260,7 @@ export class RobloxGameService {
       console.error('Failed to fetch game thumbnails', e)
     }
 
-    let votesMap: Record<number, { up: number; down: number }> = {}
+    const votesMap: Record<number, { up: number; down: number }> = {}
     if (initialData.length === 0) {
       try {
         const chunks = chunk(orderedUniverseIds, 50)

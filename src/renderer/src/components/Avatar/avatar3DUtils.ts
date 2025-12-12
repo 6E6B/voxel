@@ -221,9 +221,7 @@ const loadFromManifest = async (
       }
 
       const serialize = (obj: THREE.Object3D): any => {
-        // @ts-ignore
-        if (obj.isMesh) {
-          // @ts-ignore
+        if ((obj as any).isMesh) {
           const mesh = obj as THREE.Mesh
           const geo = mesh.geometry
 

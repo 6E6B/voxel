@@ -30,11 +30,10 @@ const InstallationStep: React.FC<InstallationStepProps> = ({ onComplete, onSkip 
 
   // Load deploy history on mount
   useEffect(() => {
-    // @ts-ignore
     window.api.getDeployHistory().then(setDeployHistory).catch(console.error)
   }, [setDeployHistory])
 
-  const availableVersions = history[getApiType(type)] || []
+  const availableVersions = useMemo(() => history[getApiType(type)] ?? [], [history, type])
 
   const versionOptions = useMemo(() => {
     if (availableVersions.length === 0) {
@@ -64,11 +63,9 @@ const InstallationStep: React.FC<InstallationStepProps> = ({ onComplete, onSkip 
       setInstallProgress({ status, percent: progress })
     }
 
-    // @ts-ignore
     window.electron.ipcRenderer.on('install-progress', onProgress)
 
     try {
-      // @ts-ignore
       const path = await window.api.installRobloxVersion(apiType, versionToInstall)
 
       if (path) {
@@ -92,7 +89,6 @@ const InstallationStep: React.FC<InstallationStepProps> = ({ onComplete, onSkip 
       console.error(err)
       setError(err?.message || 'Installation failed')
     } finally {
-      // @ts-ignore
       window.electron.ipcRenderer.removeListener('install-progress', onProgress)
       setIsInstalling(false)
     }

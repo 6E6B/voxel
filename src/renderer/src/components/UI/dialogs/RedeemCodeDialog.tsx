@@ -23,7 +23,6 @@ export default function RedeemCodeDialog({ isOpen, onClose, account }: RedeemCod
     setMessage(null)
 
     try {
-      // @ts-ignore - accountSettings API injected via preload
       const response = await window.api.redeemPromoCode(account.cookie, code)
 
       if (response.success) {

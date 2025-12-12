@@ -317,7 +317,9 @@ const UserProfileView: React.FC<ProfileViewProps> = ({
               friends={sortedFriends as any}
               isLoading={loading}
               friendCount={profile.friendCount ?? sortedFriends.length}
-              onViewAll={() => setUserListModal({ isOpen: true, type: 'friends', title: 'Friends' })}
+              onViewAll={() =>
+                setUserListModal({ isOpen: true, type: 'friends', title: 'Friends' })
+              }
               onSelectProfile={onSelectProfile}
             />
 

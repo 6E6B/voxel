@@ -4,7 +4,6 @@
  * Supports importing/exporting indexes for persistence
  */
 
-// @ts-nocheck - FlexSearch types are not well-maintained
 import FlexSearch from 'flexsearch'
 
 // Types for the indexed data
@@ -116,7 +115,6 @@ const rolimonsItems = new Map<number, RolimonsItem>()
 
 let catalogReady = false
 let rolimonsReady = false
-let currentCatalogHash = ''
 
 // Parse rolimons item data array to structured object
 function parseRolimonsItem(id: number, data: unknown[]): RolimonsItem {
@@ -200,7 +198,6 @@ self.onmessage = async (event: MessageEvent<WorkerMessage>) => {
             catalogNameIndex.import(key, value)
           }
 
-          currentCatalogHash = data.catalogHash
           catalogReady = true
 
           const response: WorkerResponse = {
@@ -232,13 +229,9 @@ self.onmessage = async (event: MessageEvent<WorkerMessage>) => {
           // Export the FlexSearch index
           // FlexSearch 0.8.x export uses callbacks with key-value pairs
           const exportedData: Record<string, string> = {}
-          let pendingExports = 0
-          let exportComplete = false
-
           catalogNameIndex.export((key: string, data: string) => {
             if (data !== undefined) {
               exportedData[key] = data
-              pendingExports++
             }
           })
 
@@ -250,8 +243,6 @@ self.onmessage = async (event: MessageEvent<WorkerMessage>) => {
             catalogIndex: exportedData,
             catalogItems: Array.from(catalogItems.entries())
           }
-
-          currentCatalogHash = message.hash
 
           const response: WorkerResponse = {
             type: 'CATALOG_INDEX_EXPORTED',
@@ -368,8 +359,8 @@ self.onmessage = async (event: MessageEvent<WorkerMessage>) => {
         const maxResults = message.maxResults || 50
         const halfMax = Math.ceil(maxResults / 2)
 
-        let catalogResults: CatalogItem[] = []
-        let rolimonsResults: RolimonsItem[] = []
+        const catalogResults: CatalogItem[] = []
+        const rolimonsResults: RolimonsItem[] = []
 
         // Search catalog if ready
         if (catalogReady) {
@@ -430,9 +421,11 @@ self.onmessage = async (event: MessageEvent<WorkerMessage>) => {
         break
       }
 
-      default:
+      default: {
         const response: WorkerResponse = { type: 'ERROR', message: 'Unknown message type' }
         self.postMessage(response)
+        break
+      }
     }
   } catch (error) {
     const response: WorkerResponse = {

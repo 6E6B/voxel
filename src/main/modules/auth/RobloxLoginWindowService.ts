@@ -26,14 +26,8 @@ export class RobloxLoginWindowService {
       return this.pendingPromise
     }
 
-    this.pendingPromise = new Promise<string>(async (resolve, reject) => {
+    this.pendingPromise = new Promise<string>((resolve, reject) => {
       const loginSession = session.fromPartition(this.PARTITION, { cache: true })
-
-      try {
-        await loginSession.cookies.remove('https://www.roblox.com', '.ROBLOSECURITY')
-      } catch (error) {
-        console.warn('[RobloxLoginWindow] Failed to remove previous security cookie:', error)
-      }
 
       let isResolved = false
       let rejectionError: Error | null = null
@@ -63,71 +57,89 @@ export class RobloxLoginWindowService {
         this.pendingPromise = null
       }
 
-      loginSession.cookies.on('changed', handleCookieChange)
-      loginSession.setPermissionRequestHandler((_wc, permission, callback) => {
-        if (permission && this.PERMITTED_PERMISSIONS.has(permission)) {
-          callback(true)
-        } else {
-          callback(false)
+      const start = async () => {
+        try {
+          await loginSession.cookies.remove('https://www.roblox.com', '.ROBLOSECURITY')
+        } catch (error) {
+          console.warn('[RobloxLoginWindow] Failed to remove previous security cookie:', error)
         }
-      })
 
-      const windowOptions: BrowserWindowConstructorOptions = {
-        width: 480,
-        height: 720,
-        title: 'Roblox Login',
-        autoHideMenuBar: true,
-        backgroundColor: '#050505',
-        parent: BrowserWindow.getFocusedWindow() ?? undefined,
-        modal: false,
-        show: false,
-        webPreferences: {
-          partition: this.PARTITION,
-          nodeIntegration: false,
-          contextIsolation: true,
-          spellcheck: true
-        }
-      }
-
-      this.loginWindow = new BrowserWindow(windowOptions)
-
-      const userAgent = this.getRealisticUserAgent()
-      if (userAgent) {
-        this.loginWindow.webContents.setUserAgent(userAgent)
-      }
-
-      this.loginWindow.on('ready-to-show', () => {
-        this.loginWindow?.show()
-        this.loginWindow?.focus()
-      })
-
-      this.loginWindow.on('closed', async () => {
-        await cleanup()
-        if (!isResolved) {
-          reject(rejectionError ?? new Error('LOGIN_WINDOW_CLOSED'))
-        }
-      })
-
-      this.loginWindow.webContents.setWindowOpenHandler(({ url }) => {
-        shell.openExternal(url)
-        return { action: 'deny' }
-      })
-
-      try {
-        await this.loginWindow.loadURL(this.ROBLOX_LOGIN_URL, {
-          httpReferrer: 'https://www.roblox.com/',
-          userAgent: this.loginWindow.webContents.getUserAgent()
+        loginSession.cookies.on('changed', handleCookieChange)
+        loginSession.setPermissionRequestHandler((_wc, permission, callback) => {
+          if (permission && this.PERMITTED_PERMISSIONS.has(permission)) {
+            callback(true)
+          } else {
+            callback(false)
+          }
         })
-      } catch (error) {
-        rejectionError =
-          error instanceof Error ? error : new Error('Failed to load Roblox login page')
+
+        const windowOptions: BrowserWindowConstructorOptions = {
+          width: 480,
+          height: 720,
+          title: 'Roblox Login',
+          autoHideMenuBar: true,
+          backgroundColor: '#050505',
+          parent: BrowserWindow.getFocusedWindow() ?? undefined,
+          modal: false,
+          show: false,
+          webPreferences: {
+            partition: this.PARTITION,
+            nodeIntegration: false,
+            contextIsolation: true,
+            spellcheck: true
+          }
+        }
+
+        this.loginWindow = new BrowserWindow(windowOptions)
+
+        const userAgent = this.getRealisticUserAgent()
+        if (userAgent) {
+          this.loginWindow.webContents.setUserAgent(userAgent)
+        }
+
+        this.loginWindow.on('ready-to-show', () => {
+          this.loginWindow?.show()
+          this.loginWindow?.focus()
+        })
+
+        this.loginWindow.on('closed', async () => {
+          await cleanup()
+          if (!isResolved) {
+            reject(rejectionError ?? new Error('LOGIN_WINDOW_CLOSED'))
+          }
+        })
+
+        this.loginWindow.webContents.setWindowOpenHandler(({ url }) => {
+          shell.openExternal(url)
+          return { action: 'deny' }
+        })
+
+        try {
+          await this.loginWindow.loadURL(this.ROBLOX_LOGIN_URL, {
+            httpReferrer: 'https://www.roblox.com/',
+            userAgent: this.loginWindow.webContents.getUserAgent()
+          })
+        } catch (error) {
+          rejectionError =
+            error instanceof Error ? error : new Error('Failed to load Roblox login page')
+          if (this.loginWindow && !this.loginWindow.isDestroyed()) {
+            this.loginWindow.close()
+          } else {
+            await cleanup()
+            reject(rejectionError)
+          }
+        }
+      }
+
+      void start().catch(async (error) => {
+        rejectionError = error instanceof Error ? error : new Error('Failed to open login window')
         if (this.loginWindow && !this.loginWindow.isDestroyed()) {
           this.loginWindow.close()
-        } else {
-          await cleanup()
-          reject(rejectionError)
+          return
         }
-      }
+        await cleanup()
+        reject(rejectionError)
+      })
     })
 
     return this.pendingPromise

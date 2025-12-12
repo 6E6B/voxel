@@ -86,9 +86,9 @@ export const registerLogsHandlers = () => {
               const channelMatch = content.match(/\[FLog::ClientRunInfo\] The channel is (\w+)/)
               if (channelMatch) metadata.channel = channelMatch[1]
 
-              const versionMatchA = content.match(/"version":"([\d\.]+)"/)
-              const versionMatchB = content.match(/Server Prefix: ([\d\.]+)_/)
-              const versionMatchC = content.match(/userAgent: Roblox\/[^/]+\/([\d\.]+)/)
+              const versionMatchA = content.match(/"version":"([\d.]+)"/)
+              const versionMatchB = content.match(/Server Prefix: ([\d.]+)_/)
+              const versionMatchC = content.match(/userAgent: Roblox\/[^/]+\/([\d.]+)/)
 
               if (versionMatchA) metadata.version = versionMatchA[1]
               else if (versionMatchB) metadata.version = versionMatchB[1]
@@ -103,9 +103,9 @@ export const registerLogsHandlers = () => {
               const universeIdMatch = content.match(/universeid:(\d+)/)
               if (universeIdMatch) metadata.universeId = universeIdMatch[1]
 
-              const ipMatchA = content.match(/UDMUX Address = ([\d\.]+)/)
-              const ipMatchB = content.match(/Connection accepted from ([\d\.]+)/)
-              const ipMatchC = content.match(/Connecting to UDMUX server ([\d\.]+)/)
+              const ipMatchA = content.match(/UDMUX Address = ([\d.]+)/)
+              const ipMatchB = content.match(/Connection accepted from ([\d.]+)/)
+              const ipMatchC = content.match(/Connecting to UDMUX server ([\d.]+)/)
 
               if (ipMatchA) metadata.serverIp = ipMatchA[1]
               else if (ipMatchB) metadata.serverIp = ipMatchB[1]

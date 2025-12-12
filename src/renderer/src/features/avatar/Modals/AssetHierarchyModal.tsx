@@ -63,7 +63,7 @@ const formatValue = (value: any, type: string, name: string): React.ReactNode =>
   }
 
   // Handle complex objects that might be stringified
-  let parsedValue = value
+  const parsedValue = value
   if (typeof value === 'object') {
     // Already an object
   }

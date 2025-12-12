@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { Friend, AccountStatus } from '@renderer/types'
 import {
   useNotificationTrayStore,
@@ -51,7 +51,7 @@ export function useFriendPresenceNotifications(
   }, [resolvedAccountId])
 
   // Load persisted friend list from localStorage
-  const loadPersistedFriendList = (): Map<string, FriendPresenceState> => {
+  const loadPersistedFriendList = useCallback((): Map<string, FriendPresenceState> => {
     if (!storageKey) return new Map()
 
     try {
@@ -64,19 +64,22 @@ export function useFriendPresenceNotifications(
       console.error('Failed to load persisted friend list:', error)
     }
     return new Map()
-  }
+  }, [storageKey])
 
   // Save friend list to localStorage
-  const savePersistedFriendList = (states: Map<string, FriendPresenceState>) => {
-    if (!storageKey) return
+  const savePersistedFriendList = useCallback(
+    (states: Map<string, FriendPresenceState>) => {
+      if (!storageKey) return
 
-    try {
-      const serialized = Object.fromEntries(states)
-      localStorage.setItem(storageKey, JSON.stringify(serialized))
-    } catch (error) {
-      console.error('Failed to save persisted friend list:', error)
-    }
-  }
+      try {
+        const serialized = Object.fromEntries(states)
+        localStorage.setItem(storageKey, JSON.stringify(serialized))
+      } catch (error) {
+        console.error('Failed to save persisted friend list:', error)
+      }
+    },
+    [storageKey]
+  )
 
   useEffect(() => {
     if (!enabled) return
@@ -230,7 +233,9 @@ export function useFriendPresenceNotifications(
     notifyFriendRemoved,
     addNotification,
     resolvedAccountId,
-    storageKey
+    storageKey,
+    loadPersistedFriendList,
+    savePersistedFriendList
   ])
 
   // Reset when disabled or account changes

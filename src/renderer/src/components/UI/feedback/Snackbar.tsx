@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from 'lucide-react'
 
 export type SnackbarType = 'success' | 'error' | 'info' | 'warning'
@@ -14,6 +14,12 @@ export interface SnackbarProps {
 const Snackbar: React.FC<SnackbarProps> = ({ id, message, type, duration = 5000, onClose }) => {
   const [isVisible, setIsVisible] = useState(false)
 
+  const handleClose = useCallback(() => {
+    setIsVisible(false)
+    // Wait for exit animation
+    setTimeout(() => onClose(id), 300)
+  }, [id, onClose])
+
   useEffect(() => {
     // Trigger entrance animation
     requestAnimationFrame(() => setIsVisible(true))
@@ -26,13 +32,7 @@ const Snackbar: React.FC<SnackbarProps> = ({ id, message, type, duration = 5000,
       handleClose()
     }, duration)
     return () => clearTimeout(timer)
-  }, [duration])
-
-  const handleClose = () => {
-    setIsVisible(false)
-    // Wait for exit animation
-    setTimeout(() => onClose(id), 300)
-  }
+  }, [duration, handleClose])
 
   const getIcon = () => {
     switch (type) {

@@ -64,21 +64,7 @@ const PinLockScreen: React.FC<PinLockScreenProps> = ({ onUnlock }) => {
     return undefined
   }, [lockoutSeconds])
 
-  // Verify PIN when all digits are entered
-  useEffect(() => {
-    const enteredPin = pin.join('')
-    if (
-      enteredPin.length === 6 &&
-      !isVerifying &&
-      !isLocked &&
-      enteredPin !== lastVerifiedPinRef.current
-    ) {
-      lastVerifiedPinRef.current = enteredPin // Mark this PIN as being verified
-      verifyPin(enteredPin)
-    }
-  }, [pin, isVerifying, isLocked])
-
-  const verifyPin = async (enteredPin: string) => {
+  const verifyPin = useCallback(async (enteredPin: string) => {
     setIsVerifying(true)
     setError(null)
 
@@ -120,7 +106,21 @@ const PinLockScreen: React.FC<PinLockScreenProps> = ({ onUnlock }) => {
     } finally {
       setIsVerifying(false)
     }
-  }
+  }, [onUnlock])
+
+  // Verify PIN when all digits are entered
+  useEffect(() => {
+    const enteredPin = pin.join('')
+    if (
+      enteredPin.length === 6 &&
+      !isVerifying &&
+      !isLocked &&
+      enteredPin !== lastVerifiedPinRef.current
+    ) {
+      lastVerifiedPinRef.current = enteredPin // Mark this PIN as being verified
+      verifyPin(enteredPin)
+    }
+  }, [pin, isVerifying, isLocked, verifyPin])
 
   const handleInputChange = useCallback(
     (index: number, value: string) => {

@@ -190,7 +190,7 @@ const PinSetupDialog: React.FC<PinSetupDialogProps> = ({ isOpen, onClose, onSave
           verifyInputRefs.current[0]?.focus()
         }
       }
-    } catch (err) {
+    } catch (_err) {
       setError('An error occurred. Please try again.')
       setVerifyPin(Array(6).fill(''))
     } finally {
@@ -237,7 +237,7 @@ const PinSetupDialog: React.FC<PinSetupDialogProps> = ({ isOpen, onClose, onSave
       } else {
         setError(result.error || 'Failed to set PIN')
       }
-    } catch (err) {
+    } catch (_err) {
       setError('An error occurred. Please try again.')
     } finally {
       setIsSubmitting(false)
@@ -263,7 +263,7 @@ const PinSetupDialog: React.FC<PinSetupDialogProps> = ({ isOpen, onClose, onSave
       } else {
         setError(result.error || 'Failed to remove PIN')
       }
-    } catch (err) {
+    } catch (_err) {
       setError('An error occurred. Please try again.')
     } finally {
       setIsSubmitting(false)

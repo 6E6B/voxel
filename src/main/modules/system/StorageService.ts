@@ -585,7 +585,8 @@ class StorageService {
     nextSettings.sidebarTabOrder = sanitizeSidebarOrder(nextSettings.sidebarTabOrder)
     nextSettings.sidebarHiddenTabs = sanitizeSidebarHidden(nextSettings.sidebarHiddenTabs)
 
-    const { pinCode: _, ...settingsWithoutPin } = nextSettings
+    const { pinCode, ...settingsWithoutPin } = nextSettings
+    void pinCode
     this.data.settings = {
       ...(this.data.settings ?? {}),
       ...(settingsWithoutPin as any)

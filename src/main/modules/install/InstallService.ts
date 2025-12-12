@@ -380,7 +380,9 @@ export class RobloxInstallService {
             // Cleanup
             try {
               await fs.promises.unlink(data.zipPath)
-            } catch {}
+            } catch {
+              // Ignore cleanup failures
+            }
           }
 
           return { success: true, pkg: data.pkg }

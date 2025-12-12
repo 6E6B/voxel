@@ -245,7 +245,9 @@ const ProfileCard = ({
               </AnimatePresence>
             </div>
           </TooltipTrigger>
-          <TooltipContent side="right">{privacyMode ? 'Hidden' : account.displayName}</TooltipContent>
+          <TooltipContent side="right">
+            {privacyMode ? 'Hidden' : account.displayName}
+          </TooltipContent>
         </Tooltip>
         <CreditsDialog isOpen={isCreditsOpen} onClose={() => setIsCreditsOpen(false)} />
       </>

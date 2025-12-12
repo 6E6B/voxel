@@ -20,36 +20,38 @@ if (kernel32) {
   CloseHandle = kernel32.func('__stdcall', 'CloseHandle', 'int', ['void*'])
 }
 
-export namespace MultiInstance {
-  let g_mutex: any = null
+let g_mutex: any = null
 
-  export function Enable(): void {
-    if (!isWindows || !kernel32) return
+const Enable = (): void => {
+  if (!isWindows || !kernel32) return
 
-    if (!g_mutex) {
-      try {
-        g_mutex = CreateMutexW(null, 0, 'ROBLOX_singletonEvent')
+  if (!g_mutex) {
+    try {
+      g_mutex = CreateMutexW(null, 0, 'ROBLOX_singletonEvent')
 
-        if (g_mutex) {
-        } else {
-          console.error('MultiInstance: Failed to create mutex')
-        }
-      } catch (e) {
-        console.error('MultiInstance: Error creating mutex:', e)
+      if (!g_mutex) {
+        console.error('MultiInstance: Failed to create mutex')
       }
+    } catch (e) {
+      console.error('MultiInstance: Error creating mutex:', e)
     }
   }
+}
 
-  export function Disable(): void {
-    if (!isWindows || !kernel32) return
+const Disable = (): void => {
+  if (!isWindows || !kernel32) return
 
-    if (g_mutex) {
-      try {
-        CloseHandle(g_mutex)
-        g_mutex = null
-      } catch (e) {
-        console.error('MultiInstance: Error closing mutex:', e)
-      }
+  if (g_mutex) {
+    try {
+      CloseHandle(g_mutex)
+      g_mutex = null
+    } catch (e) {
+      console.error('MultiInstance: Error closing mutex:', e)
     }
   }
+}
+
+export const MultiInstance = {
+  Enable,
+  Disable
 }

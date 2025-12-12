@@ -155,7 +155,7 @@ const PinSetupStep: React.FC<PinSetupStepProps> = ({ onComplete, onSkip }) => {
       } else {
         setError(result.error || 'Failed to set PIN')
       }
-    } catch (err) {
+    } catch (_err) {
       setError('An error occurred. Please try again.')
     } finally {
       setIsSubmitting(false)

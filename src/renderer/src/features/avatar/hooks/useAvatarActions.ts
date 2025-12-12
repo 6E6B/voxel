@@ -86,9 +86,10 @@ export const useAvatarActions = ({
   }, [])
 
   useEffect(() => {
+    const timeouts = favoriteBurstTimeouts.current
     return () => {
-      favoriteBurstTimeouts.current.forEach((timeoutId) => clearTimeout(timeoutId))
-      favoriteBurstTimeouts.current.clear()
+      timeouts.forEach((timeoutId) => clearTimeout(timeoutId))
+      timeouts.clear()
     }
   }, [])
 

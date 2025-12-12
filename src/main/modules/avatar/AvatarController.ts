@@ -413,10 +413,10 @@ export const registerAvatarHandlers = (): void => {
             // This handles null, true, false, numbers, strings, etc. properly
             const fn = new Function(`return ${match[1]}`)
             return fn()
-          } catch (e) {
+          } catch {
             // If Function evaluation fails, try manual JSON parsing with fixes
             try {
-              let str = match[1]
+              const str = match[1]
                 .replace(/'/g, '"') // Single quotes to double quotes
                 .replace(/,(\s*[}\]])/g, '$1') // Remove trailing commas
                 .replace(/(\w+):/g, '"$1":') // Quote unquoted keys

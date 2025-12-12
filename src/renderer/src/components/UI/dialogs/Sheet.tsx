@@ -42,7 +42,6 @@ const Sheet: React.FC<SheetProps> = ({ isOpen, onClose, children, className }) =
   const constraintsRef = React.useRef<HTMLDivElement>(null)
   const sheetRef = React.useRef<HTMLDivElement>(null)
   const prevIsOpenRef = React.useRef(false)
-  const fallbackTimerRef = React.useRef<NodeJS.Timeout | null>(null)
 
   // Handle open/close transitions and sheet stack management
   React.useEffect(() => {

@@ -1,4 +1,4 @@
-import React, { forwardRef, useMemo, useContext, createContext, useState } from 'react'
+import React, { forwardRef, useCallback, useMemo, useContext, createContext, useState } from 'react'
 import { Copy, Info, Check } from 'lucide-react'
 import { Account } from '@renderer/types'
 import CustomCheckbox from '@renderer/components/UI/buttons/CustomCheckbox'
@@ -67,28 +67,34 @@ const AccountListView = ({
   allowMultipleInstances,
   voiceBanInfo
 }: AccountListViewProps) => {
-  const handleDragStart = (e: React.DragEvent, id: string) => {
+  const handleDragStart = useCallback((e: React.DragEvent, id: string) => {
     e.dataTransfer.setData('text/plain', id)
     e.dataTransfer.effectAllowed = 'move'
     // Optional: Set a drag image or style opacity
     // (e.target as HTMLElement).style.opacity = '0.5'
-  }
+  }, [])
 
-  const handleDragOver = (e: React.DragEvent) => {
+  const handleDragOver = useCallback(
+    (e: React.DragEvent) => {
     if (onMoveAccount) {
       e.preventDefault()
       e.dataTransfer.dropEffect = 'move'
     }
-  }
+    },
+    [onMoveAccount]
+  )
 
-  const handleDrop = (e: React.DragEvent, targetId: string) => {
+  const handleDrop = useCallback(
+    (e: React.DragEvent, targetId: string) => {
     if (!onMoveAccount) return
     e.preventDefault()
     const sourceId = e.dataTransfer.getData('text/plain')
     if (sourceId && sourceId !== targetId) {
       onMoveAccount(sourceId, targetId)
     }
-  }
+    },
+    [onMoveAccount]
+  )
 
   const rowContext = useMemo<AccountRowContext>(
     () => ({
@@ -100,7 +106,15 @@ const AccountListView = ({
       handleDragOver,
       handleDrop
     }),
-    [selectedIds, onToggleSelect, onMenuOpen, onMoveAccount]
+    [
+      selectedIds,
+      onToggleSelect,
+      onMenuOpen,
+      onMoveAccount,
+      handleDragStart,
+      handleDragOver,
+      handleDrop
+    ]
   )
 
   const tableComponents = useMemo<TableComponents<Account, AccountRowContext>>(

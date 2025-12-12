@@ -38,13 +38,15 @@ const AddAccountStep: React.FC<AddAccountStepProps> = ({ onAccountAdded, onSkip 
   } | null>(null)
   const [quickLoginStatus, setQuickLoginStatus] = useState('')
   const pollingRef = React.useRef<NodeJS.Timeout | null>(null)
+  const generateCodeRef = React.useRef<() => void>(() => {})
+  const stopPollingRef = React.useRef<() => void>(() => {})
 
   React.useEffect(() => {
     if (method === 'quick' && !quickLoginData && !isLoading) {
-      generateCode()
+      generateCodeRef.current()
     }
-    return () => stopPolling()
-  }, [method])
+    return () => stopPollingRef.current()
+  }, [method, quickLoginData, isLoading])
 
   const stopPolling = () => {
     if (pollingRef.current) {
@@ -55,7 +57,7 @@ const AddAccountStep: React.FC<AddAccountStepProps> = ({ onAccountAdded, onSkip 
 
   const generateCode = async () => {
     setIsLoading(true)
-    stopPolling()
+    stopPollingRef.current()
     try {
       const data = await window.api.generateQuickLoginCode()
       setQuickLoginData(data)
@@ -68,6 +70,9 @@ const AddAccountStep: React.FC<AddAccountStepProps> = ({ onAccountAdded, onSkip 
       setIsLoading(false)
     }
   }
+
+  generateCodeRef.current = generateCode
+  stopPollingRef.current = stopPolling
 
   const startPolling = (code: string, privateKey: string) => {
     stopPolling()
@@ -83,7 +88,7 @@ const AddAccountStep: React.FC<AddAccountStepProps> = ({ onAccountAdded, onSkip 
         } else if (result.status === 'Cancelled' || result.status === 'CodeInvalid') {
           stopPolling()
           setQuickLoginData(null)
-          generateCode()
+          generateCodeRef.current()
           return
         }
         pollingRef.current = setTimeout(poll, 3000)
@@ -137,7 +142,7 @@ const AddAccountStep: React.FC<AddAccountStepProps> = ({ onAccountAdded, onSkip 
     setError(null)
     try {
       await addAccountFromCookie(cookie)
-    } catch (err) {
+    } catch {
       setError('Failed to add account. Please check the cookie.')
     } finally {
       setIsLoading(false)
@@ -355,15 +360,15 @@ const AddAccountStep: React.FC<AddAccountStepProps> = ({ onAccountAdded, onSkip 
           >
             <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 text-sm text-blue-100/90">
               <p>
-                We'll open the official Roblox login page inside a sandboxed window. The session
-                cookie will be captured securely.
+                We&apos;ll open the official Roblox login page inside a sandboxed window. The
+                session cookie will be captured securely.
               </p>
             </div>
 
             <div className="space-y-2 text-sm text-neutral-400">
               <p className="text-neutral-300 font-medium">How it works</p>
               <ul className="list-decimal list-inside space-y-1">
-                <li>Click "Open Roblox Login" to launch the official page.</li>
+                <li>Click &quot;Open Roblox Login&quot; to launch the official page.</li>
                 <li>Sign in inside the new window.</li>
                 <li>Once Roblox finishes, we import the account automatically.</li>
               </ul>

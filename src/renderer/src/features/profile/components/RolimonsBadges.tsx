@@ -75,7 +75,9 @@ export const RolimonsBadges: React.FC<RolimonsBadgesProps> = ({ userId }) => {
         <TooltipContent>
           <div className="space-y-1">
             <div className="font-semibold">{badgeMeta.label}</div>
-            <div className="text-xs text-[var(--color-text-secondary)]">{badgeMeta.description}</div>
+            <div className="text-xs text-[var(--color-text-secondary)]">
+              {badgeMeta.description}
+            </div>
             <div className="text-xs text-[var(--color-text-muted)] pt-1 border-t border-[var(--color-border-subtle)]">
               Earned {new Date(acquiredTime * 1000).toLocaleDateString()}
             </div>

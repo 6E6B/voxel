@@ -20,7 +20,7 @@ export const createProfilesCommands: CommandFactory = (callbacks) => [
         }
         callbacks.onViewProfile(user.id.toString())
         callbacks.showNotification(`Found user: ${user.displayName}`, 'success')
-      } catch (e) {
+      } catch {
         callbacks.showNotification(`User "${username}" not found`, 'error')
       }
     }

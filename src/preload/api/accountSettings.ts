@@ -93,5 +93,5 @@ export const accountSettingsApi = {
       twitch?: string
       promotionChannelsVisibilityPrivacy?: string
     }
-  ) => invoke('update-promotion-channels', updateResultSchema, cookie, channels),
+  ) => invoke('update-promotion-channels', updateResultSchema, cookie, channels)
 }

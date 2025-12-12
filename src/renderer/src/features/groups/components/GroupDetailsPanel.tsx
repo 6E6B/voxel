@@ -479,8 +479,8 @@ export const GroupDetailsPanel = ({
 
   const roles = rolesData?.roles || []
   const sortedRoles = [...roles].sort((a, b) => b.rank - a.rank)
-  const wallPosts = wallPostsData?.data || []
-  const members = membersData?.data || []
+  const wallPosts = useMemo(() => wallPostsData?.data ?? [], [wallPostsData?.data])
+  const members = useMemo(() => membersData?.data ?? [], [membersData?.data])
 
   // Extract user IDs for batch thumbnail fetching using TanStack Query
   const memberUserIds = useMemo(() => {
@@ -499,6 +499,8 @@ export const GroupDetailsPanel = ({
   }, [wallPosts])
 
   const shoutUserId = details?.shout?.poster?.userId
+  const ownerUserId = details?.owner?.userId
+  const shoutPosterUserId = details?.shout?.poster?.userId
 
   // Use TanStack Query for batch user avatars - handles caching and deduplication automatically
   const { data: memberThumbnails = {} } = useBatchUserAvatars(memberUserIds)
@@ -512,7 +514,7 @@ export const GroupDetailsPanel = ({
     try {
       await cancelRequestMutation.mutateAsync(groupId)
       showNotification('Cancelled group join request', 'success')
-    } catch (error) {
+    } catch (_error) {
       showNotification('Failed to cancel request', 'error')
     }
   }
@@ -524,7 +526,7 @@ export const GroupDetailsPanel = ({
     try {
       await leaveGroupMutation.mutateAsync(groupId)
       showNotification('Left group successfully', 'success')
-    } catch (error) {
+    } catch (_error) {
       showNotification('Failed to leave group', 'error')
     }
   }
@@ -653,11 +655,7 @@ export const GroupDetailsPanel = ({
                         By{' '}
                         <span
                           className={`font-medium hover:underline cursor-pointer inline-flex items-center gap-1 ${details.owner.hasVerifiedBadge ? 'text-[#3385ff]' : 'text-white'}`}
-                          onClick={
-                            details.owner?.userId
-                              ? () => onViewProfile?.(details.owner?.userId!)
-                              : undefined
-                          }
+                          onClick={ownerUserId ? () => onViewProfile?.(ownerUserId) : undefined}
                         >
                           {details.owner.displayName || details.owner.username}
                           {details.owner.hasVerifiedBadge && (
@@ -749,9 +747,7 @@ export const GroupDetailsPanel = ({
                         <Avatar
                           className="w-12 h-12 rounded-full border border-neutral-700 shrink-0 cursor-pointer hover:ring-2 hover:ring-neutral-600 transition-all"
                           onClick={
-                            details.shout?.poster?.userId
-                              ? () => onViewProfile?.(details.shout?.poster?.userId!)
-                              : undefined
+                            shoutPosterUserId ? () => onViewProfile?.(shoutPosterUserId) : undefined
                           }
                         >
                           <AvatarImage src={shoutThumbnail} alt={details.shout.poster?.username} />
@@ -764,8 +760,8 @@ export const GroupDetailsPanel = ({
                             <span
                               className={`font-semibold inline-flex items-center gap-1 cursor-pointer hover:underline ${details.shout.poster?.hasVerifiedBadge ? 'text-[#3385ff]' : 'text-white'}`}
                               onClick={
-                                details.shout?.poster?.userId
-                                  ? () => onViewProfile?.(details.shout?.poster?.userId!)
+                                shoutPosterUserId
+                                  ? () => onViewProfile?.(shoutPosterUserId)
                                   : undefined
                               }
                             >

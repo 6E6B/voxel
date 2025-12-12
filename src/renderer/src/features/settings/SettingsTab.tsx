@@ -390,7 +390,7 @@ const SettingsTab: React.FC<SettingsTabProps> = ({ accounts, settings, onUpdateS
       subLabel: `@${account.username}`,
       subLabelNode: settings.privacyMode ? (
         <span className="privacy-blur">@{account.username}</span>
-      ) : undefined,
+      ) : undefined
     }))
   ]
 

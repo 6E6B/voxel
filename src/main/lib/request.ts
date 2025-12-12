@@ -31,20 +31,64 @@ export class RequestError extends Error {
 }
 
 export const safeRequest = <T>(options: RequestOptions): Promise<T> => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      const method = options.method || 'GET'
+  return new Promise((resolve, reject) => {
+    const method = options.method || 'GET'
 
-      const request = net.request({
-        method,
-        url: options.url
+    const request = net.request({
+      method,
+      url: options.url
+    })
+
+    const timeout = setTimeout(() => {
+      request.abort()
+      reject(new RequestError('Request timed out', 408))
+    }, 30000)
+
+    request.on('redirect', () => {
+      request.followRedirect()
+    })
+
+    request.on('response', (response) => {
+      let data = ''
+      response.on('data', (chunk) => {
+        data += chunk
       })
 
-      const timeout = setTimeout(() => {
-        request.abort()
-        reject(new RequestError('Request timed out', 408))
-      }, 30000)
+      response.on('end', () => {
+        clearTimeout(timeout)
+        if (response.statusCode >= 200 && response.statusCode < 300) {
+          try {
+            const result = data ? JSON.parse(data) : {}
 
+            if (options.returnHeaders) {
+              resolve({ data: result, headers: response.headers } as unknown as T)
+            } else {
+              resolve(result)
+            }
+          } catch {
+            reject(
+              new RequestError(`Failed to parse response from ${options.url}`, response.statusCode)
+            )
+          }
+        } else {
+          reject(
+            new RequestError(
+              `Request failed with status code ${response.statusCode}`,
+              response.statusCode,
+              response.headers,
+              data || undefined
+            )
+          )
+        }
+      })
+    })
+
+    request.on('error', (error) => {
+      clearTimeout(timeout)
+      reject(error)
+    })
+
+    const send = async () => {
       if (options.cookie) {
         request.setHeader('Cookie', `.ROBLOSECURITY=${options.cookie}`)
         try {
@@ -73,57 +117,13 @@ export const safeRequest = <T>(options: RequestOptions): Promise<T> => {
         request.write(JSON.stringify(options.body))
       }
 
-      request.on('redirect', () => {
-        request.followRedirect()
-      })
-
-      request.on('response', (response) => {
-        let data = ''
-        response.on('data', (chunk) => {
-          data += chunk
-        })
-
-        response.on('end', () => {
-          clearTimeout(timeout)
-          if (response.statusCode >= 200 && response.statusCode < 300) {
-            try {
-              const result = data ? JSON.parse(data) : {}
-
-              if (options.returnHeaders) {
-                resolve({ data: result, headers: response.headers } as unknown as T)
-              } else {
-                resolve(result)
-              }
-            } catch (e) {
-              reject(
-                new RequestError(
-                  `Failed to parse response from ${options.url}`,
-                  response.statusCode
-                )
-              )
-            }
-          } else {
-            reject(
-              new RequestError(
-                `Request failed with status code ${response.statusCode}`,
-                response.statusCode,
-                response.headers,
-                data || undefined
-              )
-            )
-          }
-        })
-      })
-
-      request.on('error', (error) => {
-        clearTimeout(timeout)
-        reject(error)
-      })
-
       request.end()
-    } catch (error) {
-      reject(error)
     }
+
+    void send().catch((error) => {
+      clearTimeout(timeout)
+      reject(error)
+    })
   })
 }
 

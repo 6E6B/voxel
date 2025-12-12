@@ -195,13 +195,15 @@ export const useAvatarScene = ({ mountRef, userId, cookie }: UseAvatarSceneOptio
     window.addEventListener('resize', handleResize)
     setTimeout(handleResize, 0)
 
+    const mountEl = mountRef.current
+
     return () => {
       resizeObserver.disconnect()
       window.removeEventListener('resize', handleResize)
       cancelAnimationFrame(requestRef.current)
       renderer.dispose()
-      if (mountRef.current && renderer.domElement) {
-        mountRef.current.removeChild(renderer.domElement)
+      if (mountEl && renderer.domElement) {
+        mountEl.removeChild(renderer.domElement)
       }
       sceneRef.current = null
       cameraRef.current = null

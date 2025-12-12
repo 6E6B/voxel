@@ -326,7 +326,7 @@ const NotificationTray: React.FC = () => {
                 <div className="flex flex-col items-center justify-center py-12 text-neutral-500">
                   <Bell className="h-10 w-10 mb-3 opacity-30" />
                   <p className="text-sm">No notifications</p>
-                  <p className="text-xs mt-1 opacity-60">You're all caught up!</p>
+                  <p className="text-xs mt-1 opacity-60">You&apos;re all caught up!</p>
                 </div>
               )}
             </div>

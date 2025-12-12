@@ -1,4 +1,4 @@
-/// <reference path="./window.d.ts" />
+import type {} from './window'
 import React, { useState, useMemo, useRef, useEffect, useCallback, lazy, Suspense } from 'react'
 import notificationIcon from '../../../resources/build/icons/png/256x256.png'
 import { AnimatePresence } from 'framer-motion'
@@ -43,7 +43,7 @@ import {
   useNotificationTrayStore,
   useNotifyServerLocation
 } from './features/system/stores/useNotificationTrayStore'
-import { useTheme } from './theme/ThemeProvider'
+import { useTheme } from './theme/ThemeContext'
 
 import {
   useActiveTab,
@@ -212,7 +212,7 @@ const App: React.FC = () => {
       document.removeEventListener('mousedown', handleClickOutside)
       window.removeEventListener('scroll', handleScroll, true)
     }
-  }, [activeMenu])
+  }, [activeMenu, setActiveMenu])
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -461,7 +461,7 @@ const App: React.FC = () => {
 
   const installations = useInstallations()
 
-  const handleLaunch = (config: JoinConfig) => {
+  const handleLaunch = useCallback((config: JoinConfig) => {
     const configuredPath =
       typeof settings.defaultInstallationPath === 'string'
         ? settings.defaultInstallationPath.trim()
@@ -488,7 +488,15 @@ const App: React.FC = () => {
     setPendingLaunchConfig(config)
     closeModal('join')
     openModal('instanceSelection')
-  }
+  }, [
+    settings.defaultInstallationPath,
+    performLaunch,
+    installations,
+    setAvailableInstallations,
+    setPendingLaunchConfig,
+    closeModal,
+    openModal
+  ])
 
   const handleCommandPaletteLaunchGame = useCallback(
     (method: JoinMethod, target: string) => {
@@ -498,7 +506,7 @@ const App: React.FC = () => {
       }
       handleLaunch({ method, target })
     },
-    [selectedIds.size, showNotification]
+    [selectedIds.size, showNotification, handleLaunch]
   )
 
   const handleInstanceSelect = (path?: string) => {

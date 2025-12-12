@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef } from 'react'
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import {
@@ -138,17 +138,17 @@ const FriendsTab = ({ selectedAccount, onFriendJoin, onFriendsCountChange }: Fri
 
     const intervalId = setInterval(refreshStatuses, 5000)
     return () => clearInterval(intervalId)
-  }, [selectedAccount?.cookie, selectedAccount?.id, friends.length, queryClient])
+  }, [selectedAccount?.cookie, selectedAccount?.id, friends, queryClient])
 
   useEffect(() => {
     if (!selectedAccount) onFriendsCountChange?.(0)
-  }, [selectedAccount?.id, onFriendsCountChange])
+  }, [selectedAccount, onFriendsCountChange])
 
   useEffect(() => {
     if (friendsListRef.current && scrollPosition > 0 && !isLoading) {
       friendsListRef.current.scrollTop = scrollPosition
     }
-  }, [isLoading])
+  }, [isLoading, scrollPosition])
 
   // Filtering & Sorting
   const filteredFriends = useMemo(() => {
@@ -204,13 +204,13 @@ const FriendsTab = ({ selectedAccount, onFriendJoin, onFriendsCountChange }: Fri
 
   type SectionKey = 'Favorites' | AccountStatus | 'InGameNoJoin'
 
-  const getSectionKey = (friend: Friend): SectionKey => {
+  const getSectionKey = useCallback((friend: Friend): SectionKey => {
     if (favorites.includes(friend.userId)) return 'Favorites'
     if (friend.status === AccountStatus.InGame && !friend.gameActivity?.placeId) {
       return 'InGameNoJoin'
     }
     return friend.status
-  }
+  }, [favorites])
 
   const groupedFriends = useMemo(() => {
     const groups: Partial<Record<SectionKey, Friend[]>> = {}
@@ -222,7 +222,7 @@ const FriendsTab = ({ selectedAccount, onFriendJoin, onFriendsCountChange }: Fri
     })
 
     return groups
-  }, [filteredFriends, favorites])
+  }, [filteredFriends, getSectionKey])
 
   const handleUnfriend = async (targetUserId: number) => {
     if (!selectedAccount || !selectedAccount.cookie) return

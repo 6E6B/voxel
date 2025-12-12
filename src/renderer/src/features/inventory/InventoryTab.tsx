@@ -291,8 +291,7 @@ const InventoryTab = ({ account }: InventoryTabProps) => {
   const handleDownloadObj = useCallback(async (assetId: number, assetName: string) => {
     try {
       const result = await (window as any).api.downloadAsset3D(assetId, 'obj', assetName)
-      if (result.success) {
-      }
+      if (!result?.success) console.error('Failed to download OBJ')
     } catch (err) {
       console.error('Failed to download OBJ:', err)
     }
@@ -302,8 +301,7 @@ const InventoryTab = ({ account }: InventoryTabProps) => {
   const handleDownloadTexture = useCallback(async (assetId: number, assetName: string) => {
     try {
       const result = await (window as any).api.downloadAsset3D(assetId, 'texture', assetName)
-      if (result.success) {
-      }
+      if (!result?.success) console.error('Failed to download texture')
     } catch (err) {
       console.error('Failed to download texture:', err)
     }
@@ -329,8 +327,7 @@ const InventoryTab = ({ account }: InventoryTabProps) => {
     async (assetId: number, assetName: string) => {
       try {
         const result = await window.api.downloadCatalogTemplate(assetId, assetName, cookie)
-        if (result.success) {
-        } else {
+        if (!result.success) {
           console.error('Failed to download template:', result.message)
         }
       } catch (err) {

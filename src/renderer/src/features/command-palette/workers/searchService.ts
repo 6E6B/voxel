@@ -146,7 +146,7 @@ class SearchService {
         console.log(`[SearchService] Rolimons indexed: ${message.count} items`)
         break
 
-      case 'CATALOG_RESULTS':
+      case 'CATALOG_RESULTS': {
         // Find and resolve pending catalog searches for this query
         const catalogSearches = this.pendingCatalogSearches.filter((s) => s.query === message.query)
         catalogSearches.forEach((s) => s.callback(message.results, message.query))
@@ -154,8 +154,9 @@ class SearchService {
           (s) => s.query !== message.query
         )
         break
+      }
 
-      case 'ROLIMONS_RESULTS':
+      case 'ROLIMONS_RESULTS': {
         // Find and resolve pending rolimons searches for this query
         const rolimonsSearches = this.pendingRolimonsSearches.filter(
           (s) => s.query === message.query
@@ -165,6 +166,7 @@ class SearchService {
           (s) => s.query !== message.query
         )
         break
+      }
 
       case 'CATALOG_INDEX_EXPORTED':
         // Resolve pending export

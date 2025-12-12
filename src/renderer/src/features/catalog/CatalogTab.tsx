@@ -297,7 +297,7 @@ const CatalogTab = ({ onItemSelect, onCreatorSelect, cookie }: CatalogTabProps) 
   const handleApplyPriceFilter = useCallback(() => {
     setAppliedMinPrice(minPrice ? parseInt(minPrice) : undefined)
     setAppliedMaxPrice(maxPrice ? parseInt(maxPrice) : undefined)
-  }, [minPrice, maxPrice])
+  }, [minPrice, maxPrice, setAppliedMinPrice, setAppliedMaxPrice])
 
   // Apply creator filter
   const handleApplyCreatorFilter = useCallback(
@@ -367,8 +367,7 @@ const CatalogTab = ({ onItemSelect, onCreatorSelect, cookie }: CatalogTabProps) 
   const handleDownloadObj = useCallback(async (assetId: number, assetName: string) => {
     try {
       const result = await (window as any).api.downloadAsset3D(assetId, 'obj', assetName)
-      if (result.success) {
-      }
+      if (!result?.success) console.error('Failed to download OBJ')
     } catch (err) {
       console.error('Failed to download OBJ:', err)
     }
@@ -378,8 +377,7 @@ const CatalogTab = ({ onItemSelect, onCreatorSelect, cookie }: CatalogTabProps) 
   const handleDownloadTexture = useCallback(async (assetId: number, assetName: string) => {
     try {
       const result = await (window as any).api.downloadAsset3D(assetId, 'texture', assetName)
-      if (result.success) {
-      }
+      if (!result?.success) console.error('Failed to download texture')
     } catch (err) {
       console.error('Failed to download texture:', err)
     }
@@ -403,11 +401,12 @@ const CatalogTab = ({ onItemSelect, onCreatorSelect, cookie }: CatalogTabProps) 
   const handleDownloadTemplate = async (assetId: number, assetName: string) => {
     try {
       const result = await window.api.downloadCatalogTemplate(assetId, assetName, cookie)
-      if (result.success) {
-      } else {
+      if (!result.success) {
         console.error('Failed to download template:', result.message)
       }
-    } catch (err) {}
+    } catch (err) {
+      console.error('Failed to download template:', err)
+    }
   }
 
   const gridStyle: CSSProperties = {

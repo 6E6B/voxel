@@ -169,6 +169,7 @@ const Object3DLoader: React.FC<Object3DLoaderProps> = ({
 
   useEffect(() => {
     let cancelled = false
+    const group = groupRef.current
 
     const loadObject = async () => {
       try {
@@ -179,18 +180,18 @@ const Object3DLoader: React.FC<Object3DLoaderProps> = ({
           return
         }
 
-        if (objectRef.current && groupRef.current) {
-          groupRef.current.remove(objectRef.current)
+        if (objectRef.current && group) {
+          group.remove(objectRef.current)
           dispose3DObject(objectRef.current)
         }
 
-        if (groupRef.current) {
+        if (group) {
           const box = new THREE.Box3().setFromObject(object)
           const center = new THREE.Vector3()
           box.getCenter(center)
           object.position.sub(center)
 
-          groupRef.current.add(object)
+          group.add(object)
           objectRef.current = object
 
           const centeredBox = new THREE.Box3().setFromObject(object)
@@ -221,8 +222,8 @@ const Object3DLoader: React.FC<Object3DLoaderProps> = ({
 
     return () => {
       cancelled = true
-      if (objectRef.current && groupRef.current) {
-        groupRef.current.remove(objectRef.current)
+      if (objectRef.current && group) {
+        group.remove(objectRef.current)
         dispose3DObject(objectRef.current)
         objectRef.current = null
       }

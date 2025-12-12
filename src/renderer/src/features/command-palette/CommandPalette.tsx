@@ -663,9 +663,24 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     }
   })
 
+  const callbacksProxy = useMemo<CommandCallbacks>(
+    () => ({
+      setActiveTab: (...args) => callbacksRef.current.setActiveTab(...args),
+      openModal: (...args) => callbacksRef.current.openModal(...args),
+      setSelectedIds: (...args) => callbacksRef.current.setSelectedIds(...args),
+      showNotification: (...args) => callbacksRef.current.showNotification(...args),
+      onViewProfile: (...args) => callbacksRef.current.onViewProfile(...args),
+      onLaunchGame: (...args) => callbacksRef.current.onLaunchGame(...args),
+      onViewAccessory: (...args) => callbacksRef.current.onViewAccessory(...args),
+      getSelectedAccount: () => callbacksRef.current.getSelectedAccount(),
+      getAccounts: () => callbacksRef.current.getAccounts()
+    }),
+    []
+  )
+
   const commands = useMemo<CommandType[]>(() => {
-    return createAllCommands(callbacksRef.current)
-  }, [accounts])
+    return createAllCommands(callbacksProxy)
+  }, [callbacksProxy])
 
   // Trigger searches when query changes
   useEffect(() => {
