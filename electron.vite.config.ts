@@ -44,8 +44,16 @@ export default defineConfig({
     },
     assetsInclude: ['**/*.dds'], // Include DDS files as assets
     plugins: [react(), tailwindcss()],
+    worker: {
+      format: 'es'
+    },
     optimizeDeps: {
       exclude: ['multithreading']
+    },
+    build: {
+      commonjsOptions: {
+        exclude: [/node_modules\/multithreading\//]
+      }
     }
   }
 })

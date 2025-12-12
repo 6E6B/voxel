@@ -2,8 +2,7 @@ import Database from 'better-sqlite3'
 import { app, net } from 'electron'
 import path from 'path'
 import fs from 'fs'
-import { Worker } from 'node:worker_threads'
-import { catalogIndexExportSchema, type CatalogIndexExport } from '@shared/ipc-schemas/avatar'
+import type { CatalogIndexExport } from '@shared/ipc-schemas/avatar'
 
 const DATABASE_DOWNLOAD_URL =
   'https://github.com/6E6B/items-dataset/releases/download/v1/roblox_items.db'

@@ -1,6 +1,25 @@
 import * as THREE from 'three'
 import { spawn, move } from 'multithreading'
-import { SerializedObject, SerializedGroup, SerializedMesh } from './AvatarParser'
+
+export type SerializedMesh = {
+  type: 'Mesh'
+  name: string
+  geometry: {
+    position: Float32Array
+    normal: Float32Array | null
+    uv: Float32Array | null
+    index: Uint16Array | Uint32Array | null
+  }
+  materialName: string
+}
+
+export type SerializedGroup = {
+  type: 'Group'
+  name: string
+  children: SerializedObject[]
+}
+
+export type SerializedObject = SerializedMesh | SerializedGroup
 
 const textureLoader = new THREE.TextureLoader()
 

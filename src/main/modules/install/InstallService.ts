@@ -1,16 +1,11 @@
-import { net, shell } from 'electron'
+import { shell } from 'electron'
 import fs from 'fs'
 import path from 'path'
 import os from 'os'
-import { pipeline } from 'stream'
-import { promisify } from 'util'
 import { spawn } from 'child_process'
-import * as yauzl from 'yauzl'
 import { safeFetchText } from '@main/lib/request'
 import { fflagsSchema } from '@shared/ipc-schemas/system'
 import { deployHistorySchema } from '@shared/ipc-schemas/user'
-
-const streamPipeline = promisify(pipeline)
 
 export interface DetectedInstallation {
   path: string
@@ -780,151 +775,6 @@ export class RobloxInstallService {
       })
       child.unref()
     }
-  }
-
-  private static downloadFile(url: string, dest: string): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const dir = path.dirname(dest)
-      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
-
-      if (fs.existsSync(dest)) {
-        try {
-          fs.unlinkSync(dest)
-        } catch (e) {
-          console.warn(`Could not delete existing file ${dest}, trying to overwrite`, e)
-        }
-      }
-
-      const request = net.request(url)
-      request.on('response', (response) => {
-        if (response.statusCode !== 200) {
-          reject(new Error(`Failed to download ${url}: ${response.statusCode}`))
-          return
-        }
-
-        try {
-          const file = fs.createWriteStream(dest)
-
-          file.on('error', (err) => {
-            file.close()
-            fs.unlink(dest, () => {})
-            reject(err)
-          })
-
-          file.on('finish', () => {
-            file.close(() => resolve())
-          })
-
-          response.on('error', (err) => {
-            file.close()
-            fs.unlink(dest, () => {})
-            reject(err)
-          })
-
-          response.on('data', (chunk) => {
-            file.write(chunk)
-          })
-
-          response.on('end', () => {
-            file.end()
-          })
-        } catch (e) {
-          reject(e)
-        }
-      })
-      request.on('error', (err) => {
-        reject(err)
-      })
-      request.end()
-    })
-  }
-
-  private static extractZip(zipPath: string, extractPath: string): Promise<void> {
-    const normalizedRoot = path.resolve(extractPath)
-    const rootWithSep = normalizedRoot.endsWith(path.sep)
-      ? normalizedRoot
-      : normalizedRoot + path.sep
-
-    return new Promise((resolve, reject) => {
-      let finished = false
-      const finish = (err?: Error) => {
-        if (finished) return
-        finished = true
-        if (err) {
-          reject(err)
-        } else {
-          resolve()
-        }
-      }
-
-      yauzl.open(
-        zipPath,
-        { lazyEntries: true, validateEntrySizes: false, decodeStrings: false },
-        (err, zipFile) => {
-          if (err || !zipFile) {
-            finish(err ?? new Error(`Failed to open zip ${zipPath}`))
-            return
-          }
-
-          const openReadStream = (entry: yauzl.Entry) =>
-            new Promise<NodeJS.ReadableStream>((resolveStream, rejectStream) => {
-              zipFile.openReadStream(entry, (streamErr, readStream) => {
-                if (streamErr || !readStream) {
-                  rejectStream(
-                    streamErr ?? new Error(`Failed to open stream for ${entry.fileName}`)
-                  )
-                } else {
-                  resolveStream(readStream)
-                }
-              })
-            })
-
-          const processEntry = async (entry: yauzl.Entry) => {
-            let fileName = entry.fileName as unknown as string | Buffer
-            if (Buffer.isBuffer(fileName)) {
-              const isUtf8 = (entry.generalPurposeBitFlag & 0x800) !== 0
-              fileName = fileName.toString(isUtf8 ? 'utf8' : 'latin1')
-            }
-            const fileNameStr = fileName as string
-
-            const sanitizedName = fileNameStr.replace(/^([/\\])+/, '')
-            if (!sanitizedName) {
-              zipFile.readEntry()
-              return
-            }
-
-            const normalizedEntryPath = path.resolve(normalizedRoot, sanitizedName)
-
-            if (
-              normalizedEntryPath !== normalizedRoot &&
-              !normalizedEntryPath.startsWith(rootWithSep)
-            ) {
-              throw new Error(`Zip entry escapes target path: ${fileNameStr}`)
-            }
-
-            if (fileNameStr.endsWith('/') || fileNameStr.endsWith('\\')) {
-              await fs.promises.mkdir(normalizedEntryPath, { recursive: true })
-              zipFile.readEntry()
-              return
-            }
-
-            await fs.promises.mkdir(path.dirname(normalizedEntryPath), { recursive: true })
-            const readStream = await openReadStream(entry)
-            const writeStream = fs.createWriteStream(normalizedEntryPath)
-            await streamPipeline(readStream, writeStream)
-            zipFile.readEntry()
-          }
-
-          zipFile.on('error', finish)
-          zipFile.on('end', () => finish())
-          zipFile.on('entry', (entry) => {
-            processEntry(entry).catch(finish)
-          })
-
-          zipFile.readEntry()
-        }
-      )
-    })
   }
 
   /**
