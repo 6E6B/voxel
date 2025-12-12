@@ -7,6 +7,7 @@ import { getStatusColor, mapPresenceToStatus } from '@renderer/utils/statusUtils
 import { AccountStatus } from '@renderer/types'
 import { formatNumber } from '@renderer/utils/numberUtils'
 import { useHorizontalScroll } from '@renderer/hooks/useHorizontalScroll'
+import VerifiedIcon from '@renderer/components/UI/icons/VerifiedIcon'
 
 interface Friend {
   id: string | number
@@ -15,6 +16,7 @@ interface Friend {
   username?: string
   avatarUrl?: string
   userPresenceType?: number
+  hasVerifiedBadge?: boolean
 }
 
 interface FriendsSectionProps {
@@ -132,8 +134,11 @@ export const FriendsSection: React.FC<FriendsSectionProps> = ({
                       )}
                     </div>
                     <div className="text-center w-full">
-                      <div className="text-sm font-bold text-[var(--color-text-primary)] truncate">
-                        {friend.displayName}
+                      <div className="text-sm font-bold text-[var(--color-text-primary)] truncate flex items-center justify-center gap-1">
+                        <span className="truncate">{friend.displayName}</span>
+                        {friend.hasVerifiedBadge && (
+                          <VerifiedIcon width={14} height={14} className="shrink-0" />
+                        )}
                       </div>
                       <div className="text-xs font-medium text-[var(--color-text-muted)] truncate mt-0.5">
                         {usernameLabel}

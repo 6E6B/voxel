@@ -62,9 +62,9 @@ const getNotificationStyle = (type: NotificationType) => {
     case 'friend_ingame':
       return {
         icon: Gamepad2,
-        color: 'text-blue-400',
-        bg: 'bg-blue-500/10',
-        border: 'border-blue-500/20'
+        color: 'text-[var(--accent-color)]',
+        bg: 'bg-[var(--accent-color-faint)]',
+        border: 'border-[var(--accent-color-border)]'
       }
     case 'friend_removed':
       return {
@@ -98,9 +98,9 @@ const getNotificationStyle = (type: NotificationType) => {
     default:
       return {
         icon: Info,
-        color: 'text-blue-400',
-        bg: 'bg-blue-500/10',
-        border: 'border-blue-500/20'
+        color: 'text-[var(--accent-color)]',
+        bg: 'bg-[var(--accent-color-faint)]',
+        border: 'border-[var(--accent-color-border)]'
       }
   }
 }

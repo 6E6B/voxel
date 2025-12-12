@@ -192,7 +192,7 @@ export const InventoryGrid: React.FC<InventoryGridProps> = ({
                     {/* Favorite Indicator */}
                     {isFavorite && (
                       <div className="absolute top-2 left-2 w-6 h-6 rounded-full bg-neutral-900/80 flex items-center justify-center text-yellow-400 shadow-sm z-10 pointer-events-none relative overflow-visible">
-                        <Star size={18} strokeWidth={0} className="fill-current" />
+                        <Star size={18} className="fill-current" style={{ strokeWidth: 0 }} />
                         <FavoriteParticles
                           active={!!favoriteBurstKeys[item.id]}
                           color={[251, 191, 36]}

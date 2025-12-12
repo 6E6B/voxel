@@ -7,7 +7,9 @@ import { motion, AnimatePresence } from 'framer-motion'
 export interface DropdownOption {
   value: string
   label: string
+  labelNode?: React.ReactNode
   subLabel?: string
+  subLabelNode?: React.ReactNode
   icon?: React.ReactNode
 }
 
@@ -34,6 +36,7 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false)
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0, width: 0 })
+  const [menuRadius, setMenuRadius] = useState<string | null>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
 
@@ -42,6 +45,10 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
   // Calculate dropdown position based on button location
   useEffect(() => {
     if (isOpen && dropdownRef.current) {
+      const computed = window.getComputedStyle(dropdownRef.current)
+      const controlRadius = computed.getPropertyValue('--control-radius').trim()
+      setMenuRadius(controlRadius || null)
+
       const rect = dropdownRef.current.getBoundingClientRect()
       const menuWidth = Math.max(rect.width, 200)
       const viewportWidth = window.innerWidth
@@ -85,7 +92,9 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
             top: menuPosition.top,
             left: menuPosition.left,
             minWidth: menuPosition.width,
-            maxWidth: 'min(300px, calc(100vw - 32px))'
+            maxWidth: 'min(300px, calc(100vw - 32px))',
+            borderRadius: menuRadius || 'var(--menu-radius)',
+            ...(menuRadius ? ({ ['--menu-radius' as any]: menuRadius } as React.CSSProperties) : {})
           }}
         >
           <div className="p-1.5 max-h-60 overflow-y-auto scrollbar-thin">
@@ -102,16 +111,17 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
                     ? 'bg-[var(--color-surface-hover)] text-[var(--color-text-primary)]'
                     : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]'
                 }`}
+                style={{ borderRadius: 'calc(var(--menu-radius) - 6px)' }}
               >
                 <div className="flex items-center gap-2.5 min-w-0 flex-1">
                   {option.icon && <span className="shrink-0">{option.icon}</span>}
                   <div className="flex flex-col items-start min-w-0 flex-1 overflow-hidden">
-                    <span className="font-medium truncate w-full">{option.label}</span>
-                    {option.subLabel && (
+                    <span className="font-medium truncate w-full">{option.labelNode ?? option.label}</span>
+                    {(option.subLabelNode || option.subLabel) && (
                       <span
                         className={`text-xs truncate w-full ${value === option.value ? 'text-[var(--color-text-muted)]' : 'text-[var(--color-text-muted)]/80'}`}
                       >
-                        {option.subLabel}
+                        {option.subLabelNode ?? option.subLabel}
                       </span>
                     )}
                   </div>
@@ -134,6 +144,7 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
         onClick={() => !disabled && !isLoading && setIsOpen(!isOpen)}
         disabled={disabled || isLoading}
         className={`pressable w-full flex items-center justify-between ${buttonClassName || defaultButtonClasses} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+        style={{ borderRadius: 'var(--control-radius)' }}
       >
         <div className="flex items-center gap-2 truncate pr-4">
           {isLoading ? (
@@ -142,7 +153,7 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
             <div className="flex items-center gap-2 truncate">
               {selectedOption.icon && <span className="shrink-0">{selectedOption.icon}</span>}
               <span className="text-[var(--color-text-primary)] font-bold truncate">
-                {selectedOption.label}
+                {selectedOption.labelNode ?? selectedOption.label}
               </span>
             </div>
           ) : (

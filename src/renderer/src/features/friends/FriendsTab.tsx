@@ -283,6 +283,23 @@ const FriendsTab = ({ selectedAccount, onFriendJoin, onFriendsCountChange }: Fri
     }
   }
 
+  const getStatusBorderColor = (status: AccountStatus) => {
+    switch (status) {
+      case AccountStatus.Online:
+        return 'border-blue-500/50'
+      case AccountStatus.InGame:
+        return 'border-emerald-500/50'
+      case AccountStatus.InStudio:
+        return 'border-orange-500/50'
+      case AccountStatus.Offline:
+        return 'border-neutral-600/50'
+      case AccountStatus.Banned:
+        return 'border-red-500/50'
+      default:
+        return 'border-neutral-600/50'
+    }
+  }
+
   return (
     <TooltipProvider>
       <div className="flex flex-col h-full bg-neutral-950">
@@ -493,7 +510,7 @@ const FriendsTab = ({ selectedAccount, onFriendJoin, onFriendsCountChange }: Fri
                                     </AvatarFallback>
                                   </Avatar>
                                   <div
-                                    className={`absolute bottom-0 right-0 w-4 h-4 rounded-full border-2 border-neutral-950 ${getStatusColor(friend.status)}`}
+                                    className={`absolute bottom-0 right-0 w-4 h-4 rounded-full border-2 border-dotted ${getStatusBorderColor(friend.status)} ${getStatusColor(friend.status)}`}
                                   />
 
                                   {isFavorite && (

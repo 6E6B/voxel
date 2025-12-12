@@ -21,7 +21,14 @@ import {
 import { motion } from 'framer-motion'
 import Color from 'color'
 import { useQueryClient, useQuery, useMutation } from '@tanstack/react-query'
-import { Account, Settings, TabId, ThemePreference, DEFAULT_ACCENT_COLOR } from '../../types'
+import {
+  Account,
+  Settings,
+  TabId,
+  ThemePreference,
+  TintPreference,
+  DEFAULT_ACCENT_COLOR
+} from '../../types'
 import { cn } from '../../lib/utils'
 import CustomCheckbox from '../../components/UI/buttons/CustomCheckbox'
 import CustomDropdown, { DropdownOption } from '../../components/UI/menus/CustomDropdown'
@@ -98,7 +105,7 @@ const SettingsCard: React.FC<{
   actions?: React.ReactNode
   children: React.ReactNode
 }> = ({ title, description, icon, actions, children }) => (
-  <div className="p-2 bg-[var(--color-surface-strong)] rounded-[var(--radius-xl)] border border-neutral-800/50 hover:border-neutral-700/50 transition-colors space-y-3">
+  <div className="p-4 bg-[var(--color-surface-strong)] rounded-[var(--radius-xl)] border border-neutral-800/50 hover:border-neutral-700/50 transition-colors space-y-3 [--card-radius:var(--radius-xl)] [--card-gap:0.5rem] [--control-radius:calc(var(--card-radius)_-_var(--card-gap))]">
     <div className="flex items-start justify-between gap-3">
       <div className="flex items-start gap-3">
         {icon && (
@@ -126,7 +133,7 @@ const ToggleRow: React.FC<{
   icon?: React.ReactNode
   hint?: React.ReactNode
 }> = ({ title, description, checked, onChange, disabled, icon, hint }) => (
-  <div className="flex items-start gap-3 p-4 bg-[var(--color-surface-muted)] rounded-[var(--radius-md)] border border-neutral-800/50 hover:border-neutral-700/50 transition-colors">
+  <div className="flex items-start gap-3 p-4 bg-[var(--color-surface-muted)] rounded-[var(--control-radius)] border border-neutral-800/50 hover:border-neutral-700/50 transition-colors">
     <div className="mt-1">
       <CustomCheckbox checked={checked} onChange={onChange} disabled={disabled} />
     </div>
@@ -306,6 +313,10 @@ const SettingsTab: React.FC<SettingsTabProps> = ({ accounts, settings, onUpdateS
     onUpdateSettings({ theme: value as ThemePreference })
   }
 
+  const handleTintChange = (value: string) => {
+    onUpdateSettings({ tint: value as TintPreference })
+  }
+
   const handleAccentColorChange = (rgba: [number, number, number, number]) => {
     try {
       const color = Color.rgb(rgba[0], rgba[1], rgba[2], rgba[3])
@@ -318,6 +329,10 @@ const SettingsTab: React.FC<SettingsTabProps> = ({ accounts, settings, onUpdateS
 
   const handleProfileCardToggle = () => {
     onUpdateSettings({ showSidebarProfileCard: !settings.showSidebarProfileCard })
+  }
+
+  const handlePrivacyModeToggle = () => {
+    onUpdateSettings({ privacyMode: !settings.privacyMode })
   }
 
   const handleToggleTabVisibility = (tabId: TabId) => {
@@ -369,7 +384,13 @@ const SettingsTab: React.FC<SettingsTabProps> = ({ accounts, settings, onUpdateS
     ...accounts.map((account) => ({
       value: account.id,
       label: account.displayName,
-      subLabel: `@${account.username}`
+      labelNode: settings.privacyMode ? (
+        <span className="privacy-blur">{account.displayName}</span>
+      ) : undefined,
+      subLabel: `@${account.username}`,
+      subLabelNode: settings.privacyMode ? (
+        <span className="privacy-blur">@{account.username}</span>
+      ) : undefined,
     }))
   ]
 
@@ -386,6 +407,11 @@ const SettingsTab: React.FC<SettingsTabProps> = ({ accounts, settings, onUpdateS
     { value: 'system', label: 'System', subLabel: 'Match OS setting' },
     { value: 'light', label: 'Light' },
     { value: 'dark', label: 'Dark' }
+  ]
+
+  const tintOptions: DropdownOption[] = [
+    { value: 'neutral', label: 'Neutral', subLabel: 'Gray, no color cast' },
+    { value: 'cool', label: 'Cool', subLabel: 'Slight blue tint (legacy)' }
   ]
 
   const handleResetAccent = () => {
@@ -427,7 +453,7 @@ const SettingsTab: React.FC<SettingsTabProps> = ({ accounts, settings, onUpdateS
               className={cn(
                 'flex-1 py-4 text-sm font-medium transition-colors flex items-center justify-center gap-2 relative z-10 hover:bg-[var(--color-surface-hover)] active:bg-[var(--color-surface-muted)]',
                 activeTab === 'general'
-                  ? 'text-[var(--color-text-primary)]'
+                  ? 'text-[var(--color-text-primary)] bg-[var(--accent-color-faint)]'
                   : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'
               )}
             >
@@ -440,7 +466,7 @@ const SettingsTab: React.FC<SettingsTabProps> = ({ accounts, settings, onUpdateS
               className={cn(
                 'flex-1 py-4 text-sm font-medium transition-colors flex items-center justify-center gap-2 relative z-10 hover:bg-[var(--color-surface-hover)] active:bg-[var(--color-surface-muted)]',
                 activeTab === 'appearance'
-                  ? 'text-[var(--color-text-primary)]'
+                  ? 'text-[var(--color-text-primary)] bg-[var(--accent-color-faint)]'
                   : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'
               )}
             >
@@ -453,7 +479,7 @@ const SettingsTab: React.FC<SettingsTabProps> = ({ accounts, settings, onUpdateS
               className={cn(
                 'flex-1 py-4 text-sm font-medium transition-colors flex items-center justify-center gap-2 relative z-10 hover:bg-[var(--color-surface-hover)] active:bg-[var(--color-surface-muted)]',
                 activeTab === 'notifications'
-                  ? 'text-[var(--color-text-primary)]'
+                  ? 'text-[var(--color-text-primary)] bg-[var(--accent-color-faint)]'
                   : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'
               )}
             >
@@ -466,7 +492,7 @@ const SettingsTab: React.FC<SettingsTabProps> = ({ accounts, settings, onUpdateS
               className={cn(
                 'flex-1 py-4 text-sm font-medium transition-colors flex items-center justify-center gap-2 relative z-10 hover:bg-[var(--color-surface-hover)] active:bg-[var(--color-surface-muted)]',
                 activeTab === 'security'
-                  ? 'text-[var(--color-text-primary)]'
+                  ? 'text-[var(--color-text-primary)] bg-[var(--accent-color-faint)]'
                   : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'
               )}
             >
@@ -479,7 +505,7 @@ const SettingsTab: React.FC<SettingsTabProps> = ({ accounts, settings, onUpdateS
               className={cn(
                 'flex-1 py-4 text-sm font-medium transition-colors flex items-center justify-center gap-2 relative z-10 hover:bg-[var(--color-surface-hover)] active:bg-[var(--color-surface-muted)]',
                 activeTab === 'about'
-                  ? 'text-[var(--color-text-primary)]'
+                  ? 'text-[var(--color-text-primary)] bg-[var(--accent-color-faint)]'
                   : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'
               )}
             >
@@ -535,6 +561,26 @@ const SettingsTab: React.FC<SettingsTabProps> = ({ accounts, settings, onUpdateS
               </Section>
 
               <Section
+                title="Privacy"
+                description="Hide your account identity when sharing screenshots or streaming."
+              >
+                <SettingsCard
+                  title="Privacy mode"
+                  description="Blur account names and avatars throughout the app."
+                  icon={<EyeOff size={16} />}
+                >
+                  <ToggleRow
+                    title="Enable privacy mode"
+                    description={
+                      'Blurs all account names and pictures in the Accounts tab, sidebar card, and other places your account identity appears.'
+                    }
+                    checked={settings.privacyMode}
+                    onChange={handlePrivacyModeToggle}
+                  />
+                </SettingsCard>
+              </Section>
+
+              <Section
                 title="Navigation"
                 description="Control what shows in the sidebar and how it's ordered."
               >
@@ -574,7 +620,7 @@ const SettingsTab: React.FC<SettingsTabProps> = ({ accounts, settings, onUpdateS
                       return (
                         <div
                           key={tab.id}
-                          className="flex items-center justify-between gap-3 px-3 py-2 rounded-[var(--radius-md)] border border-neutral-800 bg-[var(--color-surface-muted)]"
+                          className="flex items-center justify-between gap-3 px-3 py-2 rounded-[var(--control-radius)] border border-neutral-800 bg-[var(--color-surface-muted)]"
                         >
                           <div className="flex items-center gap-3 min-w-0">
                             <CustomCheckbox
@@ -610,7 +656,7 @@ const SettingsTab: React.FC<SettingsTabProps> = ({ accounts, settings, onUpdateS
                               type="button"
                               onClick={() => handleMoveTab(tab.id, -1)}
                               disabled={index === 0}
-                              className="p-2 rounded-md border border-neutral-800 text-neutral-300 hover:text-white hover:border-neutral-700 hover:bg-neutral-800/60 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                              className="p-2 rounded-[var(--control-radius)] border border-neutral-800 text-neutral-300 hover:text-white hover:border-neutral-700 hover:bg-neutral-800/60 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                               aria-label={`Move ${tab.label} up`}
                             >
                               <ChevronUp size={14} />
@@ -619,7 +665,7 @@ const SettingsTab: React.FC<SettingsTabProps> = ({ accounts, settings, onUpdateS
                               type="button"
                               onClick={() => handleMoveTab(tab.id, 1)}
                               disabled={index === sidebarTabs.length - 1}
-                              className="p-2 rounded-md border border-neutral-800 text-neutral-300 hover:text-white hover:border-neutral-700 hover:bg-neutral-800/60 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                              className="p-2 rounded-[var(--control-radius)] border border-neutral-800 text-neutral-300 hover:text-white hover:border-neutral-700 hover:bg-neutral-800/60 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                               aria-label={`Move ${tab.label} down`}
                             >
                               <ChevronDown size={14} />
@@ -720,6 +766,19 @@ const SettingsTab: React.FC<SettingsTabProps> = ({ accounts, settings, onUpdateS
                 </SettingsCard>
 
                 <SettingsCard
+                  title="Tint"
+                  description="Choose the base tint used for surfaces and backgrounds."
+                  icon={<Palette size={16} />}
+                >
+                  <CustomDropdown
+                    options={tintOptions}
+                    value={settings.tint}
+                    onChange={handleTintChange}
+                    placeholder="Select tint"
+                  />
+                </SettingsCard>
+
+                <SettingsCard
                   title="Accent color"
                   description="Customize the highlight color used for buttons, indicators, and focus rings."
                   icon={<Palette size={16} />}
@@ -728,7 +787,7 @@ const SettingsTab: React.FC<SettingsTabProps> = ({ accounts, settings, onUpdateS
                     <button
                       type="button"
                       onClick={() => setIsColorPickerOpen(true)}
-                      className="h-12 w-12 rounded-lg border border-neutral-800 bg-transparent cursor-pointer hover:border-neutral-700 transition-colors flex-shrink-0"
+                      className="h-12 w-12 rounded-[var(--control-radius)] border border-neutral-800 bg-transparent cursor-pointer hover:border-neutral-700 transition-colors flex-shrink-0"
                       style={{ backgroundColor: settings.accentColor }}
                       aria-label="Select accent color"
                     />
@@ -753,7 +812,7 @@ const SettingsTab: React.FC<SettingsTabProps> = ({ accounts, settings, onUpdateS
                         <button
                           type="button"
                           onClick={handleResetAccent}
-                          className="px-3 py-2 text-xs font-medium rounded-lg border border-neutral-800 text-neutral-200 hover:border-neutral-700 hover:text-white transition-colors"
+                          className="px-3 py-2 text-xs font-medium rounded-[var(--control-radius)] border border-neutral-800 text-neutral-200 hover:border-neutral-700 hover:text-white transition-colors"
                         >
                           Reset to default
                         </button>

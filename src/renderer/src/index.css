@@ -1,8 +1,8 @@
 @import 'tailwindcss';
 
 @font-face {
-  font-family: 'Inter';
-  src: url('@assets/fonts/Inter.ttf') format('truetype');
+  font-family: 'Geist';
+  src: url('@assets/fonts/Geist.ttf') format('truetype');
   font-weight: 100 900;
   font-style: normal;
   font-display: swap;
@@ -17,38 +17,38 @@
 }
 
 :root {
-  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  --accent-color: #1e66f5;
-  --accent-color-rgb: 30, 102, 245;
+  --font-sans: 'Geist', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --accent-color: #00d091;
+  --accent-color-rgb: 0, 208, 145;
   --accent-color-foreground: #ffffff;
-  --accent-color-muted: rgba(30, 102, 245, 0.9);
-  --accent-color-border: rgba(30, 102, 245, 0.35);
-  --accent-color-soft: rgba(30, 102, 245, 0.15);
-  --accent-color-faint: rgba(30, 102, 245, 0.08);
-  --accent-color-ring: rgba(30, 102, 245, 0.12);
-  --accent-color-shadow: rgba(30, 102, 245, 0);
+  --accent-color-muted: rgba(0, 208, 145, 0.9);
+  --accent-color-border: rgba(0, 208, 145, 0.35);
+  --accent-color-soft: rgba(0, 208, 145, 0.15);
+  --accent-color-faint: rgba(0, 208, 145, 0.08);
+  --accent-color-ring: rgba(0, 208, 145, 0.12);
+  --accent-color-shadow: rgba(0, 208, 145, 0);
 }
 
 :root {
-  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  --accent-color: #1e66f5;
-  --accent-color-rgb: 30, 102, 245;
+  --font-sans: 'Geist', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --accent-color: #00d091;
+  --accent-color-rgb: 0, 208, 145;
   --accent-color-foreground: #ffffff;
-  --accent-color-muted: rgba(30, 102, 245, 0.9);
-  --accent-color-border: rgba(30, 102, 245, 0.35);
-  --accent-color-soft: rgba(30, 102, 245, 0.15);
-  --accent-color-faint: rgba(30, 102, 245, 0.08);
-  --accent-color-ring: rgba(30, 102, 245, 0.12);
-  --accent-color-shadow: rgba(30, 102, 245, 0);
+  --accent-color-muted: rgba(0, 208, 145, 0.9);
+  --accent-color-border: rgba(0, 208, 145, 0.35);
+  --accent-color-soft: rgba(0, 208, 145, 0.15);
+  --accent-color-faint: rgba(0, 208, 145, 0.08);
+  --accent-color-ring: rgba(0, 208, 145, 0.12);
+  --accent-color-shadow: rgba(0, 208, 145, 0);
 
   --color-app-bg: #050505;
-  --color-surface: #0c0c10;
-  --color-surface-strong: #111118;
-  --color-surface-muted: #15151d;
-  --color-surface-hover: #1b1b23;
-  --color-titlebar: #15151d;
-  --color-border: #1f1f26;
-  --color-border-strong: #292933;
+  --color-surface: #0c0c0c;
+  --color-surface-strong: #111111;
+  --color-surface-muted: #151515;
+  --color-surface-hover: #1b1b1b;
+  --color-titlebar: #151515;
+  --color-border: #1f1f1f;
+  --color-border-strong: #292929;
   --color-border-subtle: rgba(255, 255, 255, 0.06);
   --color-text-primary: #f6f7fb;
   --color-text-secondary: #d6d8e0;
@@ -60,23 +60,38 @@
   --radius-lg: 14px;
   --radius-xl: 18px;
   --radius-pill: 999px;
+
+  --icon-stroke-width: 1.85;
+
+  --control-radius: var(--radius-md);
+  --menu-radius: var(--radius-lg);
+}
+
+/* Global Lucide icon styling */
+.lucide {
+  stroke-width: var(--icon-stroke-width);
+}
+
+/* Privacy mode: blur any element marked with .privacy-blur */
+.privacy-mode .privacy-blur {
+  filter: blur(8px);
 }
 
 [data-theme='light'] {
-  --color-app-bg: #f5f7fb;
+  --color-app-bg: #f6f6f6;
   --color-surface: #ffffff;
-  --color-surface-strong: #f8f9fb;
-  --color-surface-muted: #f0f2f7;
-  --color-surface-hover: #eaedf5;
+  --color-surface-strong: #f4f4f5;
+  --color-surface-muted: #ededed;
+  --color-surface-hover: #e7e7e7;
   --color-titlebar: #ffffff;
-  --color-border: #dce1eb;
-  --color-border-strong: #c8d0e0;
+  --color-border: #d6d6d6;
+  --color-border-strong: #bdbdbd;
   --color-border-subtle: rgba(15, 23, 42, 0.08);
   --color-text-primary: #0f172a;
   --color-text-secondary: #1f2937;
   --color-text-muted: #4b5563;
   --color-muted-bg: #e5e7eb;
-  --focus-ring: rgba(59, 130, 246, 0.35);
+  --focus-ring: rgba(var(--accent-color-rgb), 0.35);
   --shadow-lg: 0 20px 60px rgba(15, 23, 42, 0.1);
 }
 
@@ -165,6 +180,17 @@ body {
   font-family: var(--font-sans);
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  background: var(--color-app-bg);
+}
+
+body {
+  margin: 0;
 }
 
 code,

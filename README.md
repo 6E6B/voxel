@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="resources/build/icons/512x512.png" alt="Voxel Logo" width="128" height="128" />
+  <img src="resources/build/icons/png/512x512.png" alt="Voxel Logo" width="128" height="128" />
 </p>
 
 <h1 align="center">Voxel</h1>

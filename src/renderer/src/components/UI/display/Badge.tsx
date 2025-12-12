@@ -14,7 +14,8 @@ const badgeVariants = cva(
           'border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80',
         outline: 'text-foreground',
         // Status variants
-        Online: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
+        Online:
+          'bg-[var(--accent-color-faint)] text-[var(--accent-color)] border-[var(--accent-color-border)]',
         'In-Game': 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
         'In Studio': 'bg-amber-500/10 text-amber-400 border-amber-500/20',
         Offline: 'bg-neutral-500/10 text-neutral-400 border-neutral-500/20',

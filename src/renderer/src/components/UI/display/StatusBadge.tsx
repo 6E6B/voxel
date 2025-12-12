@@ -10,7 +10,7 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
   const getDotColor = (status: AccountStatus) => {
     switch (status) {
       case AccountStatus.Online:
-        return 'bg-blue-400'
+        return 'bg-[var(--accent-color)]'
       case AccountStatus.InGame:
         return 'bg-emerald-400'
       case AccountStatus.InStudio:

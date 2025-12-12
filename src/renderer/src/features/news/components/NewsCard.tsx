@@ -1,5 +1,5 @@
 import React from 'react'
-import { Heart, Repeat, MoreHorizontal, BadgeCheck } from 'lucide-react'
+import { Heart, Repeat, BadgeCheck } from 'lucide-react'
 import { Avatar, AvatarImage, AvatarFallback } from '../../../components/UI/display/Avatar'
 import { Card } from '../../../components/UI/display/Card'
 import { cn } from '../../../lib/utils'
@@ -71,7 +71,7 @@ export const NewsCard: React.FC<NewsCardProps> = ({ post, isThreadChild, hasThre
           </div>
 
           <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between mb-1.5">
+            <div className="flex items-center mb-1.5">
               <div className="flex flex-col">
                 <div className="flex items-center gap-1.5">
                   <span className="font-bold text-[var(--color-text-primary)] text-[15px] hover:underline cursor-pointer">
@@ -87,9 +87,6 @@ export const NewsCard: React.FC<NewsCardProps> = ({ post, isThreadChild, hasThre
                   <span>{post.timestamp}</span>
                 </div>
               </div>
-              <button className="text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors p-1 rounded-md hover:bg-[var(--color-surface-hover)]">
-                <MoreHorizontal className="w-4 h-4" />
-              </button>
             </div>
 
             {post.content && (

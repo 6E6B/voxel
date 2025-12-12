@@ -1,7 +1,13 @@
 import { app, safeStorage } from 'electron'
 import { join } from 'path'
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs'
-import { Account, DEFAULT_ACCENT_COLOR, TabId, ThemePreference } from '../../../renderer/src/types'
+import {
+  Account,
+  DEFAULT_ACCENT_COLOR,
+  TabId,
+  ThemePreference,
+  TintPreference
+} from '../../../renderer/src/types'
 import { MultiInstance } from '@main/lib/MultiInstance'
 import { z } from 'zod'
 import { accountSchema } from '../../../shared/ipc-schemas/user'
@@ -20,6 +26,7 @@ const customFontSchema = z.object({
 
 const sidebarTabIdEnum = z.enum(SIDEBAR_TAB_IDS)
 const themePreferenceEnum = z.enum(['system', 'dark', 'light'])
+const tintPreferenceEnum = z.enum(['neutral', 'cool'])
 
 const storeDataSchema = z.object({
   sidebarWidth: z.number().optional(),
@@ -41,6 +48,8 @@ const storeDataSchema = z.object({
       defaultInstallationPath: z.string().nullable().optional(),
       accentColor: z.string().optional(),
       theme: themePreferenceEnum.optional(),
+      tint: tintPreferenceEnum.optional(),
+      privacyMode: z.boolean().optional(),
       showSidebarProfileCard: z.boolean().optional(),
       sidebarTabOrder: z.array(sidebarTabIdEnum).optional(),
       sidebarHiddenTabs: z.array(sidebarTabIdEnum).optional(),
@@ -292,8 +301,24 @@ class StorageService {
     const sidebarTabOrder = sanitizeSidebarOrder(this.data.settings?.sidebarTabOrder)
     const sidebarHiddenTabs = sanitizeSidebarHidden(this.data.settings?.sidebarHiddenTabs)
     const storedAccent = this.data.settings?.accentColor
+    const legacyAccent = storedAccent ? storedAccent.trim().toLowerCase() : ''
+    const LEGACY_DEFAULT_ACCENT_COLORS = ['#1e66f5', '#3b82f6', '#2563eb']
+
     const accentColor =
-      storedAccent && storedAccent !== '#ffffff' ? storedAccent : DEFAULT_ACCENT_COLOR
+      legacyAccent && legacyAccent !== '#ffffff'
+        ? LEGACY_DEFAULT_ACCENT_COLORS.includes(legacyAccent)
+          ? DEFAULT_ACCENT_COLOR
+          : storedAccent!
+        : DEFAULT_ACCENT_COLOR
+
+    // Persist the migration so future sessions match.
+    if (legacyAccent && LEGACY_DEFAULT_ACCENT_COLORS.includes(legacyAccent)) {
+      if (!this.data.settings) this.data.settings = {}
+      if (this.data.settings.accentColor !== DEFAULT_ACCENT_COLOR) {
+        this.data.settings.accentColor = DEFAULT_ACCENT_COLOR
+        this.save()
+      }
+    }
 
     return {
       primaryAccountId: this.data.settings?.primaryAccountId ?? null,
@@ -301,7 +326,9 @@ class StorageService {
       defaultInstallationPath: this.data.settings?.defaultInstallationPath ?? null,
       accentColor,
       theme: (this.data.settings?.theme as ThemePreference | undefined) ?? 'system',
+      tint: (this.data.settings?.tint as TintPreference | undefined) ?? 'neutral',
       showSidebarProfileCard: this.data.settings?.showSidebarProfileCard ?? true,
+      privacyMode: this.data.settings?.privacyMode ?? false,
       sidebarTabOrder,
       sidebarHiddenTabs,
       pinCode: this.data.settings?.pinCodeHash ? 'SET' : null
@@ -490,7 +517,9 @@ class StorageService {
     defaultInstallationPath?: string | null
     accentColor?: string
     theme?: ThemePreference
+    tint?: TintPreference
     showSidebarProfileCard?: boolean
+    privacyMode?: boolean
     sidebarTabOrder?: TabId[]
     sidebarHiddenTabs?: TabId[]
     pinCode?: string | null
@@ -521,8 +550,16 @@ class StorageService {
       nextSettings.theme = settings.theme as ThemePreference
     }
 
+    if ('tint' in settings && typeof settings.tint === 'string') {
+      nextSettings.tint = settings.tint as TintPreference
+    }
+
     if ('showSidebarProfileCard' in settings) {
       nextSettings.showSidebarProfileCard = !!settings.showSidebarProfileCard
+    }
+
+    if ('privacyMode' in settings) {
+      nextSettings.privacyMode = !!settings.privacyMode
     }
 
     if ('sidebarTabOrder' in settings) {

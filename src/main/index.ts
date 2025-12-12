@@ -2,8 +2,8 @@
 import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
-import iconIco from '../../resources/build/icons/icon.ico?asset'
-import iconIcns from '../../resources/build/icons/icon.icns?asset'
+import iconIco from '../../resources/build/icons/win/icon.ico?asset'
+import iconIcns from '../../resources/build/icons/mac/icon.icns?asset'
 
 const mainStart = performance.now()
 const logPerf = (label: string) => {

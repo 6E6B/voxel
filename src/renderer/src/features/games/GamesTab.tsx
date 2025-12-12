@@ -217,7 +217,7 @@ const GameCard = ({
         {isFavorite && (
           <div className="absolute top-3 left-3 z-10 pointer-events-none">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-yellow-500/90 to-amber-600/90 flex items-center justify-center text-white shadow-lg shadow-yellow-500/20 backdrop-blur-sm border border-yellow-400/30 relative overflow-visible">
-              <Star size={16} strokeWidth={0} className="fill-current" />
+              <Star size={16} className="fill-current" style={{ strokeWidth: 0 }} />
               <FavoriteParticles active={favoriteBurst} color={[251, 191, 36]} />
             </div>
           </div>

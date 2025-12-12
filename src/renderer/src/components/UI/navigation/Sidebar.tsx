@@ -27,6 +27,7 @@ import { useAccountsManager, useAccountStats } from '../../../features/auth/api/
 import CreditsDialog from '../dialogs/CreditsDialog'
 import RedeemCodeDialog from '../dialogs/RedeemCodeDialog'
 import { useTabTransition } from '@renderer/hooks/useTabTransition'
+import { VoxelLogo } from '@renderer/components/UI/icons/VoxelLogo'
 import {
   getVisibleSidebarTabs,
   sanitizeSidebarHidden,
@@ -63,6 +64,7 @@ const RobloxSettingsIcon = ({
 interface ProfileCardProps {
   account: Account
   isCollapsed: boolean
+  privacyMode: boolean
   onSettingsClick: () => void
   onTransactionsClick: () => void
   onRobloxSettingsClick: () => void
@@ -71,6 +73,7 @@ interface ProfileCardProps {
 const ProfileCard = ({
   account,
   isCollapsed,
+  privacyMode,
   onSettingsClick,
   onTransactionsClick,
   onRobloxSettingsClick
@@ -166,13 +169,13 @@ const ProfileCard = ({
                 className="relative w-full flex justify-center group"
               >
                 <img
-                  className={`h-10 w-10 rounded-full bg-[var(--color-surface)] object-cover border-2 transition-all duration-200 ${
+                  className={`h-10 w-10 rounded-full bg-[var(--color-surface)] object-cover border-2 transition-all duration-200 privacy-blur ${
                     isDropdownOpen
                       ? 'border-[var(--color-border-strong)] ring-2 ring-[var(--focus-ring)]'
                       : 'border-[var(--color-border)] group-hover:border-[var(--color-border-strong)]'
                   }`}
                   src={account.avatarUrl}
-                  alt={account.displayName}
+                  alt={privacyMode ? '' : account.displayName}
                 />
               </button>
 
@@ -190,15 +193,15 @@ const ProfileCard = ({
                     <div className="p-3 border-b border-[var(--color-border)]">
                       <div className="flex items-center gap-2.5">
                         <img
-                          className="h-8 w-8 rounded-full bg-[var(--color-surface)] object-cover border border-[var(--color-border)]"
+                          className="h-8 w-8 rounded-full bg-[var(--color-surface)] object-cover border border-[var(--color-border)] privacy-blur"
                           src={account.avatarUrl}
-                          alt={account.displayName}
+                          alt={privacyMode ? '' : account.displayName}
                         />
                         <div className="flex-1 min-w-0">
-                          <div className="font-semibold text-sm text-[var(--color-text-primary)] truncate">
+                          <div className="font-semibold text-sm text-[var(--color-text-primary)] truncate privacy-blur">
                             {account.displayName}
                           </div>
-                          <div className="text-[var(--color-text-muted)] text-xs truncate">
+                          <div className="text-[var(--color-text-muted)] text-xs truncate privacy-blur">
                             @{account.username}
                           </div>
                         </div>
@@ -242,7 +245,7 @@ const ProfileCard = ({
               </AnimatePresence>
             </div>
           </TooltipTrigger>
-          <TooltipContent side="right">{account.displayName}</TooltipContent>
+          <TooltipContent side="right">{privacyMode ? 'Hidden' : account.displayName}</TooltipContent>
         </Tooltip>
         <CreditsDialog isOpen={isCreditsOpen} onClose={() => setIsCreditsOpen(false)} />
       </>
@@ -304,13 +307,13 @@ const ProfileCard = ({
             {/* Avatar */}
             <div className="relative flex-shrink-0">
               <img
-                className={`h-10 w-10 rounded-full bg-[var(--color-surface)] object-cover border-2 transition-all duration-200 ${
+                className={`h-10 w-10 rounded-full bg-[var(--color-surface)] object-cover border-2 transition-all duration-200 privacy-blur ${
                   isDropdownOpen
                     ? 'border-[var(--color-border-strong)]'
                     : 'border-[var(--color-border)]'
                 }`}
                 src={account.avatarUrl}
-                alt={account.displayName}
+                alt={privacyMode ? '' : account.displayName}
               />
             </div>
 
@@ -318,10 +321,10 @@ const ProfileCard = ({
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between gap-2">
                 <div className="min-w-0 flex-1">
-                  <div className="font-semibold text-sm text-[var(--color-text-primary)] truncate">
+                  <div className="font-semibold text-sm text-[var(--color-text-primary)] truncate privacy-blur">
                     {account.displayName}
                   </div>
-                  <div className="text-[var(--color-text-muted)] text-xs truncate">
+                  <div className="text-[var(--color-text-muted)] text-xs truncate privacy-blur">
                     @{account.username}
                   </div>
                 </div>
@@ -362,6 +365,7 @@ interface SidebarProps {
   onResizeStart: () => void
   selectedAccount: Account | null
   showProfileCard: boolean
+  privacyMode: boolean
   tabOrder: TabId[]
   hiddenTabs: TabId[]
 }
@@ -375,6 +379,7 @@ const Sidebar = ({
   onResizeStart,
   selectedAccount,
   showProfileCard,
+  privacyMode,
   tabOrder,
   hiddenTabs
 }: SidebarProps) => {
@@ -431,7 +436,8 @@ const Sidebar = ({
               isSidebarCollapsed ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100 w-auto'
             }`}
           >
-            Voxel
+            <VoxelLogo className="h-6 w-6 shrink-0" />
+            <span>Voxel</span>
           </div>
           {!isMac && (
             <Button
@@ -477,6 +483,7 @@ const Sidebar = ({
             <ProfileCard
               account={selectedAccount}
               isCollapsed={isSidebarCollapsed}
+              privacyMode={privacyMode}
               onSettingsClick={() => setActiveTab('Settings')}
               onTransactionsClick={() => setActiveTab('Transactions')}
               onRobloxSettingsClick={() => setActiveTab('AccountSettings')}

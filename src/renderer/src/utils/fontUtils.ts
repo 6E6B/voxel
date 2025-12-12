@@ -62,10 +62,10 @@ export function applyFont(family: string | null): void {
       `'${family}', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif`
     )
   } else {
-    // Reset to default Inter font
+    // Reset to default Geist font
     root.style.setProperty(
       '--font-sans',
-      "'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif"
+      "'Geist', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif"
     )
   }
 }

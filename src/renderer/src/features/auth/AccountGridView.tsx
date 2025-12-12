@@ -3,7 +3,7 @@ import { Info } from 'lucide-react'
 import { Account } from '@renderer/types'
 import CustomCheckbox from '@renderer/components/UI/buttons/CustomCheckbox'
 import StatusBadge from '@renderer/components/UI/display/StatusBadge'
-import { getStatusColor } from '@renderer/utils/statusUtils'
+import { getStatusBorderColor, getStatusColor } from '@renderer/utils/statusUtils'
 import { timeAgo } from '@renderer/utils/timeUtils'
 import { Card } from '@renderer/components/UI/display/Card'
 import { Button } from '@renderer/components/UI/buttons/Button'
@@ -85,24 +85,24 @@ const AccountGridView = ({
 
               <div className="flex flex-col items-center text-center mt-2">
                 <div className="relative">
-                  <Avatar className="w-20 h-20 mb-4 ring-4 ring-neutral-950 shadow-lg">
-                    <AvatarImage src={account.avatarUrl} alt={account.displayName} />
+                  <Avatar className="w-20 h-20 mb-4 ring-4 ring-neutral-950 shadow-lg privacy-blur">
+                    <AvatarImage src={account.avatarUrl} alt="" />
                     <AvatarFallback>{account.displayName.slice(0, 2).toUpperCase()}</AvatarFallback>
                   </Avatar>
                   <div
-                    className={`absolute bottom-1 right-1 w-5 h-5 border-4 border-neutral-950 rounded-full ${getStatusColor(
-                      account.status
-                    )}`}
+                    className={`absolute bottom-1 right-1 w-5 h-5 border-4 border-dotted rounded-full ${getStatusBorderColor(account.status)} ${getStatusColor(account.status)}`}
                   />
                 </div>
                 <h3
                   className={`text-lg font-bold mb-1 truncate w-full ${
                     isSelected ? 'text-white' : 'text-neutral-200 group-hover:text-white'
-                  }`}
+                  } privacy-blur`}
                 >
                   {account.displayName}
                 </h3>
-                <p className="text-sm text-neutral-500 mb-5 truncate w-full">@{account.username}</p>
+                <p className="text-sm text-neutral-500 mb-5 truncate w-full privacy-blur">
+                  @{account.username}
+                </p>
                 <div className="flex flex-col items-center gap-1">
                   <StatusBadge status={account.status} />
                   {voiceBanInfo?.[account.id] && (

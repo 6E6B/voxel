@@ -34,7 +34,7 @@ const SidebarItem = ({
       className={cn(
         'w-full flex items-center py-4 mb-1 transition-colors duration-200 relative group',
         isActive
-          ? 'bg-[var(--color-surface-hover)] text-[var(--color-text-primary)]'
+          ? 'bg-[var(--accent-color-faint)] text-[var(--color-text-primary)]'
           : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-hover)]',
         isCollapsed ? 'justify-center' : 'px-6 gap-3'
       )}

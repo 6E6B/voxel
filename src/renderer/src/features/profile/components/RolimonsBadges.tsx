@@ -56,39 +56,43 @@ export const RolimonsBadges: React.FC<RolimonsBadgesProps> = ({ userId }) => {
 
   if (sortedRolimonsBadges.length === 0) return null
 
-  // Estimate rows based on badge count - each row fits roughly 4-5 badges
-  const estimatedRows = Math.ceil(sortedRolimonsBadges.length / 4)
-  const topPadding = estimatedRows <= 1 ? 'pt-2' : estimatedRows === 2 ? 'pt-4' : 'pt-6'
+  // Wrap at ~half of the available header width.
+  const topPadding = sortedRolimonsBadges.length <= 4 ? 'pt-2' : 'pt-4'
+
+  const renderBadge = ({ badgeKey, acquiredTime }: { badgeKey: string; acquiredTime: number }) => {
+    const badgeMeta = ROLIMONS_BADGES[badgeKey]
+    if (!badgeMeta) return null
+
+    return (
+      <Tooltip key={badgeKey}>
+        <TooltipTrigger asChild>
+          <span
+            className={`px-2.5 py-1 ${badgeMeta.bgColor} ${badgeMeta.color} border ${badgeMeta.borderColor} rounded-md text-xs font-medium backdrop-blur-md shadow-lg cursor-default transition-all hover:scale-105 whitespace-nowrap shrink-0`}
+          >
+            {badgeMeta.label}
+          </span>
+        </TooltipTrigger>
+        <TooltipContent>
+          <div className="space-y-1">
+            <div className="font-semibold">{badgeMeta.label}</div>
+            <div className="text-xs text-[var(--color-text-secondary)]">{badgeMeta.description}</div>
+            <div className="text-xs text-[var(--color-text-muted)] pt-1 border-t border-[var(--color-border-subtle)]">
+              Earned {new Date(acquiredTime * 1000).toLocaleDateString()}
+            </div>
+          </div>
+        </TooltipContent>
+      </Tooltip>
+    )
+  }
 
   return (
     <div className={`relative z-10 px-6 pb-4 ${topPadding}`}>
-      <div className="flex flex-wrap items-center gap-2">
-        {sortedRolimonsBadges.map(({ badgeKey, acquiredTime }) => {
-          const badgeMeta = ROLIMONS_BADGES[badgeKey]
-          if (!badgeMeta) return null
-          return (
-            <Tooltip key={badgeKey}>
-              <TooltipTrigger asChild>
-                <span
-                  className={`px-2.5 py-1 ${badgeMeta.bgColor} ${badgeMeta.color} border ${badgeMeta.borderColor} rounded-md text-xs font-medium backdrop-blur-md shadow-lg cursor-default transition-all hover:scale-105`}
-                >
-                  {badgeMeta.label}
-                </span>
-              </TooltipTrigger>
-              <TooltipContent>
-                <div className="space-y-1">
-                  <div className="font-semibold">{badgeMeta.label}</div>
-                  <div className="text-xs text-[var(--color-text-secondary)]">
-                    {badgeMeta.description}
-                  </div>
-                  <div className="text-xs text-[var(--color-text-muted)] pt-1 border-t border-[var(--color-border-subtle)]">
-                    Earned {new Date(acquiredTime * 1000).toLocaleDateString()}
-                  </div>
-                </div>
-              </TooltipContent>
-            </Tooltip>
-          )
-        })}
+      <div className="w-full max-w-full sm:max-w-[50%]">
+        <div className="flex flex-wrap items-center justify-start gap-2">
+          {sortedRolimonsBadges.map(({ badgeKey, acquiredTime }) =>
+            renderBadge({ badgeKey, acquiredTime })
+          )}
+        </div>
       </div>
     </div>
   )

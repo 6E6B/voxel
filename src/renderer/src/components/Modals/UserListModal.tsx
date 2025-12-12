@@ -6,7 +6,7 @@ import { SkeletonUserList } from '../UI/display/SkeletonGrid'
 import { Dialog, DialogContent, DialogClose } from '../UI/dialogs/Dialog'
 import { ErrorMessage } from '../UI/feedback/ErrorMessage'
 import { EmptyState } from '../UI/feedback/EmptyState'
-import { mapPresenceToStatus, getStatusColor } from '@renderer/utils/statusUtils'
+import { getStatusBorderColor, getStatusColor, mapPresenceToStatus } from '@renderer/utils/statusUtils'
 import { AccountStatus } from '@renderer/types'
 
 interface UserListModalProps {
@@ -233,7 +233,7 @@ const UserListModal: React.FC<UserListModalProps> = ({
                         </div>
                         {isOnline && (
                           <div
-                            className={`absolute bottom-0 right-0 w-4 h-4 rounded-full border-[3px] border-[var(--color-surface-strong)] ${statusColor}`}
+                            className={`absolute bottom-0 right-0 w-4 h-4 rounded-full border-[3px] border-dotted ${getStatusBorderColor(status)} ${statusColor}`}
                           />
                         )}
                       </div>

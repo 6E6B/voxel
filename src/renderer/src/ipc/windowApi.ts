@@ -56,7 +56,6 @@ import type {
   GenderResponse,
   BirthdateResponse,
   PromotionChannelsResponse,
-  StarCodeAffiliateResponse,
   OnlineStatusPrivacy
 } from '../../../shared/ipc-schemas/accountSettings'
 
@@ -767,12 +766,6 @@ export interface NewsApi {
   }
 }
 
-export interface StarCodeAffiliateResult {
-  success: boolean
-  affiliate?: StarCodeAffiliateResponse
-  error?: string
-}
-
 export interface AccountSettingsApi {
   // GET methods
   getAccountSettingsJson: (cookie: string) => Promise<AccountSettingsJson>
@@ -804,6 +797,10 @@ export interface AccountSettingsApi {
     cookie: string,
     privacy: OnlineStatusPrivacy
   ) => Promise<UpdateSettingResult>
+  updateWhoCanJoinMeInExperiences: (
+    cookie: string,
+    privacy: PrivacyLevel
+  ) => Promise<UpdateSettingResult>
   sendVerificationEmail: (cookie: string, freeItem?: boolean) => Promise<UpdateSettingResult>
   redeemPromoCode: (cookie: string, code: string) => Promise<RedeemPromoCodeResponse>
   // Account Information API methods
@@ -829,9 +826,6 @@ export interface AccountSettingsApi {
       promotionChannelsVisibilityPrivacy?: string
     }
   ) => Promise<UpdateSettingResult>
-  getStarCodeAffiliate: (cookie: string) => Promise<StarCodeAffiliateResponse | null>
-  addStarCodeAffiliate: (cookie: string, code: string) => Promise<StarCodeAffiliateResult>
-  removeStarCodeAffiliate: (cookie: string) => Promise<UpdateSettingResult>
 }
 
 // Discord Rich Presence types

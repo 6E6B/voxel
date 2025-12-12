@@ -30,6 +30,7 @@ export const CollectionsSection: React.FC<CollectionsSectionProps> = ({
   onViewAllClick
 }) => {
   const { scrollRef, canScrollLeft, canScrollRight, scroll } = useHorizontalScroll([collections])
+  const useGrid = !isLoading && collections.length <= 6
 
   if (!isLoading && collections.length === 0) return null
 
@@ -50,74 +51,94 @@ export const CollectionsSection: React.FC<CollectionsSectionProps> = ({
         </button>
       </div>
 
-      <div className="relative overflow-visible">
-        {/* Left scroll button */}
-        <AnimatePresence>
+      {useGrid ? (
+        <div className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(8.5rem,1fr))]">
+          {collections.map((item) => {
+            const isLimited = item.cssTag === 'limited' || item.cssTag === 'limited-unique'
+            const isLimitedUnique = item.cssTag === 'limited-unique'
+            const isSoundHat = SOUND_HAT_IDS.includes(item.id)
+            return (
+              <CollectionItemCard
+                key={item.id}
+                item={item}
+                isLimited={isLimited}
+                isLimitedUnique={isLimitedUnique}
+                isSoundHat={isSoundHat}
+                onItemClick={onItemClick}
+              />
+            )
+          })}
+        </div>
+      ) : (
+        <div className="relative overflow-visible">
+          {/* Left scroll button */}
+          <AnimatePresence>
+            {canScrollLeft && (
+              <motion.button
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                transition={{ duration: 0.15 }}
+                onClick={() => scroll('left')}
+                className="absolute -left-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 flex items-center justify-center bg-[var(--color-surface-muted)] hover:bg-[var(--color-surface-hover)] rounded-full shadow-lg transition-colors border border-[var(--color-border)]"
+                aria-label="Scroll left"
+              >
+                <ChevronLeft size={24} className="text-[var(--color-text-primary)]" />
+              </motion.button>
+            )}
+          </AnimatePresence>
+          {/* Right scroll button */}
+          <AnimatePresence>
+            {canScrollRight && (
+              <motion.button
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                transition={{ duration: 0.15 }}
+                onClick={() => scroll('right')}
+                className="absolute -right-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 flex items-center justify-center bg-[var(--color-surface-muted)] hover:bg-[var(--color-surface-hover)] rounded-full shadow-lg transition-colors border border-[var(--color-border)]"
+                aria-label="Scroll right"
+              >
+                <ChevronRight size={24} className="text-[var(--color-text-primary)]" />
+              </motion.button>
+            )}
+          </AnimatePresence>
+          {/* Left fade gradient */}
           {canScrollLeft && (
-            <motion.button
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.8 }}
-              transition={{ duration: 0.15 }}
-              onClick={() => scroll('left')}
-              className="absolute -left-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 flex items-center justify-center bg-[var(--color-surface-muted)] hover:bg-[var(--color-surface-hover)] rounded-full shadow-lg transition-colors border border-[var(--color-border)]"
-              aria-label="Scroll left"
-            >
-              <ChevronLeft size={24} className="text-[var(--color-text-primary)]" />
-            </motion.button>
+            <div className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-[var(--color-surface-strong)] to-transparent z-10 pointer-events-none" />
           )}
-        </AnimatePresence>
-        {/* Right scroll button */}
-        <AnimatePresence>
+          {/* Right fade gradient */}
           {canScrollRight && (
-            <motion.button
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.8 }}
-              transition={{ duration: 0.15 }}
-              onClick={() => scroll('right')}
-              className="absolute -right-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 flex items-center justify-center bg-[var(--color-surface-muted)] hover:bg-[var(--color-surface-hover)] rounded-full shadow-lg transition-colors border border-[var(--color-border)]"
-              aria-label="Scroll right"
-            >
-              <ChevronRight size={24} className="text-[var(--color-text-primary)]" />
-            </motion.button>
+            <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-[var(--color-surface-strong)] to-transparent z-10 pointer-events-none" />
           )}
-        </AnimatePresence>
-        {/* Left fade gradient */}
-        {canScrollLeft && (
-          <div className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-[var(--color-surface-strong)] to-transparent z-10 pointer-events-none" />
-        )}
-        {/* Right fade gradient */}
-        {canScrollRight && (
-          <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-[var(--color-surface-strong)] to-transparent z-10 pointer-events-none" />
-        )}
-        <div ref={scrollRef} className="overflow-x-auto pb-2 scrollbar-hide">
-          <div className="flex gap-3 px-1">
-            {isLoading
-              ? Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className="w-[calc(25%-9px)] shrink-0">
-                    <SkeletonSquareCard />
-                  </div>
-                ))
-              : collections.slice(0, 6).map((item) => {
-                  const isLimited = item.cssTag === 'limited' || item.cssTag === 'limited-unique'
-                  const isLimitedUnique = item.cssTag === 'limited-unique'
-                  const isSoundHat = SOUND_HAT_IDS.includes(item.id)
-                  return (
-                    <div key={item.id} className="w-[calc(25%-9px)] shrink-0">
-                      <CollectionItemCard
-                        item={item}
-                        isLimited={isLimited}
-                        isLimitedUnique={isLimitedUnique}
-                        isSoundHat={isSoundHat}
-                        onItemClick={onItemClick}
-                      />
+          <div ref={scrollRef} className="overflow-x-auto pb-2 scrollbar-hide">
+            <div className="flex gap-3 px-1">
+              {isLoading
+                ? Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} className="w-32 sm:w-36 md:w-40 lg:w-44 shrink-0">
+                      <SkeletonSquareCard />
                     </div>
-                  )
-                })}
+                  ))
+                : collections.map((item) => {
+                    const isLimited = item.cssTag === 'limited' || item.cssTag === 'limited-unique'
+                    const isLimitedUnique = item.cssTag === 'limited-unique'
+                    const isSoundHat = SOUND_HAT_IDS.includes(item.id)
+                    return (
+                      <div key={item.id} className="w-32 sm:w-36 md:w-40 lg:w-44 shrink-0">
+                        <CollectionItemCard
+                          item={item}
+                          isLimited={isLimited}
+                          isLimitedUnique={isLimitedUnique}
+                          isSoundHat={isSoundHat}
+                          onItemClick={onItemClick}
+                        />
+                      </div>
+                    )
+                  })}
+            </div>
           </div>
         </div>
-      </div>
+      )}
       {!isLoading && collections.length === 0 && (
         <div className="col-span-5 text-[var(--color-text-muted)] text-sm py-4 text-center">
           No collectibles found.
@@ -154,7 +175,7 @@ const CollectionItemCard: React.FC<CollectionItemCardProps> = ({
         className="absolute inset-0 bg-cover bg-center blur-xl opacity-10 scale-110"
         style={{ backgroundImage: `url(${item.imageUrl})` }}
       />
-      <div className="w-full h-full p-4 flex items-center justify-center bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-[var(--color-surface-hover)] to-transparent backdrop-blur-sm">
+      <div className="w-full h-full p-3 flex items-center justify-center bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-[var(--color-surface-hover)] to-transparent backdrop-blur-sm">
         <img
           src={item.imageUrl}
           alt={item.name}

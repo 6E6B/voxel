@@ -7,12 +7,6 @@ const updateResultSchema = z.object({
   error: z.string().optional()
 })
 
-const starCodeAffiliateResultSchema = z.object({
-  success: z.boolean(),
-  affiliate: S.starCodeAffiliateResponseSchema.optional(),
-  error: z.string().optional()
-})
-
 export const accountSettingsApi = {
   // GET methods
   getAccountSettingsJson: (cookie: string) =>
@@ -53,6 +47,9 @@ export const accountSettingsApi = {
 
   updateOnlineStatusPrivacy: (cookie: string, privacy: S.OnlineStatusPrivacy) =>
     invoke('update-online-status-privacy', updateResultSchema, cookie, privacy),
+
+  updateWhoCanJoinMeInExperiences: (cookie: string, privacy: S.PrivacyLevel) =>
+    invoke('update-who-can-join-me-in-experiences', updateResultSchema, cookie, privacy),
 
   sendVerificationEmail: (cookie: string, freeItem?: boolean) =>
     invoke('send-verification-email', updateResultSchema, cookie, freeItem),
@@ -97,14 +94,4 @@ export const accountSettingsApi = {
       promotionChannelsVisibilityPrivacy?: string
     }
   ) => invoke('update-promotion-channels', updateResultSchema, cookie, channels),
-
-  // Star code affiliate methods
-  getStarCodeAffiliate: (cookie: string) =>
-    invoke('get-star-code-affiliate', S.starCodeAffiliateResponseSchema.nullable(), cookie),
-
-  addStarCodeAffiliate: (cookie: string, code: string) =>
-    invoke('add-star-code-affiliate', starCodeAffiliateResultSchema, cookie, code),
-
-  removeStarCodeAffiliate: (cookie: string) =>
-    invoke('remove-star-code-affiliate', updateResultSchema, cookie)
 }

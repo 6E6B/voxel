@@ -44,7 +44,7 @@ const Snackbar: React.FC<SnackbarProps> = ({ id, message, type, duration = 5000,
         return <AlertTriangle size={20} className="text-yellow-400" />
       case 'info':
       default:
-        return <Info size={20} className="text-blue-400" />
+        return <Info size={20} className="text-[var(--accent-color)]" />
     }
   }
 
@@ -58,7 +58,7 @@ const Snackbar: React.FC<SnackbarProps> = ({ id, message, type, duration = 5000,
         return 'bg-neutral-900 border-yellow-500/20 text-neutral-200'
       case 'info':
       default:
-        return 'bg-neutral-900 border-blue-500/20 text-neutral-200'
+        return 'bg-neutral-900 border-[var(--accent-color-border)] text-neutral-200'
     }
   }
 

@@ -39,7 +39,7 @@ const EditNoteModal: React.FC<EditNoteModalProps> = ({ isOpen, onClose, onSave, 
             </div>
             <div>
               <h3 className="text-xl font-semibold text-white">Edit Note</h3>
-              <p className="text-sm text-neutral-500">For @{account.username}</p>
+              <p className="text-sm text-neutral-500 privacy-blur">For @{account.username}</p>
             </div>
           </div>
           <DialogClose />

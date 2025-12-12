@@ -73,10 +73,10 @@ export const Tabs: React.FC<TabsProps> = ({
               type="button"
               onClick={() => onTabChange(tab.id)}
               className={cn(
-                'flex-1 py-4 text-sm font-medium transition-colors flex items-center justify-center gap-2 relative z-10 hover:bg-[var(--color-surface-hover)] active:bg-[var(--color-surface-muted)]',
+                'flex-1 py-4 text-sm font-medium transition flex items-center justify-center gap-2 relative z-10',
                 isActive
-                  ? 'text-[var(--color-text-primary)]'
-                  : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]',
+                  ? 'text-[var(--color-text-primary)] bg-[var(--accent-color-faint)] hover:brightness-95 active:brightness-90'
+                  : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-hover)] active:bg-[var(--color-surface-muted)]',
                 tabClassName
               )}
             >

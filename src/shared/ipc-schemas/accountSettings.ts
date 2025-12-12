@@ -254,6 +254,10 @@ export const updateContentRestrictionRequestSchema = z.object({
   contentRestrictionLevel: z.enum(contentRestrictionLevelValues)
 })
 
+export const updateWhoCanJoinMeInExperiencesRequestSchema = z.object({
+  whoCanJoinMeInExperiences: z.enum(privacyLevelValues)
+})
+
 export const sendVerificationEmailRequestSchema = z.object({
   freeItem: z.boolean().optional()
 })
@@ -362,20 +366,4 @@ export const updatePromotionChannelsRequestSchema = z.object({
   youtube: z.string().optional(),
   twitch: z.string().optional(),
   promotionChannelsVisibilityPrivacy: z.string().optional()
-})
-
-// ============================================================================
-// STAR CODE AFFILIATES API SCHEMAS (/v1/star-code-affiliates)
-// ============================================================================
-
-export const starCodeAffiliateResponseSchema = z.object({
-  userId: z.number(),
-  name: z.string(),
-  code: z.string()
-})
-
-export type StarCodeAffiliateResponse = z.infer<typeof starCodeAffiliateResponseSchema>
-
-export const addStarCodeAffiliateRequestSchema = z.object({
-  code: z.string()
 })

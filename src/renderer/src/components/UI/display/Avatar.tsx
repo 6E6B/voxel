@@ -18,16 +18,36 @@ Avatar.displayName = 'Avatar'
 const AvatarImage = React.forwardRef<HTMLImageElement, React.ImgHTMLAttributes<HTMLImageElement>>(
   ({ className, src, onLoad, ...props }, ref) => {
     const [isLoaded, setIsLoaded] = React.useState(false)
+    const internalRef = React.useRef<HTMLImageElement | null>(null)
+
+    const setRefs = (node: HTMLImageElement | null) => {
+      internalRef.current = node
+
+      if (!ref) return
+      if (typeof ref === 'function') {
+        ref(node)
+      } else {
+        ;(ref as React.MutableRefObject<HTMLImageElement | null>).current = node
+      }
+    }
 
     React.useEffect(() => {
       setIsLoaded(false)
+    }, [src])
+
+    React.useEffect(() => {
+      if (!src) return
+      const img = internalRef.current
+      if (img && img.complete && img.naturalWidth > 0) {
+        setIsLoaded(true)
+      }
     }, [src])
 
     if (!src) return null
 
     return (
       <img
-        ref={ref}
+        ref={setRefs}
         src={src}
         onLoad={(event) => {
           setIsLoaded(true)

@@ -21,7 +21,6 @@ import {
   Gamepad2,
   Palette,
   FileText,
-  Star,
   Share2,
   Cake
 } from 'lucide-react'
@@ -120,8 +119,8 @@ const SettingValue: React.FC<{
 }> = ({ value, variant = 'default' }) => (
   <span
     className={cn(
-      'text-base font-medium',
-      variant === 'accent' ? 'text-[var(--accent-color)]' : 'text-white'
+      'text-sm font-medium',
+      variant === 'accent' ? 'text-[var(--accent-color)]' : 'text-neutral-200'
     )}
   >
     {value.replace(/([A-Z])/g, ' $1').trim()}
@@ -137,7 +136,7 @@ const SettingCard: React.FC<{
 }> = ({ icon, title, description, children, className }) => (
   <div
     className={cn(
-      'p-4 bg-neutral-900/30 rounded-xl border border-neutral-800/50 hover:border-neutral-700/50 transition-colors',
+      'p-4 bg-[var(--color-surface-strong)] rounded-[var(--radius-xl)] border border-neutral-800/50 hover:border-neutral-700/50 transition-colors [--card-radius:var(--radius-xl)] [--card-gap:0.5rem] [--control-radius:calc(var(--card-radius)_-_var(--card-gap))]',
       className
     )}
   >
@@ -146,9 +145,9 @@ const SettingCard: React.FC<{
         {icon}
       </div>
       <div className="flex-1 min-w-0">
-        <h4 className="text-base font-medium text-white mb-0.5">{title}</h4>
-        {description && <p className="text-sm text-neutral-500 mb-3">{description}</p>}
-        <div className="space-y-2">{children}</div>
+        <h4 className="text-sm font-medium text-white">{title}</h4>
+        {description && <p className="text-xs text-neutral-500 mt-0.5">{description}</p>}
+        <div className="space-y-3 mt-3">{children}</div>
       </div>
     </div>
   </div>
@@ -248,6 +247,14 @@ const AccountSettingsTab: React.FC<AccountSettingsTabProps> = ({ account }) => {
     onSuccess: invalidateSettings
   })
 
+  const updateWhoCanJoinMeInExperiences = useMutation({
+    mutationFn: async (privacy: PrivacyLevel) => {
+      if (!account?.cookie) throw new Error('No cookie')
+      return window.api.updateWhoCanJoinMeInExperiences(account.cookie, privacy)
+    },
+    onSuccess: invalidateSettings
+  })
+
   const updateTheme = useMutation({
     mutationFn: async (themeType: string) => {
       if (!account?.cookie || !accountSettings?.UserId) throw new Error('No cookie or userId')
@@ -328,35 +335,6 @@ const AccountSettingsTab: React.FC<AccountSettingsTabProps> = ({ account }) => {
     },
     enabled: !!account?.cookie,
     staleTime: 1000 * 60 * 5
-  })
-
-  // Star Code Affiliate
-  const { data: starCodeData } = useQuery({
-    queryKey: ['star-code-affiliate', account?.id],
-    queryFn: async () => {
-      if (!account?.cookie) throw new Error('No cookie')
-      return window.api.getStarCodeAffiliate(account.cookie)
-    },
-    enabled: !!account?.cookie,
-    staleTime: 1000 * 60 * 5
-  })
-
-  const addStarCodeAffiliate = useMutation({
-    mutationFn: async (code: string) => {
-      if (!account?.cookie) throw new Error('No cookie')
-      return window.api.addStarCodeAffiliate(account.cookie, code)
-    },
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ['star-code-affiliate', account?.id] })
-  })
-
-  const removeStarCodeAffiliate = useMutation({
-    mutationFn: async () => {
-      if (!account?.cookie) throw new Error('No cookie')
-      return window.api.removeStarCodeAffiliate(account.cookie)
-    },
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ['star-code-affiliate', account?.id] })
   })
 
   // Birthdate display helper
@@ -506,91 +484,45 @@ const AccountSettingsTab: React.FC<AccountSettingsTabProps> = ({ account }) => {
                     </SettingCard>
 
                     <SettingCard
-                      icon={<Calendar size={18} />}
-                      title="Account Age"
-                      description="How long you've been on Roblox"
+                      icon={<FileText size={18} />}
+                      title="Description"
+                      description="Your profile bio"
                     >
-                      <SettingRow label="Account Age">
-                        <SettingValue value={formatDays(accountSettings.AccountAgeInDays)} />
-                      </SettingRow>
-                      <SettingRow label="Previous Usernames">
-                        <div className="flex flex-wrap gap-1 max-w-[200px] justify-end">
-                          {accountSettings.PreviousUserNames.split(', ')
-                            .filter(Boolean)
-                            .slice(0, 3)
-                            .map((name, i) => (
-                              <span
-                                key={i}
-                                className="text-sm px-1.5 py-0.5 bg-neutral-800 rounded text-neutral-400"
-                              >
-                                {name}
-                              </span>
-                            ))}
-                          {!accountSettings.PreviousUserNames && (
-                            <span className="text-sm text-neutral-500">None</span>
-                          )}
-                        </div>
-                      </SettingRow>
-                      <SettingRow label="Robux for Username Change">
-                        <span className="text-sm text-neutral-300 font-mono">
-                          {accountSettings.RobuxRemainingForUsernameChange} R$
-                        </span>
-                      </SettingRow>
-                    </SettingCard>
-
-                    <SettingCard
-                      icon={<Mail size={18} />}
-                      title="Contact Information"
-                      description="Email and phone settings"
-                    >
-                      <SettingRow label="Email">
-                        <span className="text-sm text-neutral-300">
-                          {accountSettings.UserEmail}
-                        </span>
-                      </SettingRow>
-                      <SettingRow label="Email Verified">
+                      <div className="space-y-2">
+                        <textarea
+                          value={editingDescription ?? descriptionData?.description ?? ''}
+                          onChange={(e) => setEditingDescription(e.target.value)}
+                          placeholder="Enter your profile description..."
+                          className="w-full h-20 px-3 py-2 text-sm bg-neutral-800/50 border border-neutral-700/50 rounded-[var(--control-radius)] text-neutral-200 placeholder-neutral-500 focus:outline-none focus:border-[var(--accent-color)]/50 resize-none"
+                        />
                         <div className="flex items-center gap-2">
-                          <SettingBadge
-                            enabled={accountSettings.IsEmailVerified}
-                            label={accountSettings.IsEmailVerified ? 'Verified' : 'Not Verified'}
-                          />
-                          {!accountSettings.IsEmailVerified && accountSettings.IsEmailOnFile && (
-                            <button
-                              onClick={() => sendVerificationEmail.mutate()}
-                              disabled={sendVerificationEmail.isPending}
-                              className="text-sm px-2 py-1 bg-[var(--accent-color)]/20 text-[var(--accent-color)] rounded hover:bg-[var(--accent-color)]/30 transition-colors"
-                            >
-                              {sendVerificationEmail.isPending ? 'Sending...' : 'Send Email'}
-                            </button>
+                          {editingDescription !== null &&
+                            editingDescription !== (descriptionData?.description ?? '') && (
+                              <>
+                                <button
+                                  onClick={() => updateDescription.mutate(editingDescription)}
+                                  disabled={updateDescription.isPending}
+                                  className="text-sm px-3 py-1.5 bg-[var(--accent-color)]/20 text-[var(--accent-color)] rounded-[var(--control-radius)] hover:bg-[var(--accent-color)]/30 transition-colors disabled:opacity-50"
+                                >
+                                  {updateDescription.isPending ? 'Saving...' : 'Save'}
+                                </button>
+                                <button
+                                  onClick={() => setEditingDescription(null)}
+                                  disabled={updateDescription.isPending}
+                                  className="text-sm px-3 py-1.5 bg-neutral-700/50 text-neutral-400 rounded-[var(--control-radius)] hover:bg-neutral-700/70 transition-colors disabled:opacity-50"
+                                >
+                                  Cancel
+                                </button>
+                              </>
+                            )}
+                          {updateDescription.isSuccess && editingDescription === null && (
+                            <span className="text-sm text-emerald-400">Saved!</span>
                           )}
                         </div>
-                      </SettingRow>
-                      <SettingRow label="Phone Feature">
-                        <SettingBadge enabled={accountSettings.IsPhoneFeatureEnabled} />
-                      </SettingRow>
-                    </SettingCard>
-
-                    <SettingCard
-                      icon={<Palette size={18} />}
-                      title="Preferences"
-                      description="Display and theme settings"
-                    >
-                      <SettingRow label="Theme">
-                        <CustomDropdown
-                          value={userSettings.themeType?.currentValue || 'Dark'}
-                          options={THEME_OPTIONS}
-                          onChange={(v) => updateTheme.mutate(v)}
-                          isLoading={updateTheme.isPending}
-                        />
-                      </SettingRow>
-                      <SettingRow label="Content Age Restriction">
-                        <SettingValue
-                          value={userSettings.contentAgeRestriction?.currentValue || 'None'}
-                        />
-                      </SettingRow>
-                      <SettingRow label="Display Names">
-                        <SettingBadge enabled={accountSettings.IsDisplayNamesEnabled} />
-                      </SettingRow>
+                        {updateDescription.isError && (
+                          <p className="text-sm text-red-400">Failed to update description</p>
+                        )}
+                      </div>
                     </SettingCard>
 
                     <SettingCard
@@ -629,46 +561,91 @@ const AccountSettingsTab: React.FC<AccountSettingsTabProps> = ({ account }) => {
                     </SettingCard>
 
                     <SettingCard
-                      icon={<FileText size={18} />}
-                      title="Description"
-                      description="Your profile bio"
-                      className="md:col-span-2"
+                      icon={<Mail size={18} />}
+                      title="Contact Information"
+                      description="Email and phone settings"
                     >
-                      <div className="space-y-2">
-                        <textarea
-                          value={editingDescription ?? descriptionData?.description ?? ''}
-                          onChange={(e) => setEditingDescription(e.target.value)}
-                          placeholder="Enter your profile description..."
-                          className="w-full h-20 px-3 py-2 text-sm bg-neutral-800/50 border border-neutral-700/50 rounded-lg text-neutral-200 placeholder-neutral-500 focus:outline-none focus:border-[var(--accent-color)]/50 resize-none"
-                        />
+                      <SettingRow label="Email">
+                        <span className="text-sm text-neutral-300">
+                          {accountSettings.UserEmail}
+                        </span>
+                      </SettingRow>
+                      <SettingRow label="Email Verified">
                         <div className="flex items-center gap-2">
-                          {editingDescription !== null &&
-                            editingDescription !== (descriptionData?.description ?? '') && (
-                              <>
-                                <button
-                                  onClick={() => updateDescription.mutate(editingDescription)}
-                                  disabled={updateDescription.isPending}
-                                  className="text-sm px-3 py-1.5 bg-[var(--accent-color)]/20 text-[var(--accent-color)] rounded hover:bg-[var(--accent-color)]/30 transition-colors disabled:opacity-50"
-                                >
-                                  {updateDescription.isPending ? 'Saving...' : 'Save'}
-                                </button>
-                                <button
-                                  onClick={() => setEditingDescription(null)}
-                                  disabled={updateDescription.isPending}
-                                  className="text-sm px-3 py-1.5 bg-neutral-700/50 text-neutral-400 rounded hover:bg-neutral-700/70 transition-colors disabled:opacity-50"
-                                >
-                                  Cancel
-                                </button>
-                              </>
-                            )}
-                          {updateDescription.isSuccess && editingDescription === null && (
-                            <span className="text-sm text-emerald-400">Saved!</span>
+                          <SettingBadge
+                            enabled={accountSettings.IsEmailVerified}
+                            label={accountSettings.IsEmailVerified ? 'Verified' : 'Not Verified'}
+                          />
+                          {!accountSettings.IsEmailVerified && accountSettings.IsEmailOnFile && (
+                            <button
+                              onClick={() => sendVerificationEmail.mutate()}
+                              disabled={sendVerificationEmail.isPending}
+                              className="text-sm px-2 py-1 bg-[var(--accent-color)]/20 text-[var(--accent-color)] rounded-[var(--control-radius)] hover:bg-[var(--accent-color)]/30 transition-colors"
+                            >
+                              {sendVerificationEmail.isPending ? 'Sending...' : 'Send Email'}
+                            </button>
                           )}
                         </div>
-                        {updateDescription.isError && (
-                          <p className="text-sm text-red-400">Failed to update description</p>
-                        )}
-                      </div>
+                      </SettingRow>
+                      <SettingRow label="Phone Feature">
+                        <SettingBadge enabled={accountSettings.IsPhoneFeatureEnabled} />
+                      </SettingRow>
+                    </SettingCard>
+
+                    <SettingCard
+                      icon={<Calendar size={18} />}
+                      title="Account Age"
+                      description="How long you've been on Roblox"
+                    >
+                      <SettingRow label="Account Age">
+                        <SettingValue value={formatDays(accountSettings.AccountAgeInDays)} />
+                      </SettingRow>
+                      <SettingRow label="Previous Usernames">
+                        <div className="flex flex-wrap gap-1 max-w-[200px] justify-end">
+                          {accountSettings.PreviousUserNames.split(', ')
+                            .filter(Boolean)
+                            .slice(0, 3)
+                            .map((name, i) => (
+                              <span
+                                key={i}
+                                className="text-sm px-1.5 py-0.5 bg-neutral-800 rounded text-neutral-400"
+                              >
+                                {name}
+                              </span>
+                            ))}
+                          {!accountSettings.PreviousUserNames && (
+                            <span className="text-sm text-neutral-500">None</span>
+                          )}
+                        </div>
+                      </SettingRow>
+                      <SettingRow label="Robux for Username Change">
+                        <span className="text-sm text-neutral-300 font-mono">
+                          {accountSettings.RobuxRemainingForUsernameChange} R$
+                        </span>
+                      </SettingRow>
+                    </SettingCard>
+
+                    <SettingCard
+                      icon={<Palette size={18} />}
+                      title="Preferences"
+                      description="Display and theme settings"
+                    >
+                      <SettingRow label="Theme">
+                        <CustomDropdown
+                          value={userSettings.themeType?.currentValue || 'Dark'}
+                          options={THEME_OPTIONS}
+                          onChange={(v) => updateTheme.mutate(v)}
+                          isLoading={updateTheme.isPending}
+                        />
+                      </SettingRow>
+                      <SettingRow label="Content Age Restriction">
+                        <SettingValue
+                          value={userSettings.contentAgeRestriction?.currentValue || 'None'}
+                        />
+                      </SettingRow>
+                      <SettingRow label="Display Names">
+                        <SettingBadge enabled={accountSettings.IsDisplayNamesEnabled} />
+                      </SettingRow>
                     </SettingCard>
 
                     <SettingCard
@@ -704,55 +681,6 @@ const AccountSettingsTab: React.FC<AccountSettingsTabProps> = ({ account }) => {
                         </span>
                       </SettingRow>
                     </SettingCard>
-
-                    <SettingCard
-                      icon={<Star size={18} />}
-                      title="Star Code Affiliate"
-                      description="Support a creator"
-                    >
-                      {starCodeData ? (
-                        <>
-                          <SettingRow label="Creator">
-                            <span className="text-sm text-[var(--accent-color)] font-medium">
-                              {starCodeData.name}
-                            </span>
-                          </SettingRow>
-                          <SettingRow label="Code">
-                            <span className="text-sm text-neutral-300 font-mono">
-                              {starCodeData.code}
-                            </span>
-                          </SettingRow>
-                          <button
-                            onClick={() => removeStarCodeAffiliate.mutate()}
-                            disabled={removeStarCodeAffiliate.isPending}
-                            className="mt-2 text-sm px-3 py-1.5 bg-red-500/20 text-red-400 rounded hover:bg-red-500/30 transition-colors disabled:opacity-50"
-                          >
-                            {removeStarCodeAffiliate.isPending ? 'Removing...' : 'Remove Affiliate'}
-                          </button>
-                        </>
-                      ) : (
-                        <div className="space-y-2">
-                          <p className="text-sm text-neutral-500">No star code affiliate set</p>
-                          <input
-                            type="text"
-                            placeholder="Enter star code..."
-                            className="w-full px-3 py-1.5 text-sm bg-neutral-800/50 border border-neutral-700/50 rounded text-neutral-200 placeholder-neutral-500 focus:outline-none focus:border-[var(--accent-color)]/50"
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                const input = e.currentTarget
-                                if (input.value.trim()) {
-                                  addStarCodeAffiliate.mutate(input.value.trim())
-                                  input.value = ''
-                                }
-                              }
-                            }}
-                          />
-                          {addStarCodeAffiliate.isError && (
-                            <p className="text-sm text-red-400">Invalid star code</p>
-                          )}
-                        </div>
-                      )}
-                    </SettingCard>
                   </div>
                 </div>
               )}
@@ -780,7 +708,7 @@ const AccountSettingsTab: React.FC<AccountSettingsTabProps> = ({ account }) => {
                           disabled={!accountSettings.CanHideInventory}
                         />
                       </SettingRow>
-                      <SettingRow label="Online Status (Join Privacy)">
+                      <SettingRow label="Online Status">
                         <CustomDropdown
                           value={userSettings.whoCanSeeMyOnlineStatus?.currentValue || 'Friends'}
                           options={ONLINE_STATUS_PRIVACY_OPTIONS}
@@ -788,6 +716,16 @@ const AccountSettingsTab: React.FC<AccountSettingsTabProps> = ({ account }) => {
                             updateOnlineStatusPrivacy.mutate(v as OnlineStatusPrivacy)
                           }
                           isLoading={updateOnlineStatusPrivacy.isPending}
+                        />
+                      </SettingRow>
+                      <SettingRow label="Who can join me?">
+                        <CustomDropdown
+                          value={userSettings.whoCanJoinMeInExperiences?.currentValue || 'Friends'}
+                          options={PRIVACY_OPTIONS}
+                          onChange={(v) =>
+                            updateWhoCanJoinMeInExperiences.mutate(v as PrivacyLevel)
+                          }
+                          isLoading={updateWhoCanJoinMeInExperiences.isPending}
                         />
                       </SettingRow>
                       <SettingRow label="Social Networks">

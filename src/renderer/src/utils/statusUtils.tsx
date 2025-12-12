@@ -4,7 +4,7 @@ import { Circle } from 'lucide-react'
 export const getStatusColor = (status: AccountStatus): string => {
   switch (status) {
     case AccountStatus.Online:
-      return 'bg-blue-500'
+      return 'bg-[var(--accent-color)]'
     case AccountStatus.InGame:
       return 'bg-emerald-500'
     case AccountStatus.InStudio:
@@ -18,9 +18,26 @@ export const getStatusColor = (status: AccountStatus): string => {
   }
 }
 
+export const getStatusBorderColor = (status: AccountStatus): string => {
+  switch (status) {
+    case AccountStatus.Online:
+      return 'border-[color:color-mix(in_srgb,var(--accent-color)_50%,transparent)]'
+    case AccountStatus.InGame:
+      return 'border-emerald-500/50'
+    case AccountStatus.InStudio:
+      return 'border-orange-500/50'
+    case AccountStatus.Offline:
+      return 'border-neutral-500/50'
+    case AccountStatus.Banned:
+      return 'border-red-500/50'
+    default:
+      return 'border-neutral-500/50'
+  }
+}
+
 export const getStatusIcon = (status: AccountStatus) => {
   const colorClass = {
-    [AccountStatus.Online]: 'text-blue-500',
+    [AccountStatus.Online]: 'text-[var(--accent-color)]',
     [AccountStatus.InGame]: 'text-emerald-500',
     [AccountStatus.InStudio]: 'text-orange-500',
     [AccountStatus.Offline]: 'text-neutral-500',

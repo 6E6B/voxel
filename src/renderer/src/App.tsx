@@ -1,6 +1,6 @@
 /// <reference path="./window.d.ts" />
 import React, { useState, useMemo, useRef, useEffect, useCallback, lazy, Suspense } from 'react'
-import notificationIcon from '../../../resources/build/icons/256x256.png'
+import notificationIcon from '../../../resources/build/icons/png/256x256.png'
 import { AnimatePresence } from 'framer-motion'
 import { Search } from 'lucide-react'
 import { Account, AccountStatus, JoinMethod } from './types'
@@ -629,7 +629,7 @@ const App: React.FC = () => {
   return (
     <div
       id="app-container"
-      className="flex h-screen w-full bg-[var(--color-app-bg)] text-[var(--color-text-muted)] font-sans overflow-hidden overflow-x-hidden selection:bg-[var(--accent-color-soft)] selection:text-[var(--color-text-primary)]"
+      className={`flex h-screen w-full bg-[var(--color-app-bg)] text-[var(--color-text-muted)] font-sans overflow-hidden overflow-x-hidden selection:bg-[var(--accent-color-soft)] selection:text-[var(--color-text-primary)] ${settings.privacyMode ? 'privacy-mode' : ''}`}
     >
       {/* Sidebar */}
       <Sidebar
@@ -639,6 +639,7 @@ const App: React.FC = () => {
         onResizeStart={() => setIsResizing(true)}
         selectedAccount={selectedAccount}
         showProfileCard={settings.showSidebarProfileCard}
+        privacyMode={settings.privacyMode}
         tabOrder={sidebarTabOrder}
         hiddenTabs={sidebarHiddenTabs}
       />
@@ -687,7 +688,11 @@ const App: React.FC = () => {
           {activeTab === 'Profile' && (
             <Suspense fallback={<LoadingSpinnerFullPage />}>
               {selectedAccount ? (
-                <ProfileTab account={selectedAccount} onJoinGame={handleFriendJoin} />
+                <ProfileTab
+                  account={selectedAccount}
+                  privacyMode={settings.privacyMode}
+                  onJoinGame={handleFriendJoin}
+                />
               ) : (
                 <div className="flex flex-col items-center justify-center h-full text-[var(--color-text-muted)]">
                   <p>Select an account to view profile</p>
@@ -805,6 +810,7 @@ const App: React.FC = () => {
           onClose={() => setInfoAccount(null)}
           userId={infoAccount?.userId || null}
           selectedAccount={infoAccount}
+          privacyMode={settings.privacyMode}
           initialData={{
             name: infoAccount?.username,
             displayName: infoAccount?.displayName,
@@ -840,6 +846,7 @@ const App: React.FC = () => {
           onClose={() => setQuickProfileUserId(null)}
           userId={quickProfileUserId}
           selectedAccount={accounts.find((a) => a.cookie) || null}
+          privacyMode={settings.privacyMode}
           initialData={{}}
         />
       </Suspense>

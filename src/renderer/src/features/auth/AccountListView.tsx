@@ -3,7 +3,7 @@ import { Copy, Info, Check } from 'lucide-react'
 import { Account } from '@renderer/types'
 import CustomCheckbox from '@renderer/components/UI/buttons/CustomCheckbox'
 import StatusBadge from '@renderer/components/UI/display/StatusBadge'
-import { getStatusColor } from '@renderer/utils/statusUtils'
+import { getStatusBorderColor, getStatusColor } from '@renderer/utils/statusUtils'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@renderer/components/UI/display/Tooltip'
 import { TableVirtuoso, TableComponents } from 'react-virtuoso'
 
@@ -208,12 +208,12 @@ const AccountListView = ({
                 <div className="flex items-center">
                   <div className="h-10 w-10 flex-shrink-0 relative">
                     <img
-                      className="h-10 w-10 rounded-full bg-neutral-900 object-cover ring-2 ring-neutral-900 group-hover:ring-neutral-800 transition-all"
+                      className="h-10 w-10 rounded-full bg-neutral-900 object-cover ring-2 ring-neutral-900 group-hover:ring-neutral-800 transition-all privacy-blur"
                       src={account.avatarUrl}
                       alt=""
                     />
                     <span
-                      className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 border-2 border-neutral-950 rounded-full ${getStatusColor(account.status)}`}
+                      className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 border-2 border-dotted rounded-full ${getStatusBorderColor(account.status)} ${getStatusColor(account.status)}`}
                     ></span>
                   </div>
                   <div className="ml-4">
@@ -222,11 +222,11 @@ const AccountListView = ({
                         selectedIds.has(account.id)
                           ? 'text-white'
                           : 'text-neutral-200 group-hover:text-white'
-                      }`}
+                      } privacy-blur`}
                     >
                       {account.displayName}
                     </div>
-                    <div className="text-sm text-neutral-500">@{account.username}</div>
+                    <div className="text-sm text-neutral-500 privacy-blur">@{account.username}</div>
                   </div>
                 </div>
               </td>

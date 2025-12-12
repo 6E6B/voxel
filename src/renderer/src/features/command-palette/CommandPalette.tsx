@@ -196,9 +196,13 @@ const UniversalLimitedRow = memo(
     const badge = resultTypeBadges.limited
     return (
       <motion.button
-        initial={false}
-        animate={{ backgroundColor: isSelected ? SELECTED_BG : UNSELECTED_BG }}
-        transition={{ duration: 0.1 }}
+        initial={{ opacity: 0, y: 6 }}
+        animate={{
+          opacity: 1,
+          y: 0,
+          backgroundColor: isSelected ? SELECTED_BG : UNSELECTED_BG
+        }}
+        transition={{ duration: 0.12 }}
         data-selected={isSelected}
         data-index={idx}
         onClick={() => onSelect(result)}
@@ -278,9 +282,13 @@ const UniversalCatalogRow = memo(
     const badge = resultTypeBadges.catalog
     return (
       <motion.button
-        initial={false}
-        animate={{ backgroundColor: isSelected ? SELECTED_BG : UNSELECTED_BG }}
-        transition={{ duration: 0.1 }}
+        initial={{ opacity: 0, y: 6 }}
+        animate={{
+          opacity: 1,
+          y: 0,
+          backgroundColor: isSelected ? SELECTED_BG : UNSELECTED_BG
+        }}
+        transition={{ duration: 0.12 }}
         data-selected={isSelected}
         data-index={idx}
         onClick={() => onSelect(result)}
@@ -365,9 +373,13 @@ const UniversalCommandRow = memo(
     const badge = resultTypeBadges.command
     return (
       <motion.button
-        initial={false}
-        animate={{ backgroundColor: isSelected ? SELECTED_BG : UNSELECTED_BG }}
-        transition={{ duration: 0.1 }}
+        initial={{ opacity: 0, y: 6 }}
+        animate={{
+          opacity: 1,
+          y: 0,
+          backgroundColor: isSelected ? SELECTED_BG : UNSELECTED_BG
+        }}
+        transition={{ duration: 0.12 }}
         data-selected={isSelected}
         data-index={idx}
         onClick={() => onSelect(result)}
@@ -443,9 +455,13 @@ const UniversalPlayerRow = memo(
     const badge = result.isFriend ? resultTypeBadges.friend : resultTypeBadges.player
     return (
       <motion.button
-        initial={false}
-        animate={{ backgroundColor: isSelected ? SELECTED_BG : UNSELECTED_BG }}
-        transition={{ duration: 0.1 }}
+        initial={{ opacity: 0, y: 6 }}
+        animate={{
+          opacity: 1,
+          y: 0,
+          backgroundColor: isSelected ? SELECTED_BG : UNSELECTED_BG
+        }}
+        transition={{ duration: 0.12 }}
         data-selected={isSelected}
         data-index={idx}
         onClick={() => onSelect(result)}
@@ -667,19 +683,19 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     const results: UniversalSearchResult[] = []
     const addedPlayerIds = new Set<number>()
 
-    // Add best player match at the top (from API)
-    if (playerResult) {
-      results.push(playerResult)
-      addedPlayerIds.add(playerResult.id)
-    }
-
-    // Add matching friends
+    // Add matching friends first (friends should rank above general player lookup)
     playerFriends.forEach((friend) => {
       if (!addedPlayerIds.has(friend.id)) {
         results.push(friend)
         addedPlayerIds.add(friend.id)
       }
     })
+
+    // Add best player match (from API) after friend matches
+    if (playerResult && !addedPlayerIds.has(playerResult.id)) {
+      results.push(playerResult)
+      addedPlayerIds.add(playerResult.id)
+    }
 
     limitedsResults.forEach((limited) => {
       results.push(limited)
@@ -1258,9 +1274,13 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                         return (
                           <motion.button
                             key={cmd.id}
-                            initial={false}
-                            animate={{ backgroundColor: isSelected ? SELECTED_BG : UNSELECTED_BG }}
-                            transition={{ duration: 0.1 }}
+                            initial={{ opacity: 0, y: 6 }}
+                            animate={{
+                              opacity: 1,
+                              y: 0,
+                              backgroundColor: isSelected ? SELECTED_BG : UNSELECTED_BG
+                            }}
+                            transition={{ duration: 0.12 }}
                             data-selected={isSelected}
                             onClick={() => selectCommand(cmd)}
                             onMouseEnter={() => setSelectedIndex(idx)}

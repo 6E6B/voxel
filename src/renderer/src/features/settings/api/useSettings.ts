@@ -8,6 +8,7 @@ import {
   sanitizeSidebarOrder
 } from '@shared/navigation'
 import { applyAccentColor } from '@renderer/utils/themeUtils'
+import { applyTint, getCurrentThemeNameFromDom } from '@renderer/theme/theme'
 import { initializeFonts, CustomFont } from '@renderer/utils/fontUtils'
 
 // ============================================================================
@@ -20,11 +21,15 @@ const DEFAULT_SETTINGS: Settings = {
   defaultInstallationPath: null,
   accentColor: DEFAULT_ACCENT_COLOR,
   theme: 'system',
+  tint: 'neutral',
   showSidebarProfileCard: true,
+  privacyMode: false,
   sidebarTabOrder: DEFAULT_SIDEBAR_TAB_ORDER,
   sidebarHiddenTabs: [],
   pinCode: null
 }
+
+const LEGACY_DEFAULT_ACCENT_COLORS = ['#1e66f5', '#3b82f6', '#2563eb']
 
 // ============================================================================
 // Basic Queries
@@ -36,13 +41,23 @@ export function useSettings() {
     queryKey: queryKeys.settings.snapshot(),
     queryFn: async () => {
       const data = await window.api.getSettings()
+
+      const rawAccent = typeof data?.accentColor === 'string' ? data.accentColor.trim() : ''
+      const accentColor = !rawAccent
+        ? DEFAULT_ACCENT_COLOR
+        : LEGACY_DEFAULT_ACCENT_COLORS.includes(rawAccent.toLowerCase())
+          ? DEFAULT_ACCENT_COLOR
+          : rawAccent
+
       // Merge with defaults to ensure all fields exist
       return {
         ...DEFAULT_SETTINGS,
         ...data,
-        accentColor: data?.accentColor || DEFAULT_ACCENT_COLOR,
+        accentColor,
         theme: (data?.theme as Settings['theme']) || 'system',
+        tint: (data?.tint as Settings['tint']) || 'neutral',
         showSidebarProfileCard: data?.showSidebarProfileCard ?? true,
+        privacyMode: data?.privacyMode ?? false,
         sidebarTabOrder: sanitizeSidebarOrder(data?.sidebarTabOrder),
         sidebarHiddenTabs: sanitizeSidebarHidden(data?.sidebarHiddenTabs)
       }
@@ -102,6 +117,22 @@ export function useSettingsManager() {
       applyAccentColor(settings.accentColor)
     }
   }, [settings.accentColor])
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return
+    const tint = settings.tint || 'neutral'
+    document.documentElement.dataset.tint = tint
+    applyTint(getCurrentThemeNameFromDom(), tint)
+  }, [settings.tint])
+
+  // Persist one-time migrations so the UI (and future sessions) match.
+  useEffect(() => {
+    const raw =
+      typeof settings.accentColor === 'string' ? settings.accentColor.trim().toLowerCase() : ''
+    if (raw && LEGACY_DEFAULT_ACCENT_COLORS.includes(raw) && raw !== DEFAULT_ACCENT_COLOR) {
+      updateSettingsMutation.mutate({ accentColor: DEFAULT_ACCENT_COLOR })
+    }
+  }, [settings.accentColor, updateSettingsMutation])
 
   // Initialize custom fonts on first load
   useEffect(() => {

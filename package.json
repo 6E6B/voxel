@@ -10,13 +10,13 @@
       "buildResources": "resources/build"
     },
     "mac": {
-      "icon": "resources/build/icons/icon.icns"
+      "icon": "resources/build/icons/mac/icon.icns"
     },
     "win": {
-      "icon": "resources/build/icons/icon.ico"
+      "icon": "resources/build/icons/win/icon.ico"
     },
     "linux": {
-      "icon": "resources/build/icons"
+      "icon": "resources/build/icons/png"
     }
   },
   "scripts": {
@@ -88,6 +88,7 @@
     "autoprefixer": "^10.4.22",
     "electron": "^38.1.2",
     "electron-builder": "^25.1.8",
+    "electron-icon-maker": "^0.0.5",
     "electron-vite": "^4.0.1",
     "eslint": "^9.36.0",
     "eslint-plugin-react": "^7.37.5",

@@ -1,7 +1,6 @@
 import React from 'react'
 import { motion } from 'framer-motion'
 import { Shirt, Package, Box, Copy, Check } from 'lucide-react'
-import { Tooltip, TooltipTrigger, TooltipContent } from '@renderer/components/UI/display/Tooltip'
 
 interface QuickActionsBarProps {
   onWearingClick: () => void
@@ -56,29 +55,47 @@ export const QuickActionsBar: React.FC<QuickActionsBarProps> = ({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3, delay: 0.1 }}
-      className="flex items-center p-1 bg-[var(--color-surface-muted)] border border-[var(--color-border)] rounded-xl"
+      className="grid grid-cols-2 sm:grid-cols-4 gap-3"
     >
-      {actions.map((action, index) => (
-        <Tooltip key={index}>
-          <TooltipTrigger asChild>
-            <button
-              onClick={action.onClick}
-              className={`
-                pressable flex-1 flex items-center justify-center py-2.5 rounded-lg transition-all duration-150
-                text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]
-                hover:bg-[var(--color-surface-hover)] active:bg-[var(--color-surface-strong)]
-                ${action.icon === Check ? 'text-emerald-400' : ''}
-              `}
-              aria-label={action.label}
-            >
-              <action.icon size={18} />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom" sideOffset={8}>
-            {action.label}
-          </TooltipContent>
-        </Tooltip>
-      ))}
+      {actions.map((action, index) => {
+        const isSuccess = action.icon === Check
+
+        return (
+          <button
+            key={index}
+            onClick={action.onClick}
+            className={
+              `pressable group w-full text-left ` +
+              `bg-[var(--color-surface-strong)] border border-[var(--color-border)] rounded-xl p-4 ` +
+              `shadow-[var(--shadow-lg)]/30 hover:shadow-[var(--shadow-lg)]/40 ` +
+              `hover:border-[var(--color-border-strong)] hover:bg-[var(--color-surface-hover)] ` +
+              `transition-colors`
+            }
+            aria-label={action.label}
+            title={action.label}
+            type="button"
+          >
+            <div className="flex items-start gap-3">
+              <div
+                className={
+                  `shrink-0 w-10 h-10 rounded-xl flex items-center justify-center ` +
+                  `bg-[var(--color-surface-muted)] border border-[var(--color-border-subtle)] ` +
+                  `group-hover:bg-[var(--color-surface-strong)] transition-colors ` +
+                  (isSuccess ? 'text-emerald-400' : 'text-[var(--color-text-secondary)]')
+                }
+              >
+                <action.icon size={18} />
+              </div>
+
+              <div className="min-w-0">
+                <div className="text-sm font-bold text-[var(--color-text-primary)] leading-tight">
+                  {action.shortLabel}
+                </div>
+              </div>
+            </div>
+          </button>
+        )
+      })}
     </motion.div>
   )
 }

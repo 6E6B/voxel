@@ -8,6 +8,7 @@ interface UniversalProfileModalProps {
   onClose: () => void
   userId: string | number | null
   selectedAccount: Account | null // Context for making API calls (needs a cookie)
+  privacyMode?: boolean
   initialData?: Partial<ExtendedProfile> | null // Optional immediate data
   onJoinGame?: (placeId: number | string, jobId?: string, userId?: number | string) => void
 }
@@ -42,6 +43,7 @@ const UniversalProfileModal: React.FC<UniversalProfileModalProps> = ({
   onClose,
   userId,
   selectedAccount,
+  privacyMode,
   initialData,
   onJoinGame
 }) => {
@@ -65,6 +67,7 @@ const UniversalProfileModal: React.FC<UniversalProfileModalProps> = ({
                 requestCookie={selectedAccount.cookie}
                 accountUserId={selectedAccount.userId}
                 isOwnAccount={false}
+                privacyMode={!!privacyMode}
                 onClose={onClose}
                 showCloseButton={false}
                 onSelectProfile={(id) => setActiveUserId(id)}

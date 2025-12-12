@@ -20,7 +20,7 @@ interface BadgesSectionProps {
 
 const BadgeGrid: React.FC<{ badges: Badge[]; isLoading: boolean }> = ({ badges, isLoading }) => {
   return (
-    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
+    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
       {isLoading
         ? Array.from({ length: 6 }).map((_, i) => <SkeletonSquareCard key={i} />)
         : badges.map((badge) => (
@@ -52,7 +52,7 @@ const BadgeGrid: React.FC<{ badges: Badge[]; isLoading: boolean }> = ({ badges, 
             </Tooltip>
           ))}
       {!isLoading && badges.length === 0 && (
-        <div className="col-span-6 text-[var(--color-text-muted)] text-sm py-4 text-center">
+        <div className="col-span-full text-[var(--color-text-muted)] text-sm py-4 text-center">
           No badges found.
         </div>
       )}

@@ -8,7 +8,7 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          'bg-[var(--accent-color)] text-[var(--accent-color-foreground)] hover:bg-[var(--accent-color-muted)] shadow-sm shadow-[0_5px_15px_var(--accent-color-shadow)] border border-[var(--accent-color-border)]',
+          'bg-[rgba(var(--accent-color-rgb),0.85)] text-[var(--accent-color-foreground)] hover:bg-[rgba(var(--accent-color-rgb),0.95)] shadow-sm shadow-[0_5px_15px_var(--accent-color-shadow)] border border-[var(--accent-color-border)]',
         destructive:
           'bg-red-500 text-white hover:bg-red-600 border border-red-500/60 focus-visible:ring-red-400/50',
         outline:
@@ -23,7 +23,7 @@ const buttonVariants = cva(
         filterItem:
           'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-hover)] justify-start !font-medium',
         filterItemActive:
-          'bg-[var(--accent-color)] text-[var(--accent-color-foreground)] justify-start !font-bold'
+          'bg-[rgba(var(--accent-color-rgb),0.85)] text-[var(--accent-color-foreground)] justify-start !font-bold'
       },
       size: {
         default: 'h-10 px-4 py-2.5',

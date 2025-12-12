@@ -210,7 +210,8 @@ export class RobloxFriendService {
         lastLocation: p?.lastLocation || '',
         placeId: p?.placeId || null,
         gameId: p?.gameId || null,
-        description: f.description || ''
+        description: f.description || '',
+        hasVerifiedBadge: f.hasVerifiedBadge ?? u?.hasVerifiedBadge ?? false
       }
     })
 
@@ -276,7 +277,8 @@ export class RobloxFriendService {
         lastLocation: p?.lastLocation || '',
         placeId: p?.placeId || null,
         gameId: p?.gameId || null,
-        description: f.description || ''
+        description: f.description || '',
+        hasVerifiedBadge: f.hasVerifiedBadge ?? u?.hasVerifiedBadge ?? false
       }
     })
   }
@@ -316,7 +318,8 @@ export class RobloxFriendService {
         displayName: details ? details.displayName : u.displayName || '',
         avatarUrl: avatars[u.id] || '',
         userPresenceType: p ? p.userPresenceType : 0,
-        created: u.created
+        created: u.created,
+        hasVerifiedBadge: details?.hasVerifiedBadge ?? false
       }
     })
 
@@ -362,7 +365,8 @@ export class RobloxFriendService {
         displayName: details ? details.displayName : u.displayName || '',
         avatarUrl: avatars[u.id] || '',
         userPresenceType: p ? p.userPresenceType : 0,
-        created: u.created
+        created: u.created,
+        hasVerifiedBadge: details?.hasVerifiedBadge ?? false
       }
     })
 
@@ -423,7 +427,8 @@ export class RobloxFriendService {
         sourceUniverseId: friendRequest.sourceUniverseId ?? null,
         contactName: friendRequest.contactName ?? null,
         senderNickname: friendRequest.senderNickname ?? '',
-        mutualFriendsList: mutualFriends
+        mutualFriendsList: mutualFriends,
+        hasVerifiedBadge: user?.hasVerifiedBadge ?? r.hasVerifiedBadge ?? false
       }
     })
   }

@@ -118,7 +118,9 @@ export interface GameServer {
   region: string
 }
 
-export const DEFAULT_ACCENT_COLOR = '#1e66f5'
+export const DEFAULT_ACCENT_COLOR = '#00d091'
+
+export type TintPreference = 'neutral' | 'cool'
 
 export type ThemePreference = 'system' | 'dark' | 'light'
 
@@ -128,7 +130,9 @@ export interface Settings {
   defaultInstallationPath?: string | null
   accentColor: string
   theme: ThemePreference
+  tint: TintPreference
   showSidebarProfileCard: boolean
+  privacyMode: boolean
   sidebarTabOrder: TabId[]
   sidebarHiddenTabs: TabId[]
   pinCode: string | null

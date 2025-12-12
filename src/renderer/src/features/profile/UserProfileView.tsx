@@ -41,7 +41,7 @@ import { useUserProfileOutfits } from './hooks/useUserProfileOutfits'
 import { useProfileData } from './hooks/useProfileData'
 import { useFriendStatuses } from './hooks/useFriendStatuses'
 import { ProfileHeader } from './components/ProfileHeader'
-import { ProfileStats } from './components/ProfileStats'
+import { ProfileStatsBento } from './components/ProfileStatsBento'
 import { FriendsSection } from './components/FriendsSection'
 import { GroupsSection } from './components/GroupsSection'
 import GroupDetailsModal from '@renderer/features/groups/Modals/GroupDetailsModal'
@@ -49,7 +49,7 @@ import { CollectionsSection } from './components/CollectionsSection'
 import { BadgesSection } from './components/BadgesSection'
 import { ExpandedAvatarModal } from './components/ExpandedAvatarModal'
 import { TruncatedTextWithTooltip } from './components/TruncatedTextWithTooltip'
-import { QuickActionsBar } from './components/QuickActionsBar'
+import { ProfileFloatingToolbar } from './components/ProfileFloatingToolbar'
 import { useRolimonsItem } from '@renderer/hooks/queries'
 
 const SOUND_HAT_IDS = [24114402, 305888394, 24112667, 33070696]
@@ -131,6 +131,7 @@ export interface ProfileViewProps {
   userId: string | number
   requestCookie: string
   accountUserId?: string | number
+  privacyMode?: boolean
   initialData?: {
     displayName?: string
     username?: string
@@ -159,6 +160,7 @@ const UserProfileView: React.FC<ProfileViewProps> = ({
   userId,
   requestCookie,
   accountUserId,
+  privacyMode,
   initialData,
   isOwnAccount,
   onClose,
@@ -198,6 +200,14 @@ const UserProfileView: React.FC<ProfileViewProps> = ({
   const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null)
 
   const userIdNum = typeof userId === 'string' ? parseInt(userId) : userId
+  const accountUserIdNum =
+    typeof accountUserId === 'string'
+      ? parseInt(accountUserId)
+      : typeof accountUserId === 'number'
+        ? accountUserId
+        : null
+
+  const blurIdentity = !!privacyMode && accountUserIdNum != null && accountUserIdNum === userIdNum
 
   const { profile } = useProfileData({ userId: userIdNum, requestCookie, initialData })
   const { sortedFriends } = useFriendStatuses(userIdNum, requestCookie)
@@ -286,6 +296,7 @@ const UserProfileView: React.FC<ProfileViewProps> = ({
             showCloseButton={showCloseButton}
             onClose={onClose}
             onAvatarClick={() => setIsAvatarExpanded(true)}
+            blurIdentity={blurIdentity}
             onSocialStatClick={(type) => {
               const titles = { friends: 'Friends', followers: 'Followers', following: 'Following' }
               setUserListModal({ isOpen: true, type, title: titles[type] })
@@ -295,57 +306,51 @@ const UserProfileView: React.FC<ProfileViewProps> = ({
             onJoinGame={onJoinGame}
           />
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            <div className="lg:col-span-4 space-y-6">
-              <QuickActionsBar
-                onWearingClick={() => setIsWearingOpen(true)}
-                onOutfitsClick={() => setIsOutfitsOpen(true)}
-                onInventoryClick={() => setIsInventoryOpen(true)}
-                onCopyIdClick={handleCopyUserId}
-              />
+          <div className="space-y-6">
+            <ProfileStatsBento
+              profile={profileWithGroupCount}
+              userId={userIdNum}
+              pastUsernames={pastUsernames}
+            />
 
-              <ProfileStats
-                profile={profileWithGroupCount}
-                userId={userIdNum}
-                pastUsernames={pastUsernames}
-              />
-            </div>
+            <FriendsSection
+              friends={sortedFriends as any}
+              isLoading={loading}
+              friendCount={profile.friendCount ?? sortedFriends.length}
+              onViewAll={() => setUserListModal({ isOpen: true, type: 'friends', title: 'Friends' })}
+              onSelectProfile={onSelectProfile}
+            />
 
-            <div className="lg:col-span-8 space-y-6">
-              <FriendsSection
-                friends={sortedFriends as any}
-                isLoading={loading}
-                friendCount={profile.friendCount ?? sortedFriends.length}
-                onViewAll={() =>
-                  setUserListModal({ isOpen: true, type: 'friends', title: 'Friends' })
-                }
-                onSelectProfile={onSelectProfile}
-              />
+            <GroupsSection
+              groups={groups}
+              isLoading={isLoadingGroups}
+              groupMemberCount={profileWithGroupCount.groupMemberCount}
+              onSelectGroup={(groupId) => setSelectedGroupId(groupId)}
+            />
 
-              <GroupsSection
-                groups={groups}
-                isLoading={isLoadingGroups}
-                groupMemberCount={profileWithGroupCount.groupMemberCount}
-                onSelectGroup={(groupId) => setSelectedGroupId(groupId)}
-              />
+            <CollectionsSection
+              collections={collections}
+              isLoading={isLoadingCollections}
+              onItemClick={setSelectedAccessory}
+              onViewAllClick={() => setIsInventoryOpen(true)}
+            />
 
-              <CollectionsSection
-                collections={collections}
-                isLoading={isLoadingCollections}
-                onItemClick={setSelectedAccessory}
-                onViewAllClick={() => setIsInventoryOpen(true)}
-              />
-
-              <BadgesSection
-                robloxBadges={robloxBadges}
-                experienceBadges={experienceBadges}
-                isLoadingRobloxBadges={isLoadingRobloxBadges}
-                isLoadingExperienceBadges={isLoadingExperienceBadges}
-              />
-            </div>
+            <BadgesSection
+              robloxBadges={robloxBadges}
+              experienceBadges={experienceBadges}
+              isLoadingRobloxBadges={isLoadingRobloxBadges}
+              isLoadingExperienceBadges={isLoadingExperienceBadges}
+            />
           </div>
         </div>
       </div>
+
+      <ProfileFloatingToolbar
+        onWearingClick={() => setIsWearingOpen(true)}
+        onOutfitsClick={() => setIsOutfitsOpen(true)}
+        onInventoryClick={() => setIsInventoryOpen(true)}
+        onCopyIdClick={handleCopyUserId}
+      />
 
       <Dialog isOpen={isWearingOpen} onClose={() => setIsWearingOpen(false)}>
         <DialogContent className="max-w-3xl bg-[var(--color-surface-strong)] border border-[var(--color-border)]">

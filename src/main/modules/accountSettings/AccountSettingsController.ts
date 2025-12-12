@@ -104,6 +104,17 @@ export const registerAccountSettingsHandlers = (): void => {
   )
 
   handle(
+    'update-who-can-join-me-in-experiences',
+    z.tuple([z.string(), z.enum(privacyLevelValues)]),
+    async (_, cookie, whoCanJoinMeInExperiences) => {
+      return AccountSettingsService.updateWhoCanJoinMeInExperiences(
+        cookie,
+        whoCanJoinMeInExperiences
+      )
+    }
+  )
+
+  handle(
     'send-verification-email',
     z.tuple([z.string(), z.boolean().optional()]),
     async (_, cookie, freeItem) => {
@@ -175,17 +186,4 @@ export const registerAccountSettingsHandlers = (): void => {
       return AccountSettingsService.updatePromotionChannels(cookie, channels)
     }
   )
-
-  // Star code affiliate handlers
-  handle('get-star-code-affiliate', z.tuple([z.string()]), async (_, cookie) => {
-    return AccountSettingsService.getStarCodeAffiliate(cookie)
-  })
-
-  handle('add-star-code-affiliate', z.tuple([z.string(), z.string()]), async (_, cookie, code) => {
-    return AccountSettingsService.addStarCodeAffiliate(cookie, code)
-  })
-
-  handle('remove-star-code-affiliate', z.tuple([z.string()]), async (_, cookie) => {
-    return AccountSettingsService.removeStarCodeAffiliate(cookie)
-  })
 }

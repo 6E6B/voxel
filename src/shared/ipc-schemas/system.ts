@@ -61,6 +61,7 @@ const optionalPathSchema = z.union([z.string().min(1), z.null()]).optional()
 const accentColorSchema = z.string().regex(/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/)
 const sidebarTabIdEnum = z.enum(SIDEBAR_TAB_IDS)
 const themePreferenceSchema = z.enum(['system', 'dark', 'light'])
+const tintPreferenceSchema = z.enum(['neutral', 'cool'])
 const sidebarHiddenTabsSchema = z
   .array(sidebarTabIdEnum)
   .refine((tabs) => tabs.every((tab) => !LOCKED_SIDEBAR_TABS.includes(tab)), {
@@ -81,7 +82,9 @@ export const settingsSchema = z.object({
   defaultInstallationPath: optionalPathSchema,
   accentColor: accentColorSchema,
   theme: themePreferenceSchema,
+  tint: tintPreferenceSchema,
   showSidebarProfileCard: z.boolean(),
+  privacyMode: z.boolean(),
   sidebarTabOrder: z.array(sidebarTabIdEnum),
   sidebarHiddenTabs: sidebarHiddenTabsSchema,
   pinCode: pinCodeSchema
@@ -93,7 +96,9 @@ export const settingsPatchSchema = z.object({
   defaultInstallationPath: optionalPathSchema,
   accentColor: accentColorSchema.optional(),
   theme: themePreferenceSchema.optional(),
+  tint: tintPreferenceSchema.optional(),
   showSidebarProfileCard: z.boolean().optional(),
+  privacyMode: z.boolean().optional(),
   sidebarTabOrder: z.array(sidebarTabIdEnum).optional(),
   sidebarHiddenTabs: sidebarHiddenTabsSchema.optional(),
   pinCode: pinCodeSchema.optional()

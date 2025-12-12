@@ -359,8 +359,8 @@ const AddAccountModal: React.FC<AddAccountModalProps> = ({ isOpen, onClose, onAd
             </div>
           ) : (
             <div className="space-y-6 text-left">
-              <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 text-sm text-blue-100/90 flex items-start gap-3">
-                <Info size={18} className="text-blue-300 shrink-0 mt-0.5" />
+              <div className="bg-[var(--accent-color-faint)] border border-[var(--accent-color-border)] rounded-lg p-4 text-sm text-[var(--color-text-secondary)] flex items-start gap-3">
+                <Info size={18} className="text-[var(--accent-color)] shrink-0 mt-0.5" />
                 <p>
                   We'll open the official Roblox login page inside a sandboxed window. The
                   .ROBLOSECURITY cookie will be captured directly from Roblox.

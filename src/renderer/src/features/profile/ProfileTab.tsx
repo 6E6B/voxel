@@ -5,11 +5,12 @@ import UniversalProfileModal from '@renderer/components/Modals/UniversalProfileM
 
 interface ProfileTabProps {
   account: Account
+  privacyMode: boolean
   onJoinGame?: (placeId: number | string, jobId?: string, userId?: number | string) => void
 }
 
 const ProfileTab: React.FC<ProfileTabProps> = memo(
-  ({ account, onJoinGame }) => {
+  ({ account, privacyMode, onJoinGame }) => {
     const [selectedUserId, setSelectedUserId] = useState<number | null>(null)
 
     if (!account.userId || !account.cookie) {
@@ -27,6 +28,7 @@ const ProfileTab: React.FC<ProfileTabProps> = memo(
           requestCookie={account.cookie}
           accountUserId={account.userId}
           isOwnAccount={true}
+          privacyMode={privacyMode}
           onSelectProfile={(id) => setSelectedUserId(id)}
           initialData={{
             displayName: account.displayName,
@@ -63,7 +65,8 @@ const ProfileTab: React.FC<ProfileTabProps> = memo(
     return (
       prevProps.account.id === nextProps.account.id &&
       prevProps.account.cookie === nextProps.account.cookie &&
-      prevProps.onJoinGame === nextProps.onJoinGame
+      prevProps.onJoinGame === nextProps.onJoinGame &&
+      prevProps.privacyMode === nextProps.privacyMode
     )
   }
 )

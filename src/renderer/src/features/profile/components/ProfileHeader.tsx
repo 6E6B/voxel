@@ -4,7 +4,7 @@ import { Shield, X, ChevronRight, Gamepad2 } from 'lucide-react'
 import Avatar3DThumbnail from '@renderer/components/Avatar/Avatar3DThumbnail'
 import { Avatar, AvatarFallback, AvatarImage } from '@renderer/components/UI/display/Avatar'
 import { SlidingNumber } from '@renderer/components/UI/specialized/SlidingNumber'
-import { getStatusColor } from '@renderer/utils/statusUtils'
+import { getStatusBorderColor, getStatusColor } from '@renderer/utils/statusUtils'
 import RobloxPremiumIcon from '@assets/svg/Premium.svg'
 import VerifiedIcon from '@assets/svg/Verified.svg'
 import { ProfileData } from '../hooks/useProfileData'
@@ -20,6 +20,7 @@ interface ProfileHeaderProps {
   showCloseButton?: boolean
   onClose?: () => void
   onAvatarClick: () => void
+  blurIdentity?: boolean
   onSocialStatClick: (type: 'friends' | 'followers' | 'following') => void
   hasRawDescription: boolean
   rawDescription: string
@@ -33,6 +34,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   showCloseButton,
   onClose,
   onAvatarClick,
+  blurIdentity,
   onSocialStatClick,
   hasRawDescription,
   rawDescription,
@@ -184,22 +186,24 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
               transition={{ type: 'spring', stiffness: 240, damping: 24, mass: 0.8 }}
               style={{ originX: 0.5, originY: 0.5 }}
             >
-              <Avatar3DThumbnail
-                userId={userId.toString()}
-                cookie={cookie}
-                className="w-full h-full drop-shadow-[0_24px_60px_rgba(0,0,0,0.65)]"
-                autoRotateSpeed={0.008}
-                cameraDistanceFactor={1.4}
-                manualRotationEnabled={isAvatarHovered}
-                manualZoomEnabled={isAvatarHovered}
-              />
+              <div className={blurIdentity ? 'privacy-blur' : ''}>
+                <Avatar3DThumbnail
+                  userId={userId.toString()}
+                  cookie={cookie}
+                  className="w-full h-full drop-shadow-[0_24px_60px_rgba(0,0,0,0.65)]"
+                  autoRotateSpeed={0.008}
+                  cameraDistanceFactor={1.4}
+                  manualRotationEnabled={isAvatarHovered}
+                  manualZoomEnabled={isAvatarHovered}
+                />
+              </div>
             </motion.div>
           </div>
         ) : (
           <img
             src={profile.avatarUrl}
             alt=""
-            className="h-[80%] object-contain drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)] transition-transform duration-700 ease-in-out group-hover:scale-105 mr-10"
+            className={`h-[80%] object-contain drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)] transition-transform duration-700 ease-in-out group-hover:scale-105 mr-10 ${blurIdentity ? 'privacy-blur' : ''}`}
           />
         )}
       </div>
@@ -224,15 +228,19 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
         {/* Profile Picture */}
         <div className="shrink-0 relative pointer-events-auto">
           <div className="relative flex items-center justify-center">
-            <Avatar className="w-32 h-32 md:w-40 md:h-40 shadow-2xl bg-[var(--color-surface-strong)] ring-1 ring-[var(--color-border-subtle)]">
-              <AvatarImage src={profile.avatarUrl} alt={profile.displayName} />
+            <Avatar
+              className={`w-32 h-32 md:w-40 md:h-40 shadow-2xl bg-[var(--color-surface-strong)] ring-1 ring-[var(--color-border-subtle)] ${
+                blurIdentity ? 'privacy-blur' : ''
+              }`}
+            >
+              <AvatarImage src={profile.avatarUrl} alt={blurIdentity ? '' : profile.displayName} />
               <AvatarFallback className="text-xl font-bold text-[var(--color-text-primary)] bg-[var(--color-surface-hover)]">
                 {profile.displayName?.slice(0, 2)?.toUpperCase() || 'RB'}
               </AvatarFallback>
             </Avatar>
             <div className="absolute bottom-2 right-6 translate-x-[32%] translate-y-[32%]">
               <span
-                className={`block w-4 h-4 md:w-5 md:h-5 rounded-full ring-1 ring-[var(--color-surface-strong)] shadow-[0_0_12px_rgba(0,0,0,0.35)] ${getStatusColor(profile.status)}`}
+                className={`block w-4 h-4 md:w-5 md:h-5 rounded-full border-2 border-dotted shadow-[0_0_12px_rgba(0,0,0,0.35)] ${getStatusBorderColor(profile.status)} ${getStatusColor(profile.status)}`}
               />
             </div>
           </div>
@@ -243,7 +251,9 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           <div className="flex flex-col gap-3">
             <div className="flex flex-wrap items-center gap-3">
               <h1 className="text-3xl md:text-4xl font-bold text-[var(--color-text-primary)] flex items-center gap-3 drop-shadow-lg mb-0">
-                <span className="break-words">{profile.displayName}</span>
+                <span className={`break-words ${blurIdentity ? 'privacy-blur' : ''}`}>
+                  {profile.displayName}
+                </span>
               </h1>
               <div className="flex items-center gap-2">
                 {profile.isVerified && (
@@ -268,7 +278,11 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
               </div>
             </div>
 
-            <p className="text-base md:text-lg text-[var(--color-text-secondary)] drop-shadow-md leading-none break-words">
+            <p
+              className={`text-base md:text-lg text-[var(--color-text-secondary)] drop-shadow-md leading-none break-words ${
+                blurIdentity ? 'privacy-blur' : ''
+              }`}
+            >
               @{profile.username}
             </p>
 

@@ -5,7 +5,6 @@ import {
   genderResponseSchema,
   birthdateResponseSchema,
   promotionChannelsResponseSchema,
-  starCodeAffiliateResponseSchema,
   type AccountSettingsJson,
   type UserSettingsAndOptions,
   type PrivacyLevel,
@@ -17,7 +16,6 @@ import {
   type GenderResponse,
   type BirthdateResponse,
   type PromotionChannelsResponse,
-  type StarCodeAffiliateResponse,
   type OnlineStatusPrivacy
 } from '@shared/ipc-schemas/accountSettings'
 
@@ -329,6 +327,31 @@ export class AccountSettingsService {
   }
 
   /**
+   * Updates the user's join privacy setting (who can join me in experiences)
+   */
+  static async updateWhoCanJoinMeInExperiences(
+    cookie: string,
+    whoCanJoinMeInExperiences: PrivacyLevel
+  ): Promise<{ success: boolean; error?: string }> {
+    const csrfToken = await getCsrfToken(cookie)
+    const response = await fetch(`${USER_SETTINGS_API_URL}?_rosealRequest=`, {
+      method: 'POST',
+      headers: {
+        Cookie: `.ROBLOSECURITY=${cookie}`,
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': csrfToken
+      },
+      body: JSON.stringify({ whoCanJoinMeInExperiences })
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      return { success: false, error: errorData.errors?.[0]?.message || response.statusText }
+    }
+    return { success: true }
+  }
+
+  /**
    * Sends a verification email
    */
   static async sendVerificationEmail(
@@ -590,100 +613,6 @@ export class AccountSettingsService {
         'X-CSRF-TOKEN': csrfToken
       },
       body: JSON.stringify(channels)
-    })
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}))
-      return { success: false, error: errorData.errors?.[0]?.message || response.statusText }
-    }
-    return { success: true }
-  }
-
-  /**
-   * Gets the user's star code affiliate
-   */
-  static async getStarCodeAffiliate(cookie: string): Promise<StarCodeAffiliateResponse | null> {
-    const response = await fetch(`${ACCOUNT_INFO_API_URL}/star-code-affiliates`, {
-      method: 'GET',
-      headers: {
-        Cookie: `.ROBLOSECURITY=${cookie}`,
-        Accept: 'application/json'
-      }
-    })
-
-    // API returns 404 or empty body when no affiliate is set
-    if (response.status === 404) {
-      return null
-    }
-
-    if (!response.ok) {
-      throw new Error(
-        `Failed to fetch star code affiliate: ${response.status} ${response.statusText}`
-      )
-    }
-
-    const text = await response.text()
-
-    // Handle empty response body
-    if (!text || text.trim() === '' || text.trim() === 'null') {
-      return null
-    }
-
-    try {
-      const data = JSON.parse(text)
-      // If data is null, empty object, or doesn't have required fields, return null
-      if (!data || !data.userId || !data.name || !data.code) {
-        return null
-      }
-      return starCodeAffiliateResponseSchema.parse(data)
-    } catch {
-      return null
-    }
-  }
-
-  /**
-   * Adds a star code affiliate supporter
-   */
-  static async addStarCodeAffiliate(
-    cookie: string,
-    code: string
-  ): Promise<{ success: boolean; affiliate?: StarCodeAffiliateResponse; error?: string }> {
-    const csrfToken = await getCsrfToken(cookie)
-    const response = await fetch(`${ACCOUNT_INFO_API_URL}/star-code-affiliates`, {
-      method: 'POST',
-      headers: {
-        Cookie: `.ROBLOSECURITY=${cookie}`,
-        'Content-Type': 'application/json',
-        'X-CSRF-TOKEN': csrfToken
-      },
-      body: JSON.stringify({ code })
-    })
-
-    const data = await response.json().catch(() => ({}))
-
-    if (!response.ok) {
-      return { success: false, error: data.errors?.[0]?.message || response.statusText }
-    }
-
-    return {
-      success: true,
-      affiliate: starCodeAffiliateResponseSchema.parse(data)
-    }
-  }
-
-  /**
-   * Removes the star code affiliate supporter
-   */
-  static async removeStarCodeAffiliate(
-    cookie: string
-  ): Promise<{ success: boolean; error?: string }> {
-    const csrfToken = await getCsrfToken(cookie)
-    const response = await fetch(`${ACCOUNT_INFO_API_URL}/star-code-affiliates`, {
-      method: 'DELETE',
-      headers: {
-        Cookie: `.ROBLOSECURITY=${cookie}`,
-        'X-CSRF-TOKEN': csrfToken
-      }
     })
 
     if (!response.ok) {
