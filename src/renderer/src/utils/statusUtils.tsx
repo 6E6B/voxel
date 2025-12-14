@@ -4,13 +4,13 @@ import { Circle } from 'lucide-react'
 export const getStatusColor = (status: AccountStatus): string => {
   switch (status) {
     case AccountStatus.Online:
-      return 'bg-[var(--accent-color)]'
+      return 'bg-blue-500'
     case AccountStatus.InGame:
       return 'bg-emerald-500'
     case AccountStatus.InStudio:
       return 'bg-orange-500'
     case AccountStatus.Offline:
-      return 'bg-neutral-500'
+      return 'bg-neutral-400'
     case AccountStatus.Banned:
       return 'bg-red-500'
     default:
@@ -21,7 +21,7 @@ export const getStatusColor = (status: AccountStatus): string => {
 export const getStatusBorderColor = (status: AccountStatus): string => {
   switch (status) {
     case AccountStatus.Online:
-      return 'border-[color:color-mix(in_srgb,var(--accent-color)_75%,black)]'
+      return 'border-blue-700'
     case AccountStatus.InGame:
       return 'border-emerald-700'
     case AccountStatus.InStudio:
@@ -38,13 +38,13 @@ export const getStatusBorderColor = (status: AccountStatus): string => {
 export const getStatusRingColor = (status: AccountStatus): string => {
   switch (status) {
     case AccountStatus.Online:
-      return 'bg-[color:color-mix(in_srgb,var(--accent-color)_75%,black)]'
+      return 'bg-blue-700'
     case AccountStatus.InGame:
       return 'bg-emerald-700'
     case AccountStatus.InStudio:
       return 'bg-orange-700'
     case AccountStatus.Offline:
-      return 'bg-neutral-700'
+      return 'bg-neutral-600'
     case AccountStatus.Banned:
       return 'bg-red-700'
     default:
@@ -52,9 +52,26 @@ export const getStatusRingColor = (status: AccountStatus): string => {
   }
 }
 
+export const getStatusRingUtilityClass = (status: AccountStatus): string => {
+  switch (status) {
+    case AccountStatus.Online:
+      return 'ring-blue-500'
+    case AccountStatus.InGame:
+      return 'ring-emerald-500'
+    case AccountStatus.InStudio:
+      return 'ring-orange-500'
+    case AccountStatus.Offline:
+      return 'ring-neutral-400'
+    case AccountStatus.Banned:
+      return 'ring-red-500'
+    default:
+      return 'ring-neutral-500'
+  }
+}
+
 export const getStatusIcon = (status: AccountStatus) => {
   const colorClass = {
-    [AccountStatus.Online]: 'text-[var(--accent-color)]',
+    [AccountStatus.Online]: 'text-blue-500',
     [AccountStatus.InGame]: 'text-emerald-500',
     [AccountStatus.InStudio]: 'text-orange-500',
     [AccountStatus.Offline]: 'text-neutral-500',

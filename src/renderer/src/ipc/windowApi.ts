@@ -68,7 +68,11 @@ export interface UpdateSettingResult {
 export interface AccountApi {
   validateCookie: (cookie: string) => Promise<UserSummary>
   getAvatarUrl: (userId: string) => Promise<string>
-  getBatchUserAvatars: (userIds: number[], size?: string) => Promise<Record<number, string | null>>
+  getBatchUserAvatars: (
+    userIds: number[],
+    size?: string,
+    cookie?: string
+  ) => Promise<Record<number, string | null>>
   getAssetContent: (url: string) => Promise<string>
   fetchAccountStats: (cookie: string) => Promise<AccountStats>
   getAccountStatus: (cookie: string) => Promise<Presence | null>

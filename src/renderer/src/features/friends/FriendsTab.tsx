@@ -18,7 +18,11 @@ import {
 } from 'lucide-react'
 import CustomDropdown from '@renderer/components/UI/menus/CustomDropdown'
 import { Friend, AccountStatus, Account } from '@renderer/types'
-import { getStatusRingColor, mapPresenceToStatus } from '@renderer/utils/statusUtils'
+import {
+  getStatusRingColor,
+  mapPresenceToStatus,
+  getStatusColor
+} from '@renderer/utils/statusUtils'
 import UniversalProfileModal from '@renderer/components/Modals/UniversalProfileModal'
 import AddFriendModal from './Modals/AddFriendModal'
 import FriendRequestsModal from './Modals/FriendRequestsModal'
@@ -100,45 +104,8 @@ const FriendsTab = ({ selectedAccount, onFriendJoin, onFriendsCountChange }: Fri
     onFriendsCountChange?.(friends.length)
   }, [friends.length, onFriendsCountChange])
 
-  // Poll for status updates
-  useEffect(() => {
-    if (!selectedAccount?.cookie || friends.length === 0) return
-
-    const refreshStatuses = async () => {
-      try {
-        const userIds = friends.map((f) => parseInt(f.userId))
-        const presences = await window.api.getFriendsStatuses(selectedAccount.cookie!, userIds)
-
-        queryClient.setQueryData(
-          queryKeys.friends.list(selectedAccount.id),
-          (oldFriends: Friend[] | undefined) => {
-            if (!oldFriends) return oldFriends
-            return oldFriends.map((friend) => {
-              const presence = presences.find((p) => p.userId === parseInt(friend.userId))
-              if (!presence) return friend
-
-              return {
-                ...friend,
-                status: mapPresenceToStatus(presence.userPresenceType),
-                gameActivity: presence.placeId
-                  ? {
-                      name: presence.lastLocation || 'Unknown Game',
-                      placeId: presence.placeId.toString(),
-                      jobId: presence.gameId || undefined
-                    }
-                  : undefined
-              }
-            })
-          }
-        )
-      } catch (err) {
-        console.error('Failed to refresh friend statuses:', err)
-      }
-    }
-
-    const intervalId = setInterval(refreshStatuses, 5000)
-    return () => clearInterval(intervalId)
-  }, [selectedAccount?.cookie, selectedAccount?.id, friends, queryClient])
+  // Status polling is handled by TanStack Query's refetchInterval in useFriends hook
+  // No need for custom interval here to avoid duplicate polling and memory leaks
 
   useEffect(() => {
     if (!selectedAccount) onFriendsCountChange?.(0)
@@ -247,6 +214,12 @@ const FriendsTab = ({ selectedAccount, onFriendJoin, onFriendsCountChange }: Fri
     }
   }
 
+  const handleRequestCountChange = useCallback(() => {
+    queryClient.invalidateQueries({
+      queryKey: queryKeys.friends.requests(selectedAccount?.id || '')
+    })
+  }, [queryClient, selectedAccount?.id])
+
   const toggleSection = (key: string) => {
     const newCollapsed = new Set(collapsedSections)
     if (newCollapsed.has(key)) newCollapsed.delete(key)
@@ -269,22 +242,7 @@ const FriendsTab = ({ selectedAccount, onFriendJoin, onFriendsCountChange }: Fri
     { key: AccountStatus.Banned, label: 'Banned', icon: User, color: 'text-red-500' }
   ]
 
-  const getStatusColor = (status: AccountStatus) => {
-    switch (status) {
-      case AccountStatus.Online:
-        return 'bg-blue-500'
-      case AccountStatus.InGame:
-        return 'bg-emerald-500'
-      case AccountStatus.InStudio:
-        return 'bg-orange-500'
-      case AccountStatus.Offline:
-        return 'bg-neutral-600'
-      case AccountStatus.Banned:
-        return 'bg-red-500'
-      default:
-        return 'bg-neutral-600'
-    }
-  }
+
 
   return (
     <TooltipProvider>
@@ -595,11 +553,7 @@ const FriendsTab = ({ selectedAccount, onFriendJoin, onFriendsCountChange }: Fri
           onClose={() => setIsFriendRequestsModalOpen(false)}
           selectedAccount={selectedAccount}
           onFriendAdded={() => refetchFriends()}
-          onRequestCountChange={() =>
-            queryClient.invalidateQueries({
-              queryKey: queryKeys.friends.requests(selectedAccount?.id || '')
-            })
-          }
+          onRequestCountChange={handleRequestCountChange}
         />
 
         <AddFriendModal

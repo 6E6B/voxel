@@ -8,8 +8,14 @@ import * as S from '../../shared/ipc-schemas'
 
 export const avatarApi = {
   getAvatarUrl: (userId: string) => invoke('get-avatar-url', z.string(), userId),
-  getBatchUserAvatars: (userIds: number[], size?: string) =>
-    invoke('get-batch-user-avatars', z.record(z.string(), z.string().nullable()), userIds, size),
+  getBatchUserAvatars: (userIds: number[], size?: string, cookie?: string) =>
+    invoke(
+      'get-batch-user-avatars',
+      z.record(z.string(), z.string().nullable()),
+      userIds,
+      size,
+      cookie
+    ),
   getCurrentAvatar: (cookie: string, userId?: number) =>
     invoke('get-current-avatar', S.avatarStateSchema, cookie, userId),
   setWearingAssets: (

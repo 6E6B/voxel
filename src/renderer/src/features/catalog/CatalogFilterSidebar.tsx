@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronDown, ChevronRight, Search, Filter, Check } from 'lucide-react'
+import { ChevronDown, ChevronRight, Search, Check } from 'lucide-react'
 import { Input } from '@renderer/components/UI/inputs/Input'
 import { Button } from '@renderer/components/UI/buttons/Button'
 import { DropdownOption } from '@renderer/components/UI/menus/CustomDropdown'
@@ -142,11 +142,10 @@ export const CatalogFilterSidebar = ({
       <div className="space-y-1">
         <button
           onClick={handleCategoryClick}
-          className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm transition-colors group ${
-            isSelected
+          className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm transition-colors group ${isSelected
               ? 'bg-[rgba(var(--accent-color-rgb),0.1)] text-[var(--accent-color)] font-medium'
               : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-hover)] border border-transparent hover:border-[var(--color-border-strong)]'
-          }`}
+            }`}
         >
           {category.subcategories.length > 0 ? (
             <ChevronRight
@@ -176,11 +175,10 @@ export const CatalogFilterSidebar = ({
                       onCategoryChange(category)
                       onSubcategoryChange(sub)
                     }}
-                    className={`w-full text-left px-2 py-1.5 rounded-lg text-xs transition-colors ${
-                      selectedSubcategory?.subcategoryId === sub.subcategoryId
+                    className={`w-full text-left px-2 py-1.5 rounded-lg text-xs transition-colors ${selectedSubcategory?.subcategoryId === sub.subcategoryId
                         ? 'bg-[rgba(var(--accent-color-rgb),0.1)] text-[var(--accent-color)] font-medium'
                         : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-hover)] border border-transparent hover:border-[var(--color-border-strong)]'
-                    }`}
+                      }`}
                   >
                     {sub.name}
                   </button>
@@ -197,7 +195,6 @@ export const CatalogFilterSidebar = ({
     <div className="w-[260px] shrink-0 flex flex-col h-full border-r border-[var(--color-border)] bg-[var(--color-surface-strong)]">
       <div className="px-4 flex items-center justify-between border-b border-[var(--color-border)] min-h-[72px]">
         <div className="flex items-center gap-2 text-[var(--color-text-primary)]">
-          <Filter size={18} />
           <span className="font-bold">Filters</span>
         </div>
         {hasActiveFilters && (
@@ -221,11 +218,10 @@ export const CatalogFilterSidebar = ({
           <div className="space-y-0.5">
             <button
               onClick={handleSelectAllCategories}
-              className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm transition-colors group ${
-                isAllCategoriesSelected
+              className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm transition-colors group ${isAllCategoriesSelected
                   ? 'bg-[rgba(var(--accent-color-rgb),0.1)] text-[var(--accent-color)] font-medium'
                   : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-hover)] border border-transparent hover:border-[var(--color-border-strong)]'
-              }`}
+                }`}
             >
               <span className="w-3.5" /> {/* Spacer to align with chevron */}
               <span className="truncate text-left flex-1">All Categories</span>
@@ -244,11 +240,10 @@ export const CatalogFilterSidebar = ({
               <button
                 key={option.value}
                 onClick={() => onSalesTypeChange(option.value)}
-                className={`w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-sm transition-all border ${
-                  salesType === option.value
+                className={`w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-sm transition-all border ${salesType === option.value
                     ? 'bg-[rgba(var(--accent-color-rgb),0.1)] border-transparent text-[var(--accent-color)] font-medium'
                     : 'border-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-hover)] hover:border-[var(--color-border-strong)]'
-                }`}
+                  }`}
               >
                 <span>{option.label}</span>
                 {salesType === option.value && <Check size={14} />}
@@ -327,10 +322,9 @@ export const CatalogFilterSidebar = ({
               <div
                 className={`
                   relative w-4 h-4 rounded-full border flex items-center justify-center transition-all cursor-pointer flex-shrink-0
-                  ${
-                    localCreatorName === 'Roblox'
-                      ? 'border-[var(--color-border-strong)] bg-[var(--color-surface-hover)]'
-                      : 'border-[var(--color-border)] group-hover:border-[var(--color-border-strong)]'
+                  ${localCreatorName === 'Roblox'
+                    ? 'border-[var(--color-border-strong)] bg-[var(--color-surface-hover)]'
+                    : 'border-[var(--color-border)] group-hover:border-[var(--color-border-strong)]'
                   }
                 `}
               >
@@ -339,11 +333,10 @@ export const CatalogFilterSidebar = ({
                 )}
               </div>
               <span
-                className={`text-sm transition-colors ${
-                  localCreatorName === 'Roblox'
+                className={`text-sm transition-colors ${localCreatorName === 'Roblox'
                     ? 'text-[var(--color-text-primary)]'
                     : 'text-[var(--color-text-muted)] group-hover:text-[var(--color-text-primary)]'
-                }`}
+                  }`}
               >
                 ROBLOX
               </span>

@@ -257,8 +257,8 @@ export function useUserPresence(userId: number, cookie: string, enabled: boolean
       return window.api.getUserPresence(cookie, userId)
     },
     enabled: enabled && !!cookie && !!userId,
-    refetchInterval: 5000, // Poll every 5 seconds
-    staleTime: 4000 // Slightly less than refetch interval
+    refetchInterval: 60000, // Poll every 60 seconds
+    staleTime: 55000 // Slightly less than refetch interval
   })
 }
 
@@ -276,7 +276,7 @@ export function useUserFriendsStatuses(
       return window.api.getFriendsStatuses(cookie, friendIds)
     },
     enabled: enabled && !!cookie && !!userId && friendIds.length > 0,
-    refetchInterval: 5000, // Poll every 5 seconds
-    staleTime: 4000
+    refetchInterval: 60000, // Poll every 60 seconds
+    staleTime: 55000
   })
 }

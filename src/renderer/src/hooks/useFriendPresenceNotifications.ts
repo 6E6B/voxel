@@ -51,6 +51,7 @@ export function useFriendPresenceNotifications(
   }, [resolvedAccountId])
 
   // Load persisted friend list from localStorage
+  // Memoized to prevent unnecessary re-creation
   const loadPersistedFriendList = useCallback((): Map<string, FriendPresenceState> => {
     if (!storageKey) return new Map()
 
@@ -67,6 +68,7 @@ export function useFriendPresenceNotifications(
   }, [storageKey])
 
   // Save friend list to localStorage
+  // Memoized to prevent unnecessary re-creation
   const savePersistedFriendList = useCallback(
     (states: Map<string, FriendPresenceState>) => {
       if (!storageKey) return
@@ -133,6 +135,8 @@ export function useFriendPresenceNotifications(
       return
     }
 
+    let hasChanges = false
+
     // Check for removed friends (unfriended)
     const currentFriendIds = new Set(friends.map((f) => f.userId))
     if (notifyFriendRemoved) {
@@ -166,6 +170,7 @@ export function useFriendPresenceNotifications(
             ? { name: friend.gameActivity.name, placeId: friend.gameActivity.placeId }
             : undefined
         })
+        hasChanges = true
         return
       }
 
@@ -205,26 +210,39 @@ export function useFriendPresenceNotifications(
       }
 
       // Update stored state
-      previousStatesRef.current.set(friend.userId, {
-        status: currentStatus,
-        displayName: friend.displayName,
-        username: friend.username,
-        avatarUrl: friend.avatarUrl,
-        gameActivity: friend.gameActivity
-          ? { name: friend.gameActivity.name, placeId: friend.gameActivity.placeId }
-          : undefined
-      })
+      const activityChanged = friend.gameActivity?.placeId !== prevState.gameActivity?.placeId
+      const statusChanged = prevStatus !== currentStatus
+
+      if (statusChanged || activityChanged) {
+        previousStatesRef.current.set(friend.userId, {
+          status: currentStatus,
+          displayName: friend.displayName,
+          username: friend.username,
+          avatarUrl: friend.avatarUrl,
+          gameActivity: friend.gameActivity
+            ? { name: friend.gameActivity.name, placeId: friend.gameActivity.placeId }
+            : undefined
+        })
+        hasChanges = true
+      }
     })
 
     // Clean up friends that are no longer in the list
     for (const userId of previousStatesRef.current.keys()) {
       if (!currentFriendIds.has(userId)) {
         previousStatesRef.current.delete(userId)
+        hasChanges = true
       }
     }
 
-    // Save current state to localStorage after processing
-    savePersistedFriendList(previousStatesRef.current)
+    // Save current state to localStorage only if changes occurred
+    if (hasChanges) {
+      // Debounce saving to avoid disk thrashing
+      const timeoutId = setTimeout(() => {
+        savePersistedFriendList(previousStatesRef.current)
+      }, 500)
+      return () => clearTimeout(timeoutId)
+    }
   }, [
     friends,
     enabled,

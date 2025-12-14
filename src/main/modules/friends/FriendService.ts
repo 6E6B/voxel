@@ -1,5 +1,6 @@
 import { request, requestWithCsrf } from '@main/lib/request'
 import { RobloxAuthService } from '../auth/RobloxAuthService'
+import { RobloxUserService } from '../users/UserService'
 import { z } from 'zod'
 import {
   friendSchema,
@@ -8,7 +9,6 @@ import {
   presenceSchema,
   userPresenceResponseSchema
 } from '@shared/ipc-schemas/user'
-import { avatarHeadshotSchema } from '@shared/ipc-schemas/avatar'
 
 const hydrateUserSchema = z.object({
   id: z.number(),
@@ -88,23 +88,19 @@ export class RobloxFriendService {
       }
     }
 
-    const avatarChunks = chunk(userIds, 50)
-    for (const ids of avatarChunks) {
-      try {
-        const avatarResult = await request(z.object({ data: z.array(avatarHeadshotSchema) }), {
-          url: `https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${ids.join(',')}&size=420x420&format=Png&isCircular=false`,
-          cookie
-        })
-        const avatarData = avatarResult.data || []
-
-        avatarData.forEach((item: any) => {
-          if (item.imageUrl) {
-            avatars[item.targetId] = item.imageUrl
-          }
-        })
-      } catch (e) {
-        console.error('Failed to fetch avatars chunk', e)
+    try {
+      const avatarMap = await RobloxUserService.getBatchUserAvatarHeadshots(
+        userIds,
+        '420x420',
+        cookie
+      )
+      for (const [id, url] of avatarMap.entries()) {
+        if (url) {
+          avatars[id] = url
+        }
       }
+    } catch (e) {
+      console.error('Failed to fetch avatars via batch service', e)
     }
 
     const userChunks = chunk(userIds, 50)

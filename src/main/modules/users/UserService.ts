@@ -47,7 +47,8 @@ export class RobloxUserService {
    */
   static async getBatchUserAvatarHeadshots(
     userIds: number[],
-    size: string = '420x420'
+    size: string = '420x420',
+    cookie?: string
   ): Promise<Map<number, string | null>> {
     const resultMap = new Map<number, string | null>()
 
@@ -75,17 +76,12 @@ export class RobloxUserService {
           targetId: z.number(),
           state: z.string(),
           imageUrl: z.string().nullable().optional(),
-          version: z.string().optional()
+          version: z.string().nullable().optional()
         })
       )
     })
 
-    const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
-
-    const fetchChunkWithRetry = async (
-      chunkIds: number[],
-      maxRetries: number = 3
-    ): Promise<void> => {
+    const fetchChunk = async (chunkIds: number[]): Promise<void> => {
       const requests = chunkIds.map((id) => ({
         requestId: `user_${id}`,
         targetId: id,
@@ -95,51 +91,39 @@ export class RobloxUserService {
         isCircular: false
       }))
 
-      for (let attempt = 0; attempt <= maxRetries; attempt++) {
-        try {
-          const response = await request(thumbnailBatchSchema, {
-            method: 'POST',
-            url: 'https://thumbnails.roblox.com/v1/batch',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: requests
+      try {
+        const response = await request(thumbnailBatchSchema, {
+          method: 'POST',
+          url: 'https://thumbnails.roblox.com/v1/batch',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: requests,
+          cookie
+        })
+
+        if (response.data) {
+          response.data.forEach((entry) => {
+            if (entry.state === 'Completed' && entry.imageUrl) {
+              const cacheBusted = entry.version
+                ? RobloxUserService.appendQueryParam(entry.imageUrl, 'v', entry.version)
+                : entry.imageUrl
+              resultMap.set(entry.targetId, cacheBusted)
+            } else {
+              resultMap.set(entry.targetId, null)
+            }
           })
-
-          if (response.data) {
-            response.data.forEach((entry) => {
-              if (entry.state === 'Completed' && entry.imageUrl) {
-                const cacheBusted = entry.version
-                  ? RobloxUserService.appendQueryParam(entry.imageUrl, 'v', entry.version)
-                  : entry.imageUrl
-                resultMap.set(entry.targetId, cacheBusted)
-              } else {
-                resultMap.set(entry.targetId, null)
-              }
-            })
-          }
-          return
-        } catch (error: any) {
-          if (error?.statusCode === 429 && attempt < maxRetries) {
-            const retryAfter = error?.headers?.['retry-after']
-            const waitTime = retryAfter
-              ? parseInt(retryAfter, 10) * 1000
-              : Math.pow(2, attempt + 1) * 1000
-            console.warn(
-              `[RobloxUserService] Rate limited, waiting ${waitTime}ms before retry (attempt ${attempt + 1}/${maxRetries})`
-            )
-            await delay(waitTime)
-            continue
-          }
-
-          console.error('[RobloxUserService] Failed to fetch batch user avatars for chunk:', error)
-          chunkIds.forEach((id) => resultMap.set(id, null))
-          return
         }
+      } catch (error: any) {
+        console.error('[RobloxUserService] Failed to fetch batch user avatars for chunk:', error)
+        chunkIds.forEach((id) => resultMap.set(id, null))
       }
     }
 
-    await Promise.all(chunks.map((chunk) => fetchChunkWithRetry(chunk)))
+    // Process chunks sequentially to avoid hitting rate limits
+    for (const chunk of chunks) {
+      await fetchChunk(chunk)
+    }
 
     return resultMap
   }
@@ -206,26 +190,20 @@ export class RobloxUserService {
       return result
     }
 
-    const authResults = await Promise.allSettled(
-      cookies.map((cookie) => this.getAuthenticatedUser(cookie).then((user) => ({ cookie, user })))
-    )
-
+    // Process auth checks sequentially to avoid rate limits with many accounts
     const cookieToUserId = new Map<string, number>()
     const userIds: number[] = []
     let firstValidCookie: string | null = null
 
-    for (let i = 0; i < authResults.length; i++) {
-      const authResult = authResults[i]
-      const cookie = cookies[i]
-
-      if (authResult.status === 'fulfilled') {
-        const userId = authResult.value.user.id
-        cookieToUserId.set(cookie, userId)
-        userIds.push(userId)
+    for (const cookie of cookies) {
+      try {
+        const user = await this.getAuthenticatedUser(cookie)
+        cookieToUserId.set(cookie, user.id)
+        userIds.push(user.id)
         if (!firstValidCookie) {
           firstValidCookie = cookie
         }
-      } else {
+      } catch (e) {
         result.set(cookie, null)
       }
     }
@@ -277,39 +255,26 @@ export class RobloxUserService {
 
     let allPresences: any[] = []
 
-    const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
-
-    const fetchChunkWithRetry = async (chunkIds: number[], maxRetries: number = 3) => {
-      for (let attempt = 0; attempt <= maxRetries; attempt++) {
-        try {
-          const result = await requestWithCsrf(userPresenceResponseSchema, {
-            method: 'POST',
-            url: 'https://presence.roblox.com/v1/presence/users',
-            cookie,
-            body: { userIds: chunkIds }
-          })
-          return result.userPresences || []
-        } catch (error: any) {
-          if (error?.statusCode === 429 && attempt < maxRetries) {
-            const retryAfter = error?.headers?.['retry-after']
-            const waitTime = retryAfter
-              ? parseInt(retryAfter, 10) * 1000
-              : Math.pow(2, attempt + 1) * 1000
-            console.warn(
-              `[RobloxUserService] Rate limited on presence, waiting ${waitTime}ms before retry`
-            )
-            await delay(waitTime)
-            continue
-          }
-          console.error('Failed to fetch presence chunk:', error)
-          return []
-        }
+    const fetchChunk = async (chunkIds: number[]) => {
+      try {
+        const result = await requestWithCsrf(userPresenceResponseSchema, {
+          method: 'POST',
+          url: 'https://presence.roblox.com/v1/presence/users',
+          cookie,
+          body: { userIds: chunkIds }
+        })
+        return result.userPresences || []
+      } catch (error: any) {
+        console.error('Failed to fetch presence chunk:', error)
+        return []
       }
-      return []
     }
 
-    const results = await Promise.all(chunks.map((chunk) => fetchChunkWithRetry(chunk)))
-    allPresences = results.flat()
+    // Process chunks sequentially
+    for (const chunk of chunks) {
+      const chunkResult = await fetchChunk(chunk)
+      allPresences.push(...chunkResult)
+    }
 
     return allPresences
   }
@@ -512,57 +477,36 @@ export class RobloxUserService {
       )
     })
 
-    const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+    const fetchChunk = async (chunkIds: number[]): Promise<void> => {
+      try {
+        const response = await request(batchUserSchema, {
+          method: 'POST',
+          url: 'https://users.roblox.com/v1/users',
+          body: { userIds: chunkIds, excludeBannedUsers: false }
+        })
 
-    const fetchChunkWithRetry = async (
-      chunkIds: number[],
-      maxRetries: number = 3
-    ): Promise<void> => {
-      for (let attempt = 0; attempt <= maxRetries; attempt++) {
-        try {
-          const response = await request(batchUserSchema, {
-            method: 'POST',
-            url: 'https://users.roblox.com/v1/users',
-            body: { userIds: chunkIds, excludeBannedUsers: false }
-          })
-
-          if (response.data) {
-            response.data.forEach((user) => {
-              resultMap.set(user.id, {
-                id: user.id,
-                name: user.name,
-                displayName: user.displayName
-              })
+        if (response.data) {
+          response.data.forEach((user) => {
+            resultMap.set(user.id, {
+              id: user.id,
+              name: user.name,
+              displayName: user.displayName
             })
-          }
-
-          chunkIds.forEach((id) => {
-            if (!resultMap.has(id)) {
-              resultMap.set(id, null)
-            }
           })
-          return
-        } catch (error: any) {
-          if (error?.statusCode === 429 && attempt < maxRetries) {
-            const retryAfter = error?.headers?.['retry-after']
-            const waitTime = retryAfter
-              ? parseInt(retryAfter, 10) * 1000
-              : Math.pow(2, attempt + 1) * 1000
-            console.warn(
-              `[RobloxUserService] Rate limited on user details, waiting ${waitTime}ms before retry (attempt ${attempt + 1}/${maxRetries})`
-            )
-            await delay(waitTime)
-            continue
-          }
-
-          console.error('[RobloxUserService] Failed to fetch batch user details for chunk:', error)
-          chunkIds.forEach((id) => resultMap.set(id, null))
-          return
         }
+
+        chunkIds.forEach((id) => {
+          if (!resultMap.has(id)) {
+            resultMap.set(id, null)
+          }
+        })
+      } catch (error: any) {
+        console.error('[RobloxUserService] Failed to fetch batch user details for chunk:', error)
+        chunkIds.forEach((id) => resultMap.set(id, null))
       }
     }
 
-    await Promise.all(chunks.map((chunk) => fetchChunkWithRetry(chunk)))
+    await Promise.all(chunks.map((chunk) => fetchChunk(chunk)))
 
     return resultMap
   }

@@ -73,7 +73,7 @@ export function useSaveAccounts() {
 export function useAccountsManager() {
   const queryClient = useQueryClient()
   const { data: accounts = [], isLoading } = useAccounts()
-  const saveAccountsMutation = useSaveAccounts()
+  const { mutate: saveAccounts } = useSaveAccounts()
 
   // Update accounts (optimistic)
   const setAccounts = useCallback(
@@ -88,9 +88,9 @@ export function useAccountsManager() {
       queryClient.setQueryData(queryKeys.accounts.list(), newAccounts)
 
       // Persist to storage
-      saveAccountsMutation.mutate(newAccounts)
+      saveAccounts(newAccounts)
     },
-    [queryClient, saveAccountsMutation]
+    [queryClient, saveAccounts]
   )
 
   // Add account
@@ -169,7 +169,7 @@ export function useAccountStatuses(
     queryFn: () => window.api.getBatchAccountStatuses(cookies),
     enabled: cookies.length > 0 && (options?.enabled ?? true),
     refetchInterval: options?.refetchInterval ?? 5000,
-    staleTime: 4000,
+    staleTime: 8000,
     // Prevent refetching when window regains focus (we have our own polling)
     refetchOnWindowFocus: false
   })
@@ -193,10 +193,21 @@ export function updateAccountsWithStatuses(
     const statusChanged = acc.status !== newStatus
     const isCurrentlyActive = isActiveStatus(newStatus)
 
-    // Update lastActive whenever account is detected as active
     if (isCurrentlyActive) {
-      hasChanges = true
-      return { ...acc, status: newStatus, lastActive: new Date().toISOString() }
+      // Timestamp tracking disabled to prevent memory leaks due to infinite update loops
+      // const now = new Date()
+      // const lastActiveDate = acc.lastActive ? new Date(acc.lastActive) : new Date(0)
+      // const shouldUpdateTimestamp = now.getTime() - lastActiveDate.getTime() > 60 * 1000
+
+      // if (shouldUpdateTimestamp || statusChanged) {
+      //   hasChanges = true
+      //   return { ...acc, status: newStatus, lastActive: now.toISOString() }
+      // }
+
+      if (statusChanged) {
+        hasChanges = true
+        return { ...acc, status: newStatus }
+      }
     }
 
     // Only update status if it changed
@@ -223,7 +234,7 @@ export function useAccountStatusPolling() {
   const accounts = queryClient.getQueryData<Account[]>(queryKeys.accounts.list()) || []
 
   // Determine polling interval based on active tab
-  const pollInterval = activeTab === 'Accounts' ? 5000 : 3 * 60 * 1000
+  const pollInterval = activeTab === 'Accounts' ? 30000 : 5 * 60 * 1000
 
   // Use the existing useAccountStatuses hook with dynamic interval
   const { data: batchResults } = useAccountStatuses(accounts, {
@@ -247,7 +258,11 @@ export function useAccountStatusPolling() {
 
     if (hasChanges) {
       // Update cache directly without triggering save (status is transient)
-      queryClient.setQueryData(queryKeys.accounts.list(), updatedAccounts)
+      // Check for deep equality to prevent infinite render loops if hasChanges is false positive
+      const cached = queryClient.getQueryData<Account[]>(queryKeys.accounts.list())
+      if (JSON.stringify(cached) !== JSON.stringify(updatedAccounts)) {
+        queryClient.setQueryData(queryKeys.accounts.list(), updatedAccounts)
+      }
     }
   }, [batchResults, queryClient])
 }

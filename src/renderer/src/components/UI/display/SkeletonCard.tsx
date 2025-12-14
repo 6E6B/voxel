@@ -22,7 +22,7 @@ export const SkeletonUserCard: React.FC<
   if (variant === 'vertical') {
     return (
       <div className={cn('w-28 flex flex-col items-center gap-2 shrink-0', className)}>
-        <Skeleton className="w-26 h-26 rounded-full" />
+        <Skeleton className="w-24 h-24 rounded-full" />
         <div className="w-full flex flex-col items-center gap-1">
           <Skeleton className="h-4 w-20" />
           <Skeleton className="h-3 w-12" />
@@ -114,7 +114,7 @@ export const SkeletonSquareCard: React.FC<
  */
 export const SkeletonGroupCard: React.FC<SkeletonCardProps> = ({ className }) => (
   <div className={cn('w-28 flex flex-col items-center gap-2 shrink-0', className)}>
-    <Skeleton className="w-26 h-26 rounded-xl" />
+    <Skeleton className="w-24 h-24 rounded-xl" />
     <div className="w-full flex flex-col items-center gap-1">
       <Skeleton className="h-4 w-20" />
       <Skeleton className="h-3 w-12" />

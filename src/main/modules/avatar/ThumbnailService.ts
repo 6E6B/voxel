@@ -29,8 +29,7 @@ export class RobloxThumbnailService {
     ids: number[],
     type: 'Asset' | 'Outfit' | 'BadgeIcon' | 'GroupIcon',
     size: string,
-    format: string,
-    maxRetries: number = 3
+    format: string
   ): Promise<ThumbnailEntry[]> {
     if (ids.length === 0) {
       return []
@@ -40,8 +39,6 @@ export class RobloxThumbnailService {
     if (this.thumbnailChunkPromises.has(chunkKey)) {
       return this.thumbnailChunkPromises.get(chunkKey)!
     }
-
-    const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
     const promise = (async () => {
       const requests = ids.map((id) => ({
@@ -53,35 +50,21 @@ export class RobloxThumbnailService {
         isCircular: false
       }))
 
-      for (let attempt = 0; attempt <= maxRetries; attempt++) {
-        try {
-          const response = await request(thumbnailBatchSchema, {
-            method: 'POST',
-            url: 'https://thumbnails.roblox.com/v1/batch',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: requests
-          })
+      try {
+        const response = await request(thumbnailBatchSchema, {
+          method: 'POST',
+          url: 'https://thumbnails.roblox.com/v1/batch',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: requests
+        })
 
-          return response.data || []
-        } catch (error: any) {
-          if (error?.statusCode === 429 && attempt < maxRetries) {
-            const retryAfter = error?.headers?.['retry-after']
-            const waitTime = retryAfter
-              ? parseInt(retryAfter, 10) * 1000
-              : Math.pow(2, attempt + 1) * 1000
-            console.warn(
-              `[RobloxThumbnailService] Rate limited, waiting ${waitTime}ms before retry (attempt ${attempt + 1}/${maxRetries})`
-            )
-            await delay(waitTime)
-            continue
-          }
-          console.error('[RobloxThumbnailService] Failed to fetch thumbnail chunk:', error)
-          return []
-        }
+        return response.data || []
+      } catch (error: any) {
+        console.error('[RobloxThumbnailService] Failed to fetch thumbnail chunk:', error)
+        return []
       }
-      return []
     })()
 
     this.thumbnailChunkPromises.set(chunkKey, promise)
@@ -119,13 +102,20 @@ export class RobloxThumbnailService {
     const cacheNamespace = `${resolvedType}|${resolvedSize}|${resolvedFormat}`
     const entryMap = new Map<number, ThumbnailEntry>()
 
-    // Fetch all IDs in parallel with retry logic
+    // Fetch all IDs sequentially to avoid hitting rate limits
     const chunks = this.chunkArray(sanitizedIds, this.THUMBNAIL_BATCH_LIMIT)
-    const chunkResults = await Promise.all(
-      chunks.map((chunk) =>
-        this.fetchThumbnailChunk(cacheNamespace, chunk, resolvedType, resolvedSize, resolvedFormat)
+    const chunkResults: ThumbnailEntry[][] = []
+
+    for (const chunk of chunks) {
+      const result = await this.fetchThumbnailChunk(
+        cacheNamespace,
+        chunk,
+        resolvedType,
+        resolvedSize,
+        resolvedFormat
       )
-    )
+      chunkResults.push(result)
+    }
 
     chunkResults.forEach((entries) => {
       entries.forEach((entry) => {

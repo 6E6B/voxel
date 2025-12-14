@@ -13,11 +13,12 @@ export const registerUserHandlers = (): void => {
 
   handle(
     'get-batch-user-avatars',
-    z.tuple([z.array(z.number()), z.string().optional()]),
-    async (_, userIds, size) => {
+    z.tuple([z.array(z.number()), z.string().optional(), z.string().optional()]),
+    async (_, userIds, size, cookie) => {
       const resultMap = await RobloxUserService.getBatchUserAvatarHeadshots(
         userIds,
-        size || '420x420'
+        size || '420x420',
+        cookie
       )
       const resultObj: Record<number, string | null> = {}
       for (const [userId, url] of resultMap.entries()) {

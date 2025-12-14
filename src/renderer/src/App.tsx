@@ -1,9 +1,9 @@
-import type {} from './window'
+import type { } from './window'
 import React, { useState, useMemo, useRef, useEffect, useCallback, lazy, Suspense } from 'react'
 import notificationIcon from '../../../resources/build/icons/png/256x256.png'
 import { AnimatePresence } from 'framer-motion'
 import { Search } from 'lucide-react'
-import { Account, AccountStatus, DEFAULT_ACCENT_COLOR, JoinMethod } from './types'
+import { Account, AccountStatus, JoinMethod } from './types'
 import { mapPresenceToStatus, isActiveStatus } from './utils/statusUtils'
 import { applyAccentColor } from './utils/themeUtils'
 import { getDominantAccentColorFromImageUrl } from './utils/imageAccentColor'
@@ -102,13 +102,9 @@ const App: React.FC = () => {
   const lastAvatarRefreshAtRef = useRef(0)
   const avatarRefreshInFlightRef = useRef(false)
 
-  useEffect(() => {
-    if (perfLoggedRef.current) return
-    perfLoggedRef.current = true
-    const now = performance.now()
-    const base = (window as any).__perfRendererStart ?? now
-    console.log('[perf:renderer] app-mounted', (now - base).toFixed(1))
-  }, [])
+
+
+
 
   const { showNotification } = useNotification()
   const queryClient = useQueryClient()
@@ -184,7 +180,9 @@ const App: React.FC = () => {
       }
 
       try {
-        const avatarMap = await window.api.getBatchUserAvatars(userIds, '420x420')
+        // Use the first available cookie for authenticated requests (better rate limits)
+        const cookie = currentAccounts.find((a) => a.cookie)?.cookie
+        const avatarMap = await window.api.getBatchUserAvatars(userIds, '420x420', cookie)
         setAccounts((prev) => {
           let changed = false
           const next = prev.map((acc) => {
@@ -212,10 +210,14 @@ const App: React.FC = () => {
   )
 
   // Keep account avatars from going stale (Roblox thumbnails can change when you update your avatar).
+  const initialAvatarRefreshRef = useRef(false)
   useEffect(() => {
     if (isLoadingAccounts) return
 
-    void refreshAccountAvatarUrls({ force: true })
+    if (!initialAvatarRefreshRef.current) {
+      void refreshAccountAvatarUrls({ force: true })
+      initialAvatarRefreshRef.current = true
+    }
 
     const intervalId = window.setInterval(() => {
       void refreshAccountAvatarUrls()
@@ -256,7 +258,7 @@ const App: React.FC = () => {
 
   const filterRef = useRef<HTMLDivElement>(null)
 
-  useClickOutside(filterRef, () => {})
+  useClickOutside(filterRef, () => { })
 
   useEffect(() => {
     if (!activeMenu) return
@@ -315,17 +317,12 @@ const App: React.FC = () => {
     return null
   }, [accounts, selectedAccount?.avatarUrl, settings.primaryAccountId])
 
-  // If the user hasn't chosen a custom accent color, derive it from the current account's avatar.
-  // This keeps the default theme feeling personalized (e.g. mostly-orange outfit => orange accent).
+  // If dynamic accent color is enabled, derive it from the current account's avatar.
   useEffect(() => {
-    const raw = typeof settings.accentColor === 'string' ? settings.accentColor.trim() : ''
-    const isDefaultAccent = !raw || raw.toLowerCase() === DEFAULT_ACCENT_COLOR
-    const avatarUrl = accentAvatarUrl
-
-    if (!isDefaultAccent || !avatarUrl) return
+    if (!settings.useDynamicAccentColor || !accentAvatarUrl) return
 
     const controller = new AbortController()
-    getDominantAccentColorFromImageUrl(avatarUrl, { signal: controller.signal })
+    getDominantAccentColorFromImageUrl(accentAvatarUrl, { signal: controller.signal })
       .then((hex) => {
         if (controller.signal.aborted) return
         applyAccentColor(hex)
@@ -336,7 +333,7 @@ const App: React.FC = () => {
       })
 
     return () => controller.abort()
-  }, [accentAvatarUrl, settings.accentColor])
+  }, [accentAvatarUrl, settings.useDynamicAccentColor])
 
   const { data: friendsData = [] } = useFriends(selectedAccount)
 
@@ -722,7 +719,13 @@ const App: React.FC = () => {
         followingCount: 0
       }
 
+      const isFirstAccount = accounts.length === 0
       addAccount(newAccount)
+
+      if (isFirstAccount) {
+        updateSettings({ primaryAccountId: newAccount.id })
+      }
+
       closeModal('addAccount')
       showNotification(`Successfully added account: ${newAccount.displayName}`, 'success')
     } catch (error) {
@@ -973,9 +976,9 @@ const App: React.FC = () => {
           initialData={
             commandPaletteAccessory
               ? {
-                  name: commandPaletteAccessory.name,
-                  imageUrl: commandPaletteAccessory.imageUrl || ''
-                }
+                name: commandPaletteAccessory.name,
+                imageUrl: commandPaletteAccessory.imageUrl || ''
+              }
               : undefined
           }
         />

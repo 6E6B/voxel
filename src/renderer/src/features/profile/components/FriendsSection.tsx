@@ -21,6 +21,7 @@ interface Friend {
   avatarUrl?: string
   userPresenceType?: number
   hasVerifiedBadge?: boolean
+  lastLocation?: string
 }
 
 interface FriendsSectionProps {
@@ -128,7 +129,7 @@ export const FriendsSection: React.FC<FriendsSectionProps> = ({
                       if (friendId) onSelectProfile?.(friendId)
                     }}
                   >
-                    <div className="relative w-26 h-26 rounded-full bg-[var(--color-surface-hover)] shadow-md ring-2 ring-transparent group-hover:ring-[var(--color-border-strong)] transition-all overflow-hidden">
+                    <div className="relative w-24 h-24 rounded-full bg-[var(--color-surface-hover)] shadow-md ring-2 ring-transparent group-hover:ring-[var(--color-border-strong)] transition-all overflow-hidden">
                       {friend.avatarUrl && (
                         <img
                           src={friend.avatarUrl}
@@ -151,7 +152,11 @@ export const FriendsSection: React.FC<FriendsSectionProps> = ({
                         <span
                           className={`inline-block w-2 h-2 rounded-full border border-solid ${getStatusBorderColor(friendStatus)} ${getStatusColor(friendStatus)}`}
                         />
-                        <span className="truncate">{getStatusLabel(friendStatus)}</span>
+                        <span className="truncate">
+                          {friendStatus === AccountStatus.InGame && friend.lastLocation
+                            ? friend.lastLocation
+                            : getStatusLabel(friendStatus)}
+                        </span>
                       </div>
                     </div>
                   </motion.div>

@@ -783,7 +783,21 @@ const SettingsTab: React.FC<SettingsTabProps> = ({ accounts, settings, onUpdateS
                   description="Customize the highlight color used for buttons, indicators, and focus rings."
                   icon={<Palette size={16} />}
                 >
-                  <div className="flex items-center gap-3">
+                  <ToggleRow
+                    title="Dynamic accent color"
+                    description="Automatically derive the accent color from your avatar's appearance."
+                    checked={settings.useDynamicAccentColor}
+                    onChange={() =>
+                      onUpdateSettings({ useDynamicAccentColor: !settings.useDynamicAccentColor })
+                    }
+                  />
+
+                  <div
+                    className={cn(
+                      'flex items-center gap-3 transition-opacity duration-200',
+                      settings.useDynamicAccentColor && 'opacity-50 pointer-events-none'
+                    )}
+                  >
                     <button
                       type="button"
                       onClick={() => setIsColorPickerOpen(true)}

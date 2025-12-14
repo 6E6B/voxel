@@ -66,7 +66,7 @@ interface UIActions {
 type UIStore = UIState & UIActions
 
 const initialState: UIState = {
-  activeTab: 'Accounts',
+  activeTab: 'Profile',
   isSidebarCollapsed: false,
   modals: {
     join: false,

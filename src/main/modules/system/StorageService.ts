@@ -47,6 +47,7 @@ const storeDataSchema = z.object({
       allowMultipleInstances: z.boolean().optional(),
       defaultInstallationPath: z.string().nullable().optional(),
       accentColor: z.string().optional(),
+      useDynamicAccentColor: z.boolean().optional(),
       theme: themePreferenceEnum.optional(),
       tint: tintPreferenceEnum.optional(),
       privacyMode: z.boolean().optional(),
@@ -325,6 +326,7 @@ class StorageService {
       allowMultipleInstances: this.data.settings?.allowMultipleInstances ?? false,
       defaultInstallationPath: this.data.settings?.defaultInstallationPath ?? null,
       accentColor,
+      useDynamicAccentColor: this.data.settings?.useDynamicAccentColor ?? false,
       theme: (this.data.settings?.theme as ThemePreference | undefined) ?? 'system',
       tint: (this.data.settings?.tint as TintPreference | undefined) ?? 'neutral',
       showSidebarProfileCard: this.data.settings?.showSidebarProfileCard ?? true,
@@ -516,6 +518,7 @@ class StorageService {
     allowMultipleInstances?: boolean
     defaultInstallationPath?: string | null
     accentColor?: string
+    useDynamicAccentColor?: boolean
     theme?: ThemePreference
     tint?: TintPreference
     showSidebarProfileCard?: boolean
@@ -544,6 +547,10 @@ class StorageService {
 
     if ('accentColor' in settings && typeof settings.accentColor === 'string') {
       nextSettings.accentColor = settings.accentColor
+    }
+
+    if ('useDynamicAccentColor' in settings) {
+      nextSettings.useDynamicAccentColor = !!settings.useDynamicAccentColor
     }
 
     if ('theme' in settings && typeof settings.theme === 'string') {

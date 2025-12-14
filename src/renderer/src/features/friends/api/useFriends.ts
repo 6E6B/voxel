@@ -26,20 +26,23 @@ export function useFriends(account: Account | null, options?: { forceRefresh?: b
         description: f.description,
         gameActivity: f.placeId
           ? {
-              name: f.lastLocation || 'Unknown Game',
-              placeId: f.placeId.toString(),
-              jobId: f.gameId
-            }
+            name: f.lastLocation || 'Unknown Game',
+            placeId: f.placeId.toString(),
+            jobId: f.gameId
+          }
           : undefined
       }))
     },
     enabled: !!cookie && !!accountId,
-    staleTime: 30 * 1000, // 30 seconds
-    refetchInterval: 30 * 1000 // Poll every 30 seconds for presence updates
+    staleTime: 60 * 1000, // 60 seconds
+    refetchInterval: 60 * 1000 // Poll every 60 seconds for presence updates
   })
 }
 
-// Fetch friend statuses (for polling updates)
+// NOTE: This hook has been disabled to prevent duplicate polling.
+// Friend statuses are already fetched and updated by the main useFriends hook above.
+// If you need real-time status updates, increase the refetchInterval in useFriends instead.
+/*
 export function useFriendStatuses(
   account: Account | null,
   friends: Friend[],
@@ -56,10 +59,11 @@ export function useFriendStatuses(
       return window.api.getFriendsStatuses(cookie, userIds)
     },
     enabled: !!cookie && userIds.length > 0 && enabled,
-    refetchInterval: 5000, // Poll every 5 seconds
-    staleTime: 4000 // Slightly less than refetch interval
+    refetchInterval: 60000, // Poll every 60 seconds
+    staleTime: 55000 // Slightly less than refetch interval
   })
 }
+*/
 
 // Fetch friend requests
 export function useFriendRequests(account: Account | null) {
@@ -70,7 +74,7 @@ export function useFriendRequests(account: Account | null) {
     queryKey: queryKeys.friends.requests(accountId || ''),
     queryFn: () => window.api.getFriendRequests(cookie!),
     enabled: !!cookie && !!accountId,
-    staleTime: 30 * 1000
+    staleTime: 120 * 1000
   })
 }
 

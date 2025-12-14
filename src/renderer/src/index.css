@@ -18,28 +18,28 @@
 
 :root {
   --font-sans: 'Geist', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  --accent-color: #00d091;
-  --accent-color-rgb: 0, 208, 145;
+  --accent-color: #e05c1a;
+  --accent-color-rgb: 224, 92, 26;
   --accent-color-foreground: #ffffff;
-  --accent-color-muted: rgba(0, 208, 145, 0.9);
-  --accent-color-border: rgba(0, 208, 145, 0.35);
-  --accent-color-soft: rgba(0, 208, 145, 0.15);
-  --accent-color-faint: rgba(0, 208, 145, 0.08);
-  --accent-color-ring: rgba(0, 208, 145, 0.12);
-  --accent-color-shadow: rgba(0, 208, 145, 0);
+  --accent-color-muted: rgba(224, 92, 26, 0.9);
+  --accent-color-border: rgba(224, 92, 26, 0.35);
+  --accent-color-soft: rgba(224, 92, 26, 0.15);
+  --accent-color-faint: rgba(224, 92, 26, 0.08);
+  --accent-color-ring: rgba(224, 92, 26, 0.12);
+  --accent-color-shadow: rgba(224, 92, 26, 0);
 }
 
 :root {
   --font-sans: 'Geist', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  --accent-color: #00d091;
-  --accent-color-rgb: 0, 208, 145;
+  --accent-color: #e05c1a;
+  --accent-color-rgb: 224, 92, 26;
   --accent-color-foreground: #ffffff;
-  --accent-color-muted: rgba(0, 208, 145, 0.9);
-  --accent-color-border: rgba(0, 208, 145, 0.35);
-  --accent-color-soft: rgba(0, 208, 145, 0.15);
-  --accent-color-faint: rgba(0, 208, 145, 0.08);
-  --accent-color-ring: rgba(0, 208, 145, 0.12);
-  --accent-color-shadow: rgba(0, 208, 145, 0);
+  --accent-color-muted: rgba(224, 92, 26, 0.9);
+  --accent-color-border: rgba(224, 92, 26, 0.35);
+  --accent-color-soft: rgba(224, 92, 26, 0.15);
+  --accent-color-faint: rgba(224, 92, 26, 0.08);
+  --accent-color-ring: rgba(224, 92, 26, 0.12);
+  --accent-color-shadow: rgba(224, 92, 26, 0);
 
   --color-app-bg: #050505;
   --color-surface: #0c0c0c;
@@ -254,8 +254,8 @@ pre {
 }
 
 ::-webkit-scrollbar {
-  width: 3px;
-  height: 3px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -269,11 +269,6 @@ pre {
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-text-muted);
-}
-
-body {
-  scrollbar-color: var(--color-border-strong) var(--color-surface-muted);
-  scrollbar-width: thin;
 }
 
 .scrollbar-hide::-webkit-scrollbar {

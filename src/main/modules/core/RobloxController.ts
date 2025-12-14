@@ -148,14 +148,7 @@ export const registerRobloxHandlers = (): void => {
     return resultObj
   })
 
-  handle(
-    'get-friends-statuses',
-    z.tuple([z.string(), z.array(z.number())]),
-    async (_, cookieRaw, userIds) => {
-      const cookie = RobloxAuthService.extractCookie(cookieRaw)
-      return RobloxUserService.getBatchPresences(cookie, userIds)
-    }
-  )
+
 
   handle('get-user-presence', z.tuple([z.string(), z.number()]), async (_, cookieRaw, userId) => {
     const cookie = RobloxAuthService.extractCookie(cookieRaw)

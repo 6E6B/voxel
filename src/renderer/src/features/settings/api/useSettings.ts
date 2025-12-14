@@ -20,6 +20,7 @@ const DEFAULT_SETTINGS: Settings = {
   allowMultipleInstances: false,
   defaultInstallationPath: null,
   accentColor: DEFAULT_ACCENT_COLOR,
+  useDynamicAccentColor: false,
   theme: 'system',
   tint: 'neutral',
   showSidebarProfileCard: true,
@@ -54,6 +55,7 @@ export function useSettings() {
         ...DEFAULT_SETTINGS,
         ...data,
         accentColor,
+        useDynamicAccentColor: data?.useDynamicAccentColor ?? false,
         theme: (data?.theme as Settings['theme']) || 'system',
         tint: (data?.tint as Settings['tint']) || 'neutral',
         showSidebarProfileCard: data?.showSidebarProfileCard ?? true,
@@ -65,6 +67,7 @@ export function useSettings() {
     staleTime: Infinity // Settings are managed locally
   })
 }
+
 
 // Update settings mutation (optimistic)
 export function useUpdateSettings() {
@@ -113,10 +116,10 @@ export function useSettingsManager() {
 
   // Apply accent color when settings change
   useEffect(() => {
-    if (settings.accentColor) {
+    if (settings.accentColor && !settings.useDynamicAccentColor) {
       applyAccentColor(settings.accentColor)
     }
-  }, [settings.accentColor])
+  }, [settings.accentColor, settings.useDynamicAccentColor])
 
   useEffect(() => {
     if (typeof document === 'undefined') return

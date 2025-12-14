@@ -169,11 +169,10 @@ const ProfileCard = ({
                 className="relative w-full flex justify-center group"
               >
                 <img
-                  className={`h-10 w-10 rounded-full bg-[var(--color-surface)] object-cover border-2 transition-all duration-200 privacy-blur ${
-                    isDropdownOpen
-                      ? 'border-[var(--color-border-strong)] ring-2 ring-[var(--focus-ring)]'
-                      : 'border-[var(--color-border)] group-hover:border-[var(--color-border-strong)]'
-                  }`}
+                  className={`h-10 w-10 rounded-full bg-[var(--color-surface)] object-cover border-2 transition-all duration-200 privacy-blur ${isDropdownOpen
+                    ? 'border-[var(--color-border-strong)] ring-2 ring-[var(--focus-ring)]'
+                    : 'border-[var(--color-border)] group-hover:border-[var(--color-border-strong)]'
+                    }`}
                   src={account.avatarUrl}
                   alt={privacyMode ? '' : account.displayName}
                 />
@@ -227,11 +226,10 @@ const ProfileCard = ({
                             <button
                               key={index}
                               onClick={item.onClick}
-                              className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm rounded-[calc(var(--menu-radius)-6px)] transition-colors ${
-                                item.danger
-                                  ? 'text-red-400 hover:bg-red-500/10 hover:text-red-300'
-                                  : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]'
-                              }`}
+                              className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm rounded-[calc(var(--menu-radius)-6px)] transition-colors ${item.danger
+                                ? 'text-red-400 hover:bg-red-500/10 hover:text-red-300'
+                                : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]'
+                                }`}
                             >
                               <item.icon size={16} />
                               <span className="font-medium">{item.label}</span>
@@ -278,11 +276,10 @@ const ProfileCard = ({
                     <button
                       key={index}
                       onClick={item.onClick}
-                      className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-sm rounded-[calc(var(--menu-radius)-6px)] transition-colors ${
-                        item.danger
-                          ? 'text-red-400 hover:bg-red-500/10 hover:text-red-300'
-                          : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]'
-                      }`}
+                      className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-sm rounded-[calc(var(--menu-radius)-6px)] transition-colors ${item.danger
+                        ? 'text-red-400 hover:bg-red-500/10 hover:text-red-300'
+                        : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]'
+                        }`}
                     >
                       <item.icon size={16} />
                       <span className="font-medium">{item.label}</span>
@@ -298,22 +295,20 @@ const ProfileCard = ({
       {/* Main Card */}
       <button
         onClick={handleCardClick}
-        className={`w-full rounded-xl border transition-all duration-200 text-left ${
-          isDropdownOpen
-            ? 'border-[var(--accent-color-border)] bg-[rgba(var(--accent-color-rgb),0.08)]'
-            : 'border-[var(--color-border)] bg-[var(--color-surface-muted)] hover:bg-[var(--color-surface-hover)] hover:border-[var(--color-border-strong)]'
-        }`}
+        className={`w-full rounded-xl border transition-all duration-200 text-left ${isDropdownOpen
+          ? 'border-[var(--accent-color-border)] bg-[rgba(var(--accent-color-rgb),0.08)]'
+          : 'border-[var(--color-border)] bg-[var(--color-surface-muted)] hover:bg-[var(--color-surface-hover)] hover:border-[var(--color-border-strong)]'
+          }`}
       >
         <div className="p-3">
           <div className="flex items-center gap-3">
             {/* Avatar */}
             <div className="relative flex-shrink-0">
               <img
-                className={`h-10 w-10 rounded-full bg-[var(--color-surface)] object-cover border-2 transition-all duration-200 privacy-blur ${
-                  isDropdownOpen
-                    ? 'border-[var(--color-border-strong)]'
-                    : 'border-[var(--color-border)]'
-                }`}
+                className={`h-10 w-10 rounded-full bg-[var(--color-surface)] object-cover border-2 transition-all duration-200 privacy-blur ${isDropdownOpen
+                  ? 'border-[var(--color-border-strong)]'
+                  : 'border-[var(--color-border)]'
+                  }`}
                 src={account.avatarUrl}
                 alt={privacyMode ? '' : account.displayName}
               />
@@ -419,24 +414,21 @@ const Sidebar = ({
       <motion.aside
         ref={sidebarRef}
         style={{ width: isSidebarCollapsed ? '72px' : `${sidebarWidth}px` }}
-        className={`flex flex-col border-r border-[var(--color-border)] bg-[var(--color-surface-strong)] z-30 relative ${
-          isSidebarCollapsed ? 'min-w-[72px]' : ''
-        } ${!isResizing ? 'transition-[width] duration-300 ease-in-out' : ''}`}
+        className={`flex flex-col border-r border-[var(--color-border)] bg-[var(--color-surface-strong)] z-30 relative ${isSidebarCollapsed ? 'min-w-[72px]' : ''
+          } ${!isResizing ? 'transition-[width] duration-300 ease-in-out' : ''}`}
       >
         {/* Sidebar Header - extra top padding on macOS for traffic lights */}
         <div
-          className={`flex items-center shrink-0 bg-[var(--color-surface-strong)] transition-all duration-300 ${
-            isSidebarCollapsed ? 'justify-center px-0' : 'justify-between pl-6 pr-4'
-          }`}
+          className={`flex items-center shrink-0 bg-[var(--color-surface-strong)] transition-all duration-300 ${isSidebarCollapsed ? 'justify-center px-0' : 'justify-between pl-6 pr-4'
+            }`}
           style={{
             height: isMac ? '72px' : '72px',
             paddingTop: isMac ? '28px' : '0px'
           }}
         >
           <div
-            className={`font-bold text-xl tracking-tight text-[var(--color-text-primary)] transition-all duration-200 flex items-center gap-2 ${
-              isSidebarCollapsed ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100 w-auto'
-            }`}
+            className={`font-bold text-xl tracking-tight text-[var(--color-text-primary)] transition-all duration-200 flex items-center gap-2 ${isSidebarCollapsed ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100 w-auto'
+              }`}
           >
             <VoxelLogo className="h-6 w-6 shrink-0" />
             <span>Voxel</span>

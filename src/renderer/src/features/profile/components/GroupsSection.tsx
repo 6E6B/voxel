@@ -109,7 +109,7 @@ export const GroupsSection: React.FC<GroupsSectionProps> = ({
                     className="group w-28 flex flex-col items-center gap-2 cursor-pointer shrink-0"
                     onClick={() => onSelectGroup?.(group.id)}
                   >
-                    <div className="relative w-26 h-26 rounded-xl bg-[var(--color-surface-hover)] shadow-md ring-1 ring-[var(--color-border-subtle)] group-hover:ring-[var(--color-border-strong)] transition-all overflow-hidden">
+                    <div className="relative w-24 h-24 rounded-xl bg-[var(--color-surface-hover)] shadow-md ring-1 ring-[var(--color-border-subtle)] group-hover:ring-[var(--color-border-strong)] transition-all overflow-hidden">
                       <img
                         src={groupItem.thumbnail}
                         alt={group.name}

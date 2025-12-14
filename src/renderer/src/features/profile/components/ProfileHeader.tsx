@@ -4,7 +4,8 @@ import { Shield, X, ChevronRight, Gamepad2 } from 'lucide-react'
 import Avatar3DThumbnail from '@renderer/components/Avatar/Avatar3DThumbnail'
 import { Avatar, AvatarFallback, AvatarImage } from '@renderer/components/UI/display/Avatar'
 import { SlidingNumber } from '@renderer/components/UI/specialized/SlidingNumber'
-import { getStatusColor, getStatusRingColor } from '@renderer/utils/statusUtils'
+import { getStatusRingUtilityClass } from '@renderer/utils/statusUtils'
+import { AccountStatus } from '@renderer/types'
 import RobloxPremiumIcon from '@assets/svg/Premium.svg'
 import VerifiedIcon from '@assets/svg/Verified.svg'
 import { ProfileData } from '../hooks/useProfileData'
@@ -126,11 +127,10 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5, delay: 0 }}
-      className={`relative w-full rounded-xl overflow-hidden flex flex-col text-[var(--color-text-secondary)] ${
-        variant === 'default'
+      className={`relative w-full rounded-xl overflow-hidden flex flex-col text-[var(--color-text-secondary)] ${variant === 'default'
           ? 'bg-[var(--color-surface-strong)] border border-[var(--color-border)]'
           : ''
-      }`}
+        }`}
       style={{ minHeight: `${minHeightPx}px` }}
     >
       {/* Background Gradients */}
@@ -239,24 +239,14 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
         <div className="shrink-0 relative pointer-events-auto">
           <div className="relative flex items-center justify-center">
             <Avatar
-              className={`w-32 h-32 md:w-40 md:h-40 shadow-2xl bg-[var(--color-surface-strong)] ring-1 ring-[var(--color-border-subtle)] ${
-                blurIdentity ? 'privacy-blur' : ''
-              }`}
+              className={`w-32 h-32 md:w-40 md:h-40 shadow-2xl bg-[var(--color-surface-strong)] ${profile.status !== AccountStatus.Offline ? `ring-4 ${getStatusRingUtilityClass(profile.status)}` : ''
+                } ${blurIdentity ? 'privacy-blur' : ''}`}
             >
               <AvatarImage src={profile.avatarUrl} alt={blurIdentity ? '' : profile.displayName} />
               <AvatarFallback className="text-xl font-bold text-[var(--color-text-primary)] bg-[var(--color-surface-hover)]">
                 {profile.displayName?.slice(0, 2)?.toUpperCase() || 'RB'}
               </AvatarFallback>
             </Avatar>
-            <div className="absolute bottom-2 right-6 translate-x-[32%] translate-y-[32%]">
-              <span
-                className={`flex items-center justify-center w-3.5 h-3.5 md:w-4 md:h-4 rounded-full shadow-[0_0_12px_rgba(0,0,0,0.35)] ${getStatusRingColor(profile.status)}`}
-              >
-                <span
-                  className={`block w-2.5 h-2.5 md:w-3 md:h-3 rounded-full ${getStatusColor(profile.status)}`}
-                />
-              </span>
-            </div>
           </div>
         </div>
 
@@ -293,9 +283,8 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
             </div>
 
             <p
-              className={`text-base md:text-lg text-[var(--color-text-secondary)] drop-shadow-md leading-none break-words ${
-                blurIdentity ? 'privacy-blur' : ''
-              }`}
+              className={`text-base md:text-lg text-[var(--color-text-secondary)] drop-shadow-md leading-none break-words ${blurIdentity ? 'privacy-blur' : ''
+                }`}
             >
               @{profile.username}
             </p>

@@ -55,7 +55,6 @@ export {
 // Friends hooks
 export {
   useFriends,
-  useFriendStatuses,
   useFriendRequests,
   useSendFriendRequest,
   useAcceptFriendRequest,
