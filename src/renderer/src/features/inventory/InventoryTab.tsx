@@ -89,9 +89,8 @@ const InventoryItemCard = ({
                 src={thumbnailUrl}
                 alt={displayName}
                 onLoad={() => setImageLoaded(true)}
-                className={`w-full h-full object-contain transition-all duration-500 group-hover:scale-110 ${
-                  imageLoaded ? 'opacity-100' : 'opacity-0'
-                }`}
+                className={`w-full h-full object-contain transition-all duration-500 group-hover:scale-110 ${imageLoaded ? 'opacity-100' : 'opacity-0'
+                  }`}
                 loading="lazy"
               />
             </>
@@ -406,7 +405,7 @@ const InventoryTab = ({ account }: InventoryTabProps) => {
           </div>
 
           {/* Content */}
-          <div className="flex-1 overflow-y-auto p-6 scrollbar-thin bg-neutral-950">
+          <div className="flex-1 overflow-y-auto scrollbar-thin bg-neutral-950">
             <AnimatePresence mode="wait">
               {isLoading && items.length === 0 ? (
                 <motion.div
@@ -414,7 +413,7 @@ const InventoryTab = ({ account }: InventoryTabProps) => {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="grid gap-4"
+                  className="grid gap-4 px-6 pt-8 pb-6"
                   style={gridStyle}
                 >
                   {Array.from({ length: 20 }).map((_, i) => (
@@ -458,7 +457,7 @@ const InventoryTab = ({ account }: InventoryTabProps) => {
                   <VirtuosoGrid
                     totalCount={items.length}
                     overscan={200}
-                    listClassName={`grid gap-4 ${viewMode === 'compact' ? 'grid-cols-[repeat(auto-fill,minmax(140px,1fr))]' : 'grid-cols-[repeat(auto-fill,minmax(200px,1fr))]'}`}
+                    listClassName={`grid gap-4 px-6 pb-6 ${viewMode === 'compact' ? 'grid-cols-[repeat(auto-fill,minmax(140px,1fr))]' : 'grid-cols-[repeat(auto-fill,minmax(200px,1fr))]'}`}
                     itemContent={(index) => {
                       const item = items[index]
                       return (
@@ -479,6 +478,7 @@ const InventoryTab = ({ account }: InventoryTabProps) => {
                       }
                     }}
                     components={{
+                      Header: () => <div className="h-8" />,
                       Footer: () =>
                         isFetchingNextPage ? (
                           <div className="h-20 flex items-center justify-center">
@@ -526,9 +526,9 @@ const InventoryTab = ({ account }: InventoryTabProps) => {
           initialData={
             selectedAccessory
               ? {
-                  name: selectedAccessory.name,
-                  imageUrl: selectedAccessory.imageUrl || ''
-                }
+                name: selectedAccessory.name,
+                imageUrl: selectedAccessory.imageUrl || ''
+              }
               : undefined
           }
         />

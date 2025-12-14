@@ -253,9 +253,8 @@ export const CatalogItemCard = ({
                 src={thumbnailUrl}
                 alt={item.name}
                 onLoad={() => setImageLoaded(true)}
-                className={`w-full h-full object-contain transition-all duration-500 group-hover:scale-110 ${
-                  imageLoaded ? 'opacity-100' : 'opacity-0'
-                }`}
+                className={`w-full h-full object-contain transition-all duration-500 group-hover:scale-110 ${imageLoaded ? 'opacity-100' : 'opacity-0'
+                  }`}
                 loading="lazy"
               />
             </>
@@ -304,7 +303,7 @@ export const CatalogItemCard = ({
                         ref={creatorRef as React.RefObject<HTMLButtonElement>}
                         type="button"
                         onClick={handleCreatorClick}
-                        className={`truncate text-left hover:text-[var(--color-text-primary)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--focus-ring)] rounded-sm transition-colors text-xs ${item.creatorHasVerifiedBadge ? 'text-[var(--accent-color)] font-medium' : 'text-[var(--color-text-muted)]'}`}
+                        className={`truncate text-left hover:text-[var(--color-text-primary)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--focus-ring)] rounded-sm transition-colors text-xs ${item.creatorHasVerifiedBadge ? 'text-[#3385ff] font-medium' : 'text-[var(--color-text-muted)]'}`}
                       >
                         {item.creatorName}
                       </button>
@@ -316,7 +315,7 @@ export const CatalogItemCard = ({
                     ref={creatorRef as React.RefObject<HTMLButtonElement>}
                     type="button"
                     onClick={handleCreatorClick}
-                    className={`truncate text-left hover:text-[var(--color-text-primary)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--focus-ring)] rounded-sm transition-colors text-xs ${item.creatorHasVerifiedBadge ? 'text-[var(--accent-color)] font-medium' : 'text-[var(--color-text-muted)]'}`}
+                    className={`truncate text-left hover:text-[var(--color-text-primary)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--focus-ring)] rounded-sm transition-colors text-xs ${item.creatorHasVerifiedBadge ? 'text-[#3385ff] font-medium' : 'text-[var(--color-text-muted)]'}`}
                   >
                     {item.creatorName}
                   </button>
@@ -326,7 +325,7 @@ export const CatalogItemCard = ({
                   <TooltipTrigger asChild>
                     <span
                       ref={creatorRef as React.RefObject<HTMLSpanElement>}
-                      className={`truncate text-xs ${item.creatorHasVerifiedBadge ? 'text-[var(--accent-color)] font-medium' : 'text-[var(--color-text-muted)]'}`}
+                      className={`truncate text-xs ${item.creatorHasVerifiedBadge ? 'text-[#3385ff] font-medium' : 'text-[var(--color-text-muted)]'}`}
                     >
                       {item.creatorName}
                     </span>
@@ -336,7 +335,7 @@ export const CatalogItemCard = ({
               ) : (
                 <span
                   ref={creatorRef as React.RefObject<HTMLSpanElement>}
-                  className={`truncate text-xs ${item.creatorHasVerifiedBadge ? 'text-[var(--accent-color)] font-medium' : 'text-[var(--color-text-muted)]'}`}
+                  className={`truncate text-xs ${item.creatorHasVerifiedBadge ? 'text-[#3385ff] font-medium' : 'text-[var(--color-text-muted)]'}`}
                 >
                   {item.creatorName}
                 </span>
@@ -365,11 +364,10 @@ export const CatalogItemCard = ({
               <TooltipTrigger asChild>
                 <div
                   ref={priceRef}
-                  className={`flex items-center gap-1 font-bold text-sm ${
-                    isOffSale
+                  className={`flex items-center gap-1 font-bold text-sm ${isOffSale
                       ? 'text-[var(--color-text-muted)]'
                       : 'text-[var(--color-text-primary)]'
-                  }`}
+                    }`}
                 >
                   {!isOffSale && displayPrice !== 'Free' && (
                     <RobuxIcon className="w-4 h-4 text-[var(--color-text-primary)]" />
@@ -381,8 +379,8 @@ export const CatalogItemCard = ({
               </TooltipTrigger>
               <TooltipContent>
                 {displayPrice !== 'Free' &&
-                displayPrice !== 'Off Sale' &&
-                displayPrice !== 'Not For Sale' ? (
+                  displayPrice !== 'Off Sale' &&
+                  displayPrice !== 'Not For Sale' ? (
                   <span className="flex items-center gap-1">
                     {!isOffSale && displayPrice !== 'Free' && (
                       <RobuxIcon className="w-4 h-4 text-white" />
@@ -397,9 +395,8 @@ export const CatalogItemCard = ({
           ) : (
             <div
               ref={priceRef}
-              className={`flex items-center gap-1 font-bold text-sm ${
-                isOffSale ? 'text-[var(--color-text-muted)]' : 'text-[var(--color-text-primary)]'
-              }`}
+              className={`flex items-center gap-1 font-bold text-sm ${isOffSale ? 'text-[var(--color-text-muted)]' : 'text-[var(--color-text-primary)]'
+                }`}
             >
               {!isOffSale && displayPrice !== 'Free' && (
                 <RobuxIcon className="w-4 h-4 text-[var(--color-text-primary)]" />

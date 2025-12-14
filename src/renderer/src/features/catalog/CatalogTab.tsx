@@ -418,8 +418,8 @@ const CatalogTab = ({ onItemSelect, onCreatorSelect, cookie }: CatalogTabProps) 
 
   const gridClassName =
     viewMode === 'compact'
-      ? 'grid gap-4 grid-cols-[repeat(auto-fill,minmax(140px,1fr))]'
-      : 'grid gap-4 grid-cols-[repeat(auto-fill,minmax(200px,1fr))]'
+      ? 'grid gap-4 px-6 pb-6 grid-cols-[repeat(auto-fill,minmax(140px,1fr))]'
+      : 'grid gap-4 px-6 pb-6 grid-cols-[repeat(auto-fill,minmax(200px,1fr))]'
 
   return (
     <TooltipProvider>
@@ -516,7 +516,7 @@ const CatalogTab = ({ onItemSelect, onCreatorSelect, cookie }: CatalogTabProps) 
           />
 
           {/* Content */}
-          <div className="flex-1 overflow-y-auto pt-8 pb-6 px-6 scrollbar-thin bg-neutral-950">
+          <div className="flex-1 overflow-y-auto scrollbar-thin bg-neutral-950">
             <AnimatePresence mode="wait">
               {isLoading && items.length === 0 ? (
                 <motion.div
@@ -524,7 +524,7 @@ const CatalogTab = ({ onItemSelect, onCreatorSelect, cookie }: CatalogTabProps) 
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="grid gap-4"
+                  className="grid gap-4 px-6 pt-8 pb-6"
                   style={gridStyle}
                 >
                   {Array.from({ length: 20 }).map((_, i) => (
@@ -592,6 +592,7 @@ const CatalogTab = ({ onItemSelect, onCreatorSelect, cookie }: CatalogTabProps) 
                       }
                     }}
                     components={{
+                      Header: () => <div className="h-8" />,
                       Footer: () =>
                         isFetchingNextPage ? (
                           <div className="h-20 flex items-center justify-center">

@@ -42,7 +42,7 @@ export const GroupDetailsModal = ({
           <SheetClose />
         </SheetHeader>
 
-        <SheetBody className="flex-1 overflow-hidden p-0">
+        <SheetBody className="flex-1 overflow-hidden p-0 flex flex-col">
           <GroupDetailsPanel
             groupId={groupId}
             selectedAccount={selectedAccount}
