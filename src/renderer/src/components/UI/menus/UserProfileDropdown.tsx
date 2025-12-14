@@ -37,7 +37,7 @@ const UserProfileDropdown: React.FC<UserProfileDropdownProps> = ({ account, onSi
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="pressable flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-[var(--color-surface-hover)] transition-colors border border-transparent"
+        className="pressable flex items-center gap-2 px-2 py-1.5 rounded-[var(--control-radius)] hover:bg-[var(--color-surface-hover)] transition-colors border border-transparent"
       >
         <Avatar className="h-7 w-7">
           <AvatarImage src={account.avatarUrl} alt={account.displayName} />
@@ -62,7 +62,7 @@ const UserProfileDropdown: React.FC<UserProfileDropdownProps> = ({ account, onSi
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: -4 }}
             transition={{ duration: 0.1 }}
-            className="absolute top-full right-0 mt-1 w-48 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg shadow-xl z-[100] py-1 overflow-hidden"
+            className="absolute top-full right-0 mt-1 w-48 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[var(--menu-radius)] shadow-xl z-[100] py-1 overflow-hidden"
           >
             <div className="px-3 py-2 border-b border-[var(--color-border)]">
               <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">

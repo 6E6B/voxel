@@ -45,7 +45,7 @@
   --color-surface: #0c0c0c;
   --color-surface-strong: #111111;
   --color-surface-muted: #151515;
-  --color-surface-hover: #1b1b1b;
+  --color-surface-hover: #080808;
   --color-titlebar: #151515;
   --color-border: #1f1f1f;
   --color-border-strong: #292929;
@@ -63,8 +63,8 @@
 
   --icon-stroke-width: 1.85;
 
-  --control-radius: var(--radius-md);
-  --menu-radius: var(--radius-lg);
+  --control-radius: var(--radius-lg);
+  --menu-radius: var(--radius-xl);
 }
 
 /* Global Lucide icon styling */

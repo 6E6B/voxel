@@ -92,7 +92,8 @@ export class RobloxFriendService {
     for (const ids of avatarChunks) {
       try {
         const avatarResult = await request(z.object({ data: z.array(avatarHeadshotSchema) }), {
-          url: `https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${ids.join(',')}&size=420x420&format=Png&isCircular=false`
+          url: `https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${ids.join(',')}&size=420x420&format=Png&isCircular=false`,
+          cookie
         })
         const avatarData = avatarResult.data || []
 
@@ -112,6 +113,7 @@ export class RobloxFriendService {
         const usersResult = await request(hydrateUsersResponseSchema, {
           method: 'POST',
           url: 'https://users.roblox.com/v1/users',
+          cookie,
           body: { userIds: ids, excludeBannedUsers: false }
         })
         const userData = usersResult.data || []
@@ -120,25 +122,7 @@ export class RobloxFriendService {
           userDetails[u.id] = u
         })
       } catch (e: any) {
-        if (e.statusCode === 429) {
-          await new Promise((resolve) => setTimeout(resolve, 2000))
-          try {
-            const usersResult = await request(hydrateUsersResponseSchema, {
-              method: 'POST',
-              url: 'https://users.roblox.com/v1/users',
-              body: { userIds: ids, excludeBannedUsers: false }
-            })
-            const userData = usersResult.data || []
-
-            userData.forEach((u: any) => {
-              userDetails[u.id] = u
-            })
-          } catch (retryErr) {
-            console.error('Retry failed for user details chunk', retryErr)
-          }
-        } else {
-          console.error('Failed to fetch user details chunk', e)
-        }
+        console.error('Failed to fetch user details chunk', e)
       }
     }
 

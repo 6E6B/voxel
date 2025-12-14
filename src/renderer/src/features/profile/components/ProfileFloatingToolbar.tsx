@@ -38,7 +38,7 @@ export const ProfileFloatingToolbar: React.FC<ProfileFloatingToolbarProps> = ({
       transition={{ duration: 0.25, delay: 0.08 }}
       className="fixed bottom-6 right-6 z-50"
     >
-      <div className="bg-[var(--color-surface-muted)] border border-[var(--color-border)] rounded-2xl p-1 shadow-[var(--shadow-lg)]/50 backdrop-blur">
+      <div className="bg-[var(--color-surface-muted)] border border-[var(--color-border)] rounded-2xl p-1 backdrop-blur">
         <div className="flex items-center">
           {actions.map((action, index) => (
             <Tooltip key={index}>

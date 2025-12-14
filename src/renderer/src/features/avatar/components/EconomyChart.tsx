@@ -357,7 +357,17 @@ export const EconomyChart: React.FC<EconomyChartProps> = ({
         volumeSeriesRef.current = null
       }
     }
-  }, [filteredData, showMA, maData, showVolume, color, height, handleZoomIn, handleZoomOut, handleResetView])
+  }, [
+    filteredData,
+    showMA,
+    maData,
+    showVolume,
+    color,
+    height,
+    handleZoomIn,
+    handleZoomOut,
+    handleResetView
+  ])
 
   // Export handlers
   const handleExportPNG = useCallback(() => {

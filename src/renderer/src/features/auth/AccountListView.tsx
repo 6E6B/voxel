@@ -76,22 +76,22 @@ const AccountListView = ({
 
   const handleDragOver = useCallback(
     (e: React.DragEvent) => {
-    if (onMoveAccount) {
-      e.preventDefault()
-      e.dataTransfer.dropEffect = 'move'
-    }
+      if (onMoveAccount) {
+        e.preventDefault()
+        e.dataTransfer.dropEffect = 'move'
+      }
     },
     [onMoveAccount]
   )
 
   const handleDrop = useCallback(
     (e: React.DragEvent, targetId: string) => {
-    if (!onMoveAccount) return
-    e.preventDefault()
-    const sourceId = e.dataTransfer.getData('text/plain')
-    if (sourceId && sourceId !== targetId) {
-      onMoveAccount(sourceId, targetId)
-    }
+      if (!onMoveAccount) return
+      e.preventDefault()
+      const sourceId = e.dataTransfer.getData('text/plain')
+      if (sourceId && sourceId !== targetId) {
+        onMoveAccount(sourceId, targetId)
+      }
     },
     [onMoveAccount]
   )
@@ -227,7 +227,7 @@ const AccountListView = ({
                       alt=""
                     />
                     <span
-                      className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 border-2 border-dotted rounded-full ${getStatusBorderColor(account.status)} ${getStatusColor(account.status)}`}
+                      className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 border-2 border-solid rounded-full ${getStatusBorderColor(account.status)} ${getStatusColor(account.status)}`}
                     ></span>
                   </div>
                   <div className="ml-4">

@@ -67,7 +67,6 @@ export const QuickActionsBar: React.FC<QuickActionsBarProps> = ({
             className={
               `pressable group w-full text-left ` +
               `bg-[var(--color-surface-strong)] border border-[var(--color-border)] rounded-xl p-4 ` +
-              `shadow-[var(--shadow-lg)]/30 hover:shadow-[var(--shadow-lg)]/40 ` +
               `hover:border-[var(--color-border-strong)] hover:bg-[var(--color-surface-hover)] ` +
               `transition-colors`
             }

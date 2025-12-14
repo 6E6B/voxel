@@ -1,7 +1,55 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query'
 import { queryKeys } from '../../../../../shared/queryKeys'
 import { Account } from '@renderer/types'
 import { avatar3DKeys } from '../hooks/useAvatar3DManifest'
+
+const headshotRefreshInFlight = new Set<number>()
+const headshotLastRefreshAt = new Map<number, number>()
+
+const refreshAccountAvatarHeadshot = async (
+  queryClient: QueryClient,
+  accountId: string,
+  userId: string,
+  size: string = '420x420',
+  options?: { force?: boolean }
+): Promise<void> => {
+  const uid = Number.parseInt(userId, 10)
+  if (!Number.isFinite(uid)) return
+
+  const force = options?.force ?? false
+  const now = Date.now()
+  const minIntervalMs = 60 * 1000
+  const last = headshotLastRefreshAt.get(uid) ?? 0
+  if (!force && now - last < minIntervalMs) return
+  if (headshotRefreshInFlight.has(uid)) return
+  headshotRefreshInFlight.add(uid)
+
+  try {
+    const map = await window.api.getBatchUserAvatars([uid], size)
+    const url = map[uid]
+    if (!url) return
+
+    queryClient.setQueryData(queryKeys.accounts.list(), (prev: Account[] | undefined) => {
+      if (!prev) return prev
+      let changed = false
+      const next = prev.map((acc) => {
+        if (acc.id !== accountId) return acc
+        if (acc.avatarUrl === url) return acc
+        changed = true
+        return { ...acc, avatarUrl: url }
+      })
+      return changed ? next : prev
+    })
+
+    headshotLastRefreshAt.set(uid, now)
+    queryClient.invalidateQueries({ queryKey: ['userAvatar', uid] })
+    queryClient.invalidateQueries({ queryKey: queryKeys.thumbnails.userAvatars([uid], size) })
+  } catch {
+    // ignore avatar refresh errors
+  } finally {
+    headshotRefreshInFlight.delete(uid)
+  }
+}
 
 interface AvatarAsset {
   id: number
@@ -191,6 +239,9 @@ export function useSetWearingAssets(account: Account | null) {
       queryClient.invalidateQueries({ queryKey: queryKeys.avatar.current(accountId) })
       if (userId) {
         queryClient.resetQueries({ queryKey: avatar3DKeys.manifest(userId) })
+        void refreshAccountAvatarHeadshot(queryClient, accountId, userId, '420x420', {
+          force: true
+        })
       }
     }
   })
@@ -211,6 +262,9 @@ export function useWearOutfit(account: Account | null) {
       queryClient.invalidateQueries({ queryKey: queryKeys.avatar.current(accountId) })
       if (userId) {
         queryClient.resetQueries({ queryKey: avatar3DKeys.manifest(userId) })
+        void refreshAccountAvatarHeadshot(queryClient, accountId, userId, '420x420', {
+          force: true
+        })
       }
     }
   })
@@ -231,6 +285,9 @@ export function useSetBodyColors(account: Account | null) {
       queryClient.invalidateQueries({ queryKey: queryKeys.avatar.current(accountId) })
       if (userId) {
         queryClient.resetQueries({ queryKey: avatar3DKeys.manifest(userId) })
+        void refreshAccountAvatarHeadshot(queryClient, accountId, userId, '420x420', {
+          force: true
+        })
       }
     }
   })
@@ -257,6 +314,9 @@ export function useSetAvatarScales(account: Account | null) {
       queryClient.invalidateQueries({ queryKey: queryKeys.avatar.current(accountId) })
       if (userId) {
         queryClient.resetQueries({ queryKey: avatar3DKeys.manifest(userId) })
+        void refreshAccountAvatarHeadshot(queryClient, accountId, userId, '420x420', {
+          force: true
+        })
       }
     }
   })
@@ -277,6 +337,9 @@ export function useSetPlayerAvatarType(account: Account | null) {
       queryClient.invalidateQueries({ queryKey: queryKeys.avatar.current(accountId) })
       if (userId) {
         queryClient.resetQueries({ queryKey: avatar3DKeys.manifest(userId) })
+        void refreshAccountAvatarHeadshot(queryClient, accountId, userId, '420x420', {
+          force: true
+        })
       }
     }
   })

@@ -591,7 +591,7 @@ const TransactionsTab = ({ account }: TransactionsTabProps) => {
                     setIsTimeFrameDropdownOpen(!isTimeFrameDropdownOpen)
                     setIsTypeDropdownOpen(false)
                   }}
-                  className="flex items-center gap-2 px-3 py-2 bg-neutral-900 border border-neutral-800 rounded-lg text-sm text-neutral-300 hover:bg-neutral-800 hover:border-neutral-700 transition-colors"
+                  className="flex items-center gap-2 px-3 py-2 bg-neutral-900 border border-neutral-800 rounded-[var(--control-radius)] text-sm text-neutral-300 hover:bg-neutral-800 hover:border-neutral-700 transition-colors"
                 >
                   <Calendar size={16} className="text-neutral-500" />
                   <span>
@@ -609,7 +609,7 @@ const TransactionsTab = ({ account }: TransactionsTabProps) => {
                       initial={{ opacity: 0, y: -4 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -4 }}
-                      className="absolute right-0 mt-2 w-48 bg-neutral-900 border border-neutral-800 rounded-xl shadow-xl z-50 overflow-hidden"
+                      className="absolute right-0 mt-2 w-48 bg-neutral-900 border border-neutral-800 rounded-[var(--menu-radius)] shadow-xl z-50 overflow-hidden"
                     >
                       <div className="p-1">
                         {TIME_FRAME_OPTIONS.map((option) => (
@@ -619,7 +619,7 @@ const TransactionsTab = ({ account }: TransactionsTabProps) => {
                               setTimeFrame(option.value)
                               setIsTimeFrameDropdownOpen(false)
                             }}
-                            className={`w-full text-left px-3 py-2 text-sm rounded-lg transition-colors ${
+                            className={`w-full text-left px-3 py-2 text-sm rounded-[calc(var(--menu-radius)-6px)] transition-colors ${
                               timeFrame === option.value
                                 ? 'bg-neutral-800 text-white'
                                 : 'text-neutral-400 hover:bg-neutral-800/50 hover:text-white'
@@ -642,7 +642,7 @@ const TransactionsTab = ({ account }: TransactionsTabProps) => {
                   setIsTypeDropdownOpen(!isTypeDropdownOpen)
                   setIsTimeFrameDropdownOpen(false)
                 }}
-                className="flex items-center gap-2 px-3 py-2 bg-neutral-900 border border-neutral-800 rounded-lg text-sm text-neutral-300 hover:bg-neutral-800 hover:border-neutral-700 transition-colors min-w-[180px]"
+                className="flex items-center gap-2 px-3 py-2 bg-neutral-900 border border-neutral-800 rounded-[var(--control-radius)] text-sm text-neutral-300 hover:bg-neutral-800 hover:border-neutral-700 transition-colors min-w-[180px]"
               >
                 <span className="flex-1 text-left">{TRANSACTION_TYPE_LABELS[selectedType]}</span>
                 <ChevronDown
@@ -657,7 +657,7 @@ const TransactionsTab = ({ account }: TransactionsTabProps) => {
                     initial={{ opacity: 0, y: -4 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -4 }}
-                    className="absolute right-0 mt-2 w-64 bg-neutral-900 border border-neutral-800 rounded-xl shadow-xl z-50 overflow-hidden max-h-[400px] overflow-y-auto scrollbar-thin"
+                    className="absolute right-0 mt-2 w-64 bg-neutral-900 border border-neutral-800 rounded-[var(--menu-radius)] shadow-xl z-50 overflow-hidden max-h-[400px] overflow-y-auto scrollbar-thin"
                   >
                     <div className="p-1">
                       <button
@@ -665,7 +665,7 @@ const TransactionsTab = ({ account }: TransactionsTabProps) => {
                           setSelectedType('all')
                           setIsTypeDropdownOpen(false)
                         }}
-                        className={`w-full text-left px-3 py-2 text-sm rounded-lg transition-colors ${
+                        className={`w-full text-left px-3 py-2 text-sm rounded-[calc(var(--menu-radius)-6px)] transition-colors ${
                           selectedType === 'all'
                             ? 'bg-neutral-800 text-white'
                             : 'text-neutral-400 hover:bg-neutral-800/50 hover:text-white'
@@ -683,7 +683,7 @@ const TransactionsTab = ({ account }: TransactionsTabProps) => {
                             setSelectedType(type)
                             setIsTypeDropdownOpen(false)
                           }}
-                          className={`w-full text-left px-3 py-2 text-sm rounded-lg transition-colors ${
+                          className={`w-full text-left px-3 py-2 text-sm rounded-[calc(var(--menu-radius)-6px)] transition-colors ${
                             selectedType === type
                               ? 'bg-neutral-800 text-white'
                               : 'text-neutral-400 hover:bg-neutral-800/50 hover:text-white'

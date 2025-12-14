@@ -90,7 +90,7 @@ const AccountGridView = ({
                     <AvatarFallback>{account.displayName.slice(0, 2).toUpperCase()}</AvatarFallback>
                   </Avatar>
                   <div
-                    className={`absolute bottom-1 right-1 w-5 h-5 border-4 border-dotted rounded-full ${getStatusBorderColor(account.status)} ${getStatusColor(account.status)}`}
+                    className={`absolute bottom-1 right-1 w-5 h-5 border-4 border-solid rounded-full ${getStatusBorderColor(account.status)} ${getStatusColor(account.status)}`}
                   />
                 </div>
                 <h3

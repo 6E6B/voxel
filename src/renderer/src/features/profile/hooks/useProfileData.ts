@@ -65,7 +65,7 @@ export const useProfileData = ({ userId, requestCookie, initialData }: UseProfil
       return result[userId] ?? null
     },
     enabled: !!userId,
-    staleTime: 5 * 60 * 1000
+    staleTime: 60 * 1000
   })
 
   const profile = useMemo(() => {

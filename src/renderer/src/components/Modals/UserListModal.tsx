@@ -237,7 +237,7 @@ const UserListModal: React.FC<UserListModalProps> = ({
                         </div>
                         {isOnline && (
                           <div
-                            className={`absolute bottom-0 right-0 w-4 h-4 rounded-full border-[3px] border-dotted ${getStatusBorderColor(status)} ${statusColor}`}
+                            className={`absolute bottom-0 right-0 w-4 h-4 rounded-full border-[3px] border-solid ${getStatusBorderColor(status)} ${statusColor}`}
                           />
                         )}
                       </div>

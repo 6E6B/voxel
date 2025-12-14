@@ -46,8 +46,8 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
   useEffect(() => {
     if (isOpen && dropdownRef.current) {
       const computed = window.getComputedStyle(dropdownRef.current)
-      const controlRadius = computed.getPropertyValue('--control-radius').trim()
-      setMenuRadius(controlRadius || null)
+      const menuRadiusValue = computed.getPropertyValue('--menu-radius').trim()
+      setMenuRadius(menuRadiusValue || null)
 
       const rect = dropdownRef.current.getBoundingClientRect()
       const menuWidth = Math.max(rect.width, 200)
@@ -74,7 +74,7 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
 
   const selectedOption = options.find((opt) => opt.value === value)
 
-  const defaultButtonClasses = `px-3 py-2.5 bg-[var(--color-surface-muted)] border border-[var(--color-border)] rounded-lg text-sm transition-all hover:border-[var(--color-border-strong)] focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring)] ${
+  const defaultButtonClasses = `px-3 py-2.5 bg-[var(--color-surface-muted)] border border-[var(--color-border)] rounded-[var(--control-radius)] text-sm transition-all hover:border-[var(--color-border-strong)] focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring)] ${
     isOpen ? 'border-[var(--color-border-strong)] ring-1 ring-[var(--focus-ring)]' : ''
   }`
 
@@ -87,7 +87,7 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 8, scale: 0.95 }}
           transition={{ duration: 0.15, ease: 'easeOut' }}
-          className="fixed bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl shadow-2xl z-[10000] overflow-hidden"
+          className="fixed bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[var(--menu-radius)] shadow-2xl z-[10000] overflow-hidden"
           style={{
             top: menuPosition.top,
             left: menuPosition.left,
@@ -106,12 +106,11 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
                   onChange(option.value)
                   setIsOpen(false)
                 }}
-                className={`pressable w-full text-left px-3 py-2.5 text-sm flex items-center justify-between rounded-lg transition-colors ${
+                className={`pressable w-full text-left px-3 py-2.5 text-sm flex items-center justify-between rounded-[calc(var(--menu-radius)-6px)] transition-colors ${
                   value === option.value
                     ? 'bg-[var(--color-surface-hover)] text-[var(--color-text-primary)]'
                     : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]'
                 }`}
-                style={{ borderRadius: 'calc(var(--menu-radius) - 6px)' }}
               >
                 <div className="flex items-center gap-2.5 min-w-0 flex-1">
                   {option.icon && <span className="shrink-0">{option.icon}</span>}

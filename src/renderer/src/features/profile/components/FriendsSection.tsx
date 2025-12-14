@@ -3,7 +3,11 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronRight, ChevronLeft } from 'lucide-react'
 import { SlidingNumber } from '@renderer/components/UI/specialized/SlidingNumber'
 import { SkeletonUserRow } from '@renderer/components/UI/display/SkeletonGrid'
-import { getStatusColor, mapPresenceToStatus } from '@renderer/utils/statusUtils'
+import {
+  getStatusBorderColor,
+  getStatusColor,
+  mapPresenceToStatus
+} from '@renderer/utils/statusUtils'
 import { AccountStatus } from '@renderer/types'
 import { formatNumber } from '@renderer/utils/numberUtils'
 import { useHorizontalScroll } from '@renderer/hooks/useHorizontalScroll'
@@ -145,7 +149,7 @@ export const FriendsSection: React.FC<FriendsSectionProps> = ({
                       </div>
                       <div className="flex items-center justify-center gap-1 text-[11px] font-semibold text-[var(--color-text-secondary)] mt-0.5">
                         <span
-                          className={`inline-block w-2 h-2 rounded-full ${getStatusColor(friendStatus)}`}
+                          className={`inline-block w-2 h-2 rounded-full border border-solid ${getStatusBorderColor(friendStatus)} ${getStatusColor(friendStatus)}`}
                         />
                         <span className="truncate">{getStatusLabel(friendStatus)}</span>
                       </div>

@@ -168,7 +168,7 @@ const CollectionItemCard: React.FC<CollectionItemCardProps> = ({
 
   return (
     <div
-      className="group relative aspect-square bg-[var(--color-surface-strong)] border border-[var(--color-border)] rounded-[var(--radius-lg)] overflow-hidden cursor-pointer transition-all hover:border-[var(--color-border-strong)] hover:shadow-lg isolate"
+      className="group relative aspect-square bg-[var(--color-surface-hover)] border border-[var(--color-border)] rounded-[var(--radius-lg)] overflow-hidden cursor-pointer transition-all hover:border-[var(--color-border-strong)] hover:shadow-lg isolate"
       onClick={() => onItemClick({ id: item.id, name: item.name, imageUrl: item.imageUrl })}
     >
       <div
@@ -251,7 +251,7 @@ const CollectionItemCard: React.FC<CollectionItemCardProps> = ({
           className="absolute inset-0 pointer-events-none"
           style={{
             background:
-              'linear-gradient(180deg, rgba(8,8,8,0) 0%, rgba(8,8,8,0.15) 35%, rgba(8,8,8,0.85) 100%)'
+              'linear-gradient(180deg, rgba(8,8,8,0) 0%, rgba(8,8,8,0.12) 35%, rgba(8,8,8,0.65) 100%)'
           }}
         />
         <TruncatedTextWithTooltip

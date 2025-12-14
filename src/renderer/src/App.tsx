@@ -3,8 +3,10 @@ import React, { useState, useMemo, useRef, useEffect, useCallback, lazy, Suspens
 import notificationIcon from '../../../resources/build/icons/png/256x256.png'
 import { AnimatePresence } from 'framer-motion'
 import { Search } from 'lucide-react'
-import { Account, AccountStatus, JoinMethod } from './types'
+import { Account, AccountStatus, DEFAULT_ACCENT_COLOR, JoinMethod } from './types'
 import { mapPresenceToStatus, isActiveStatus } from './utils/statusUtils'
+import { applyAccentColor } from './utils/themeUtils'
+import { getDominantAccentColorFromImageUrl } from './utils/imageAccentColor'
 import JoinModal from './components/Modals/JoinModal'
 import EditNoteModal from './features/auth/Modals/EditNoteModal'
 import AddAccountModal from './features/auth/Modals/AddAccountModal'
@@ -97,6 +99,8 @@ const isMac = window.platform?.isMac ?? false
 const App: React.FC = () => {
   const perfLoggedRef = useRef(false)
   const catalogInitTriggeredRef = useRef(false)
+  const lastAvatarRefreshAtRef = useRef(0)
+  const avatarRefreshInFlightRef = useRef(false)
 
   useEffect(() => {
     if (perfLoggedRef.current) return
@@ -159,6 +163,67 @@ const App: React.FC = () => {
 
   const { accounts, isLoading: isLoadingAccounts, setAccounts, addAccount } = useAccountsManager()
   const { settings, isLoading: isLoadingSettings, updateSettings } = useSettingsManager()
+
+  const refreshAccountAvatarUrls = useCallback(
+    async (options?: { force?: boolean }) => {
+      const force = options?.force ?? false
+      const now = Date.now()
+      const minIntervalMs = 60 * 1000
+      if (!force && now - lastAvatarRefreshAtRef.current < minIntervalMs) return
+      if (avatarRefreshInFlightRef.current) return
+
+      avatarRefreshInFlightRef.current = true
+      const currentAccounts = queryClient.getQueryData<Account[]>(queryKeys.accounts.list()) || []
+      const userIds = currentAccounts
+        .map((a) => Number(a.userId))
+        .filter((id) => Number.isFinite(id))
+
+      if (userIds.length === 0) {
+        avatarRefreshInFlightRef.current = false
+        return
+      }
+
+      try {
+        const avatarMap = await window.api.getBatchUserAvatars(userIds, '420x420')
+        setAccounts((prev) => {
+          let changed = false
+          const next = prev.map((acc) => {
+            const uid = Number(acc.userId)
+            const nextUrl = Number.isFinite(uid) ? avatarMap[uid] : null
+
+            if (nextUrl && nextUrl !== acc.avatarUrl) {
+              changed = true
+              return { ...acc, avatarUrl: nextUrl }
+            }
+            return acc
+          })
+
+          return changed ? next : prev
+        })
+
+        lastAvatarRefreshAtRef.current = now
+      } catch (error) {
+        console.warn('[accounts] failed to refresh avatar thumbnails', error)
+      } finally {
+        avatarRefreshInFlightRef.current = false
+      }
+    },
+    [queryClient, setAccounts]
+  )
+
+  // Keep account avatars from going stale (Roblox thumbnails can change when you update your avatar).
+  useEffect(() => {
+    if (isLoadingAccounts) return
+
+    void refreshAccountAvatarUrls({ force: true })
+
+    const intervalId = window.setInterval(() => {
+      void refreshAccountAvatarUrls()
+    }, 60 * 1000)
+    return () => {
+      window.clearInterval(intervalId)
+    }
+  }, [isLoadingAccounts, refreshAccountAvatarUrls])
 
   const sidebarTabOrder = useMemo(
     () => sanitizeSidebarOrder(settings.sidebarTabOrder),
@@ -235,6 +300,43 @@ const App: React.FC = () => {
   const selectedAccount = useMemo(() => {
     return accounts.find((a) => a.id === selectedAccountId) || null
   }, [accounts, selectedAccountId])
+
+  // Refetch thumbnails when switching accounts (cached by the 60s throttle).
+  useEffect(() => {
+    if (!selectedAccountId || isLoadingAccounts) return
+    void refreshAccountAvatarUrls()
+  }, [isLoadingAccounts, refreshAccountAvatarUrls, selectedAccountId])
+
+  const accentAvatarUrl = useMemo(() => {
+    if (selectedAccount?.avatarUrl) return selectedAccount.avatarUrl
+    if (settings.primaryAccountId) {
+      return accounts.find((a) => a.id === settings.primaryAccountId)?.avatarUrl ?? null
+    }
+    return null
+  }, [accounts, selectedAccount?.avatarUrl, settings.primaryAccountId])
+
+  // If the user hasn't chosen a custom accent color, derive it from the current account's avatar.
+  // This keeps the default theme feeling personalized (e.g. mostly-orange outfit => orange accent).
+  useEffect(() => {
+    const raw = typeof settings.accentColor === 'string' ? settings.accentColor.trim() : ''
+    const isDefaultAccent = !raw || raw.toLowerCase() === DEFAULT_ACCENT_COLOR
+    const avatarUrl = accentAvatarUrl
+
+    if (!isDefaultAccent || !avatarUrl) return
+
+    const controller = new AbortController()
+    getDominantAccentColorFromImageUrl(avatarUrl, { signal: controller.signal })
+      .then((hex) => {
+        if (controller.signal.aborted) return
+        applyAccentColor(hex)
+      })
+      .catch((error) => {
+        if (controller.signal.aborted) return
+        console.warn('[theme] failed to derive accent from avatar thumbnail', error)
+      })
+
+    return () => controller.abort()
+  }, [accentAvatarUrl, settings.accentColor])
 
   const { data: friendsData = [] } = useFriends(selectedAccount)
 
@@ -461,42 +563,45 @@ const App: React.FC = () => {
 
   const installations = useInstallations()
 
-  const handleLaunch = useCallback((config: JoinConfig) => {
-    const configuredPath =
-      typeof settings.defaultInstallationPath === 'string'
-        ? settings.defaultInstallationPath.trim()
-        : ''
+  const handleLaunch = useCallback(
+    (config: JoinConfig) => {
+      const configuredPath =
+        typeof settings.defaultInstallationPath === 'string'
+          ? settings.defaultInstallationPath.trim()
+          : ''
 
-    if (configuredPath) {
-      performLaunch(config, configuredPath)
-      return
-    }
-
-    if (installations.length > 0) {
-      if (installations.length === 1) {
-        performLaunch(config, installations[0].path)
+      if (configuredPath) {
+        performLaunch(config, configuredPath)
         return
       }
-      setAvailableInstallations(installations)
+
+      if (installations.length > 0) {
+        if (installations.length === 1) {
+          performLaunch(config, installations[0].path)
+          return
+        }
+        setAvailableInstallations(installations)
+        setPendingLaunchConfig(config)
+        closeModal('join')
+        openModal('instanceSelection')
+        return
+      }
+
+      setAvailableInstallations([])
       setPendingLaunchConfig(config)
       closeModal('join')
       openModal('instanceSelection')
-      return
-    }
-
-    setAvailableInstallations([])
-    setPendingLaunchConfig(config)
-    closeModal('join')
-    openModal('instanceSelection')
-  }, [
-    settings.defaultInstallationPath,
-    performLaunch,
-    installations,
-    setAvailableInstallations,
-    setPendingLaunchConfig,
-    closeModal,
-    openModal
-  ])
+    },
+    [
+      settings.defaultInstallationPath,
+      performLaunch,
+      installations,
+      setAvailableInstallations,
+      setPendingLaunchConfig,
+      closeModal,
+      openModal
+    ]
+  )
 
   const handleCommandPaletteLaunchGame = useCallback(
     (method: JoinMethod, target: string) => {

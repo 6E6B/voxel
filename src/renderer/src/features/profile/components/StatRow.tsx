@@ -49,7 +49,7 @@ export const StatRow: React.FC<StatRowProps> = ({
         <Icon size={15} />
         <span className="text-sm font-medium">{label}</span>
       </div>
-      <div className="text-sm text-[var(--color-text-primary)] font-semibold">{value}</div>
+      <div className="text-xs text-[var(--color-text-primary)] font-semibold">{value}</div>
     </div>
   )
 

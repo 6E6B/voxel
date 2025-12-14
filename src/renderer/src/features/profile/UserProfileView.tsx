@@ -394,7 +394,7 @@ const UserProfileView: React.FC<ProfileViewProps> = ({
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ duration: 0.2, delay: Math.min(index * 0.02, 0.3) }}
-                      className="group relative aspect-square bg-neutral-900/80 border border-neutral-800/60 rounded-xl overflow-hidden cursor-pointer transition-all duration-200 hover:border-neutral-600 hover:bg-neutral-800/80 hover:shadow-lg"
+                      className="group relative aspect-square bg-[var(--color-surface-hover)] border border-[var(--color-border)] rounded-xl overflow-hidden cursor-pointer transition-all duration-200 hover:border-[var(--color-border-strong)] hover:bg-[var(--color-surface-strong)] hover:shadow-lg"
                       onClick={() =>
                         setSelectedAccessory({
                           id: item.id,
@@ -482,7 +482,7 @@ const UserProfileView: React.FC<ProfileViewProps> = ({
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ duration: 0.2, delay: Math.min(index * 0.02, 0.3) }}
-                      className="group relative aspect-square bg-[var(--color-surface-strong)] border border-[var(--color-border)] rounded-xl overflow-hidden cursor-pointer transition-all duration-200 hover:border-[var(--color-border-strong)] hover:bg-[var(--color-surface-hover)] hover:shadow-lg"
+                      className="group relative aspect-square bg-[var(--color-surface-hover)] border border-[var(--color-border)] rounded-xl overflow-hidden cursor-pointer transition-all duration-200 hover:border-[var(--color-border-strong)] hover:bg-[var(--color-surface-strong)] hover:shadow-lg"
                       onClick={async () => {
                         setSelectedOutfit({
                           id: outfit.id,
@@ -616,7 +616,7 @@ const UserProfileView: React.FC<ProfileViewProps> = ({
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ duration: 0.2, delay: Math.min(index * 0.02, 0.3) }}
-                      className="group relative aspect-square bg-[var(--color-surface-strong)] border border-[var(--color-border)] rounded-xl overflow-hidden cursor-pointer transition-all duration-200 hover:border-[var(--color-border-strong)] hover:bg-[var(--color-surface-hover)] hover:shadow-lg"
+                      className="group relative aspect-square bg-[var(--color-surface-hover)] border border-[var(--color-border)] rounded-xl overflow-hidden cursor-pointer transition-all duration-200 hover:border-[var(--color-border-strong)] hover:bg-[var(--color-surface-strong)] hover:shadow-lg"
                       onClick={() =>
                         setSelectedAccessory({
                           id: item.id,

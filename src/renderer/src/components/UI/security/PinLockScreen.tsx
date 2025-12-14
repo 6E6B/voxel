@@ -64,49 +64,52 @@ const PinLockScreen: React.FC<PinLockScreenProps> = ({ onUnlock }) => {
     return undefined
   }, [lockoutSeconds])
 
-  const verifyPin = useCallback(async (enteredPin: string) => {
-    setIsVerifying(true)
-    setError(null)
+  const verifyPin = useCallback(
+    async (enteredPin: string) => {
+      setIsVerifying(true)
+      setError(null)
 
-    try {
-      const result = await window.api.verifyPin(enteredPin)
+      try {
+        const result = await window.api.verifyPin(enteredPin)
 
-      if (result.success) {
-        onUnlock()
-      } else if (result.locked) {
-        setIsLocked(true)
-        setLockoutSeconds(result.lockoutSeconds || 300)
-        setError(`Too many failed attempts. Please wait.`)
-        setShake(true)
-        setTimeout(() => {
-          setShake(false)
-          setPin(Array(6).fill(''))
-          lastVerifiedPinRef.current = '' // Reset so user can try again after lockout
-        }, 500)
-      } else {
-        setRemainingAttempts(result.remainingAttempts)
-        setError(
-          result.remainingAttempts === 1
-            ? 'Incorrect PIN. 1 attempt remaining!'
-            : `Incorrect PIN. ${result.remainingAttempts} attempts remaining.`
-        )
-        setShake(true)
-        setTimeout(() => {
-          setShake(false)
-          setPin(Array(6).fill(''))
-          lastVerifiedPinRef.current = '' // Reset so user can try again
-          inputRefs.current[0]?.focus()
-        }, 500)
+        if (result.success) {
+          onUnlock()
+        } else if (result.locked) {
+          setIsLocked(true)
+          setLockoutSeconds(result.lockoutSeconds || 300)
+          setError(`Too many failed attempts. Please wait.`)
+          setShake(true)
+          setTimeout(() => {
+            setShake(false)
+            setPin(Array(6).fill(''))
+            lastVerifiedPinRef.current = '' // Reset so user can try again after lockout
+          }, 500)
+        } else {
+          setRemainingAttempts(result.remainingAttempts)
+          setError(
+            result.remainingAttempts === 1
+              ? 'Incorrect PIN. 1 attempt remaining!'
+              : `Incorrect PIN. ${result.remainingAttempts} attempts remaining.`
+          )
+          setShake(true)
+          setTimeout(() => {
+            setShake(false)
+            setPin(Array(6).fill(''))
+            lastVerifiedPinRef.current = '' // Reset so user can try again
+            inputRefs.current[0]?.focus()
+          }, 500)
+        }
+      } catch (err) {
+        console.error('PIN verification error:', err)
+        setError('An error occurred. Please try again.')
+        setPin(Array(6).fill(''))
+        lastVerifiedPinRef.current = '' // Reset so user can try again
+      } finally {
+        setIsVerifying(false)
       }
-    } catch (err) {
-      console.error('PIN verification error:', err)
-      setError('An error occurred. Please try again.')
-      setPin(Array(6).fill(''))
-      lastVerifiedPinRef.current = '' // Reset so user can try again
-    } finally {
-      setIsVerifying(false)
-    }
-  }, [onUnlock])
+    },
+    [onUnlock]
+  )
 
   // Verify PIN when all digits are entered
   useEffect(() => {

@@ -196,7 +196,7 @@ export const ChartControls: React.FC<ChartControlsProps> = ({
         >
           <Download size={14} />
         </button>
-        <div className="absolute right-0 top-full mt-1 py-1 bg-neutral-800 border border-neutral-700 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 min-w-[100px]">
+        <div className="absolute right-0 top-full mt-1 py-1 bg-neutral-800 border border-neutral-700 rounded-[var(--menu-radius)] shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 min-w-[100px]">
           <button
             onClick={onExportPNG}
             className="w-full px-3 py-1.5 text-xs text-left text-neutral-300 hover:bg-neutral-700 hover:text-white"

@@ -4,7 +4,7 @@ import { Shield, X, ChevronRight, Gamepad2 } from 'lucide-react'
 import Avatar3DThumbnail from '@renderer/components/Avatar/Avatar3DThumbnail'
 import { Avatar, AvatarFallback, AvatarImage } from '@renderer/components/UI/display/Avatar'
 import { SlidingNumber } from '@renderer/components/UI/specialized/SlidingNumber'
-import { getStatusBorderColor, getStatusColor } from '@renderer/utils/statusUtils'
+import { getStatusColor, getStatusRingColor } from '@renderer/utils/statusUtils'
 import RobloxPremiumIcon from '@assets/svg/Premium.svg'
 import VerifiedIcon from '@assets/svg/Verified.svg'
 import { ProfileData } from '../hooks/useProfileData'
@@ -25,6 +25,7 @@ interface ProfileHeaderProps {
   hasRawDescription: boolean
   rawDescription: string
   onJoinGame?: (placeId: number | string, jobId?: string, userId?: number | string) => void
+  variant?: 'default' | 'transparent'
 }
 
 export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
@@ -38,7 +39,8 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   onSocialStatClick,
   hasRawDescription,
   rawDescription,
-  onJoinGame
+  onJoinGame,
+  variant = 'default'
 }) => {
   const [isAvatarHovered, setIsAvatarHovered] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
@@ -124,23 +126,31 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5, delay: 0 }}
-      className="relative w-full bg-[var(--color-surface-strong)] rounded-xl overflow-hidden border border-[var(--color-border)] flex flex-col text-[var(--color-text-secondary)]"
+      className={`relative w-full rounded-xl overflow-hidden flex flex-col text-[var(--color-text-secondary)] ${
+        variant === 'default'
+          ? 'bg-[var(--color-surface-strong)] border border-[var(--color-border)]'
+          : ''
+      }`}
       style={{ minHeight: `${minHeightPx}px` }}
     >
       {/* Background Gradients */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[rgba(var(--accent-color-rgb),0.08)] via-[var(--color-app-bg)] to-[var(--color-app-bg)] opacity-90" />
+      {variant === 'default' && (
+        <>
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[rgba(var(--accent-color-rgb),0.08)] via-[var(--color-app-bg)] to-[var(--color-app-bg)] opacity-90" />
 
-      {/* Animated Floor Grid */}
-      <div
-        className="absolute inset-0 opacity-25"
-        style={{
-          backgroundImage:
-            'linear-gradient(0deg, transparent 24%, rgba(255, 255, 255, 0.06) 25%, rgba(255, 255, 255, 0.06) 26%, transparent 27%, transparent 74%, rgba(255, 255, 255, 0.06) 75%, rgba(255, 255, 255, 0.06) 76%, transparent 77%, transparent), linear-gradient(90deg, transparent 24%, rgba(255, 255, 255, 0.06) 25%, rgba(255, 255, 255, 0.06) 26%, transparent 27%, transparent 74%, rgba(255, 255, 255, 0.06) 75%, rgba(255, 255, 255, 0.06) 76%, transparent 77%, transparent)',
-          backgroundSize: '60px 60px',
-          transform: 'perspective(800px) rotateX(60deg) translateY(0) scale(1.5)',
-          transformOrigin: 'top center'
-        }}
-      />
+          {/* Animated Floor Grid */}
+          <div
+            className="absolute inset-0 opacity-25"
+            style={{
+              backgroundImage:
+                'linear-gradient(0deg, transparent 24%, rgba(255, 255, 255, 0.06) 25%, rgba(255, 255, 255, 0.06) 26%, transparent 27%, transparent 74%, rgba(255, 255, 255, 0.06) 75%, rgba(255, 255, 255, 0.06) 76%, transparent 77%, transparent), linear-gradient(90deg, transparent 24%, rgba(255, 255, 255, 0.06) 25%, rgba(255, 255, 255, 0.06) 26%, transparent 27%, transparent 74%, rgba(255, 255, 255, 0.06) 75%, rgba(255, 255, 255, 0.06) 76%, transparent 77%, transparent)',
+              backgroundSize: '60px 60px',
+              transform: 'perspective(800px) rotateX(60deg) translateY(0) scale(1.5)',
+              transformOrigin: 'top center'
+            }}
+          />
+        </>
+      )}
 
       {/* Main 3D Render - Centered/Right */}
       <div className="absolute inset-0 flex items-center justify-end pointer-events-none pb-0 pr-0 avatar-wrapper">
@@ -240,8 +250,12 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
             </Avatar>
             <div className="absolute bottom-2 right-6 translate-x-[32%] translate-y-[32%]">
               <span
-                className={`block w-4 h-4 md:w-5 md:h-5 rounded-full border-2 border-dotted shadow-[0_0_12px_rgba(0,0,0,0.35)] ${getStatusBorderColor(profile.status)} ${getStatusColor(profile.status)}`}
-              />
+                className={`flex items-center justify-center w-3.5 h-3.5 md:w-4 md:h-4 rounded-full shadow-[0_0_12px_rgba(0,0,0,0.35)] ${getStatusRingColor(profile.status)}`}
+              >
+                <span
+                  className={`block w-2.5 h-2.5 md:w-3 md:h-3 rounded-full ${getStatusColor(profile.status)}`}
+                />
+              </span>
             </div>
           </div>
         </div>
@@ -297,7 +311,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                 <SlidingNumber
                   number={profile.friendCount}
                   formatter={formatNumber}
-                  className="text-[var(--color-text-primary)] font-bold text-lg transition-colors"
+                  className="text-[var(--color-text-primary)] font-bold text-base transition-colors"
                 />
                 <span className="text-[var(--color-text-secondary)] text-sm font-medium tracking-wide group-hover/stat:text-[var(--color-text-primary)] group-hover/stat:underline underline-offset-2 transition-colors">
                   Friends
@@ -316,7 +330,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                 <SlidingNumber
                   number={profile.followerCount}
                   formatter={formatNumber}
-                  className="text-[var(--color-text-primary)] font-bold text-lg transition-colors"
+                  className="text-[var(--color-text-primary)] font-bold text-base transition-colors"
                 />
                 <span className="text-[var(--color-text-secondary)] text-sm font-medium tracking-wide group-hover/stat:text-[var(--color-text-primary)] group-hover/stat:underline underline-offset-2 transition-colors">
                   Followers
@@ -335,7 +349,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                 <SlidingNumber
                   number={profile.followingCount}
                   formatter={formatNumber}
-                  className="text-[var(--color-text-primary)] font-bold text-lg transition-colors"
+                  className="text-[var(--color-text-primary)] font-bold text-base transition-colors"
                 />
                 <span className="text-[var(--color-text-secondary)] text-sm font-medium tracking-wide group-hover/stat:text-[var(--color-text-primary)] group-hover/stat:underline underline-offset-2 transition-colors">
                   Following

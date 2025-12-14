@@ -19,6 +19,11 @@ export default function RedeemCodeDialog({ isOpen, onClose, account }: RedeemCod
   const handleRedeem = async () => {
     if (!code.trim()) return
 
+    if (!account.cookie) {
+      setMessage({ type: 'error', text: 'You must be logged in to redeem a code.' })
+      return
+    }
+
     setIsLoading(true)
     setMessage(null)
 

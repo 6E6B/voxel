@@ -7,6 +7,8 @@ interface TooltipContextType {
   setIsOpen: (open: boolean) => void
   rect: DOMRect | null
   setRect: (rect: DOMRect | null) => void
+  anchorEl: HTMLElement | null
+  setAnchorEl: (el: HTMLElement | null) => void
 }
 
 const TooltipContext = React.createContext<TooltipContextType | null>(null)
@@ -18,9 +20,10 @@ const TooltipProvider = ({ children }: { children: React.ReactNode }) => {
 const Tooltip = ({ children }: { children: React.ReactNode }) => {
   const [isOpen, setIsOpen] = React.useState(false)
   const [rect, setRect] = React.useState<DOMRect | null>(null)
+  const [anchorEl, setAnchorEl] = React.useState<HTMLElement | null>(null)
 
   return (
-    <TooltipContext.Provider value={{ isOpen, setIsOpen, rect, setRect }}>
+    <TooltipContext.Provider value={{ isOpen, setIsOpen, rect, setRect, anchorEl, setAnchorEl }}>
       {children}
     </TooltipContext.Provider>
   )
@@ -33,16 +36,19 @@ const TooltipTrigger = React.forwardRef<HTMLElement, any>(
     // Handle case where TooltipTrigger is used without Tooltip
     if (!context) return children
 
-    const { setIsOpen, setRect } = context
+    const { setIsOpen, setRect, setAnchorEl } = context
 
     const handleMouseEnter = (e: React.MouseEvent) => {
-      setRect(e.currentTarget.getBoundingClientRect())
+      const el = e.currentTarget as HTMLElement
+      setAnchorEl(el)
+      setRect(el.getBoundingClientRect())
       setIsOpen(true)
     }
 
     const handleMouseLeave = () => {
       setIsOpen(false)
       setRect(null)
+      setAnchorEl(null)
     }
 
     if (asChild && React.isValidElement(children)) {
@@ -90,6 +96,8 @@ const TooltipContent = React.forwardRef<HTMLDivElement, any>(
     const context = React.useContext(TooltipContext)
     const rect = context?.rect ?? null
     const isOpen = context?.isOpen ?? false
+    const anchorEl = context?.anchorEl ?? null
+    const setRect = context?.setRect
     const tooltipRef = React.useRef<HTMLDivElement | null>(null)
     const mergedRef = React.useCallback(
       (node: HTMLDivElement | null) => {
@@ -115,6 +123,32 @@ const TooltipContent = React.forwardRef<HTMLDivElement, any>(
         setCachedRect(rect)
       }
     }, [rect])
+
+    React.useEffect(() => {
+      if (!isOpen || !anchorEl || !setRect) return
+
+      let rafId = 0
+      const update = () => {
+        cancelAnimationFrame(rafId)
+        rafId = requestAnimationFrame(() => {
+          setRect(anchorEl.getBoundingClientRect())
+        })
+      }
+
+      update()
+      window.addEventListener('scroll', update, true)
+      window.addEventListener('resize', update)
+
+      const resizeObserver = new ResizeObserver(update)
+      resizeObserver.observe(anchorEl)
+
+      return () => {
+        cancelAnimationFrame(rafId)
+        window.removeEventListener('scroll', update, true)
+        window.removeEventListener('resize', update)
+        resizeObserver.disconnect()
+      }
+    }, [anchorEl, isOpen, setRect])
 
     const shouldRender = Boolean(resolvedRect && (isOpen || isVisible))
 

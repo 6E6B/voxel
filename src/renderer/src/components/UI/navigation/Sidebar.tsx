@@ -187,7 +187,7 @@ const ProfileCard = ({
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 8, scale: 0.95 }}
                     transition={{ duration: 0.15, ease: 'easeOut' }}
-                    className="absolute bottom-full left-3 mb-2 w-56 bg-[var(--color-surface-strong)] border border-[var(--color-border)] rounded-xl shadow-2xl z-50 overflow-hidden"
+                    className="absolute bottom-full left-3 mb-2 w-56 bg-[var(--color-surface-strong)] border border-[var(--color-border)] rounded-[var(--menu-radius)] shadow-2xl z-50 overflow-hidden"
                   >
                     {/* Mini profile header */}
                     <div className="p-3 border-b border-[var(--color-border)]">
@@ -227,7 +227,7 @@ const ProfileCard = ({
                             <button
                               key={index}
                               onClick={item.onClick}
-                              className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm rounded-lg transition-colors ${
+                              className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm rounded-[calc(var(--menu-radius)-6px)] transition-colors ${
                                 item.danger
                                   ? 'text-red-400 hover:bg-red-500/10 hover:text-red-300'
                                   : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]'
@@ -264,7 +264,7 @@ const ProfileCard = ({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.95 }}
             transition={{ duration: 0.15, ease: 'easeOut' }}
-            className="absolute bottom-full left-3 right-3 mb-2 bg-[var(--color-surface-strong)] border border-[var(--color-border)] rounded-xl shadow-2xl z-50 overflow-hidden"
+            className="absolute bottom-full left-3 right-3 mb-2 bg-[var(--color-surface-strong)] border border-[var(--color-border)] rounded-[var(--menu-radius)] shadow-2xl z-50 overflow-hidden"
           >
             <div className="p-1.5">
               {dropdownGroups.map((group, groupIndex) => (
@@ -278,7 +278,7 @@ const ProfileCard = ({
                     <button
                       key={index}
                       onClick={item.onClick}
-                      className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-sm rounded-lg transition-colors ${
+                      className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-sm rounded-[calc(var(--menu-radius)-6px)] transition-colors ${
                         item.danger
                           ? 'text-red-400 hover:bg-red-500/10 hover:text-red-300'
                           : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]'

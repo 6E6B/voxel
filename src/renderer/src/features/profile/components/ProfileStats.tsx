@@ -89,7 +89,7 @@ export const ProfileStats: React.FC<ProfileStatsProps> = ({
             <SlidingNumber
               number={profile.groupMemberCount}
               formatter={formatNumber}
-              className="text-sm text-[var(--color-text-primary)] font-semibold"
+              className="text-xs text-[var(--color-text-primary)] font-semibold"
             />
           }
         />
@@ -98,7 +98,7 @@ export const ProfileStats: React.FC<ProfileStatsProps> = ({
             icon={Clock}
             label="Last Online"
             value={
-              <span className="text-sm text-[var(--color-text-primary)] font-semibold">
+              <span className="text-xs text-[var(--color-text-primary)] font-semibold">
                 {formatRelativeDate(lastOnlineDate)}
               </span>
             }
@@ -149,7 +149,7 @@ export const ProfileStats: React.FC<ProfileStatsProps> = ({
                 icon={Coins}
                 label="Value"
                 value={
-                  <span className="flex items-center gap-1.5 text-sm text-[var(--color-text-primary)] font-semibold">
+                  <span className="flex items-center gap-1.5 text-xs text-[var(--color-text-primary)] font-semibold">
                     {formatNumber(rolimonsPlayer.value)}
                     <RobuxIcon className="w-3.5 h-3.5" />
                   </span>
@@ -162,7 +162,7 @@ export const ProfileStats: React.FC<ProfileStatsProps> = ({
                 icon={TrendingUp}
                 label="RAP"
                 value={
-                  <span className="flex items-center gap-1.5 text-sm text-[var(--color-text-primary)] font-semibold">
+                  <span className="flex items-center gap-1.5 text-xs text-[var(--color-text-primary)] font-semibold">
                     {formatNumber(rolimonsPlayer.rap)}
                     <RobuxIcon className="w-3.5 h-3.5" />
                   </span>
@@ -192,7 +192,7 @@ export const ProfileStats: React.FC<ProfileStatsProps> = ({
                   <SlidingNumber
                     number={profile.placeVisits}
                     formatter={formatNumber}
-                    className="text-sm text-[var(--color-text-primary)] font-semibold"
+                    className="text-xs text-[var(--color-text-primary)] font-semibold"
                   />
                 }
               />
@@ -205,7 +205,7 @@ export const ProfileStats: React.FC<ProfileStatsProps> = ({
                   <SlidingNumber
                     number={profile.totalFavorites}
                     formatter={formatNumber}
-                    className="text-sm text-[var(--color-text-primary)] font-semibold"
+                    className="text-xs text-[var(--color-text-primary)] font-semibold"
                   />
                 }
               />
@@ -218,7 +218,7 @@ export const ProfileStats: React.FC<ProfileStatsProps> = ({
                   <SlidingNumber
                     number={profile.concurrentPlayers}
                     formatter={formatNumber}
-                    className="text-sm text-[var(--color-text-primary)] font-semibold"
+                    className="text-xs text-[var(--color-text-primary)] font-semibold"
                   />
                 }
               />

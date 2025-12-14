@@ -145,7 +145,6 @@ const AddAccountModal: React.FC<AddAccountModalProps> = ({ isOpen, onClose, onAd
     pollingRef.current = setTimeout(poll, 3000)
   }
 
-
   const handleQuickLoginComplete = async (code: string, privateKey: string) => {
     setIsLoading(true)
     try {

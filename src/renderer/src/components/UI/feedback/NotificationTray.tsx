@@ -289,7 +289,7 @@ const NotificationTray: React.FC<NotificationTrayProps> = ({ onOpenUserProfile }
           setIsOpen(!isOpen)
         }}
         className={`
-          relative p-2 rounded-md transition-all
+          relative p-2 rounded-[var(--control-radius)] transition-all
           ${
             isOpen
               ? 'bg-[var(--color-surface-hover)] text-[var(--color-text-primary)]'
@@ -323,7 +323,7 @@ const NotificationTray: React.FC<NotificationTrayProps> = ({ onOpenUserProfile }
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.95 }}
             transition={{ duration: 0.15 }}
-            className="absolute right-0 top-full mt-2 w-96 max-h-[500px] bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl shadow-2xl overflow-hidden z-[100]"
+            className="absolute right-0 top-full mt-2 w-96 max-h-[500px] bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[var(--menu-radius)] shadow-2xl overflow-hidden z-[100]"
           >
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--color-border)] bg-[var(--color-surface-strong)]/90 backdrop-blur-sm sticky top-0 z-10">

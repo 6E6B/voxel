@@ -3,12 +3,12 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '../../../lib/utils'
 
 const buttonVariants = cva(
-  'pressable inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-app-bg)] disabled:pointer-events-none disabled:opacity-50 cursor-pointer',
+  'pressable inline-flex items-center justify-center whitespace-nowrap rounded-[var(--control-radius)] text-sm font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-app-bg)] disabled:pointer-events-none disabled:opacity-50 cursor-pointer',
   {
     variants: {
       variant: {
         default:
-          'bg-[rgba(var(--accent-color-rgb),0.85)] text-[var(--accent-color-foreground)] hover:bg-[rgba(var(--accent-color-rgb),0.95)] shadow-sm shadow-[0_5px_15px_var(--accent-color-shadow)] border border-[var(--accent-color-border)]',
+          'bg-[var(--accent-color)] text-[var(--accent-color-foreground)] hover:bg-[color:color-mix(in_srgb,var(--accent-color)_92%,var(--color-text-primary))] active:bg-[color:color-mix(in_srgb,var(--accent-color)_84%,var(--color-text-primary))] shadow-sm shadow-[0_5px_15px_var(--accent-color-shadow)] border border-[color:color-mix(in_srgb,var(--accent-color)_65%,var(--color-text-primary))]',
         destructive:
           'bg-red-500 text-white hover:bg-red-600 border border-red-500/60 focus-visible:ring-red-400/50',
         outline:
@@ -23,12 +23,12 @@ const buttonVariants = cva(
         filterItem:
           'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-hover)] justify-start !font-medium',
         filterItemActive:
-          'bg-[rgba(var(--accent-color-rgb),0.85)] text-[var(--accent-color-foreground)] justify-start !font-bold'
+          'bg-[var(--accent-color)] text-[var(--accent-color-foreground)] justify-start !font-bold'
       },
       size: {
         default: 'h-10 px-4 py-2.5',
-        sm: 'h-9 rounded-md px-3',
-        lg: 'h-11 rounded-md px-8',
+        sm: 'h-9 px-3',
+        lg: 'h-11 px-8',
         icon: 'h-10 w-10 p-2.5',
         iconSm: 'h-8 w-8 p-1.5'
       }
@@ -41,8 +41,7 @@ const buttonVariants = cva(
 )
 
 export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonVariants> {
   asChild?: boolean
 }
 

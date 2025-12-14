@@ -26,7 +26,7 @@ const BadgeGrid: React.FC<{ badges: Badge[]; isLoading: boolean }> = ({ badges, 
         : badges.map((badge) => (
             <Tooltip key={badge.id}>
               <TooltipTrigger asChild>
-                <div className="group relative aspect-square bg-[var(--color-surface-strong)] border border-[var(--color-border)] rounded-[var(--radius-lg)] overflow-hidden cursor-pointer transition-all hover:border-[var(--color-border-strong)] hover:shadow-lg isolate">
+                <div className="group relative aspect-square bg-[var(--color-surface-hover)] border border-[var(--color-border)] rounded-[var(--radius-lg)] overflow-hidden cursor-pointer transition-all hover:border-[var(--color-border-strong)] hover:shadow-lg isolate">
                   <div className="w-full h-full p-4 flex items-center justify-center bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-[var(--color-surface-hover)] to-transparent">
                     <img
                       src={badge.imageUrl}
@@ -39,7 +39,7 @@ const BadgeGrid: React.FC<{ badges: Badge[]; isLoading: boolean }> = ({ badges, 
                       className="absolute inset-0 pointer-events-none"
                       style={{
                         background:
-                          'linear-gradient(180deg, rgba(8,8,8,0) 0%, rgba(8,8,8,0.15) 35%, rgba(8,8,8,0.85) 100%)'
+                          'linear-gradient(180deg, rgba(8,8,8,0) 0%, rgba(8,8,8,0.12) 35%, rgba(8,8,8,0.65) 100%)'
                       }}
                     />
                     <div className="relative p-3 text-[11px] font-semibold text-[var(--color-text-primary)] line-clamp-2 leading-tight">

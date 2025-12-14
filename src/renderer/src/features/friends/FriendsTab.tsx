@@ -18,7 +18,7 @@ import {
 } from 'lucide-react'
 import CustomDropdown from '@renderer/components/UI/menus/CustomDropdown'
 import { Friend, AccountStatus, Account } from '@renderer/types'
-import { mapPresenceToStatus } from '@renderer/utils/statusUtils'
+import { getStatusRingColor, mapPresenceToStatus } from '@renderer/utils/statusUtils'
 import UniversalProfileModal from '@renderer/components/Modals/UniversalProfileModal'
 import AddFriendModal from './Modals/AddFriendModal'
 import FriendRequestsModal from './Modals/FriendRequestsModal'
@@ -204,13 +204,16 @@ const FriendsTab = ({ selectedAccount, onFriendJoin, onFriendsCountChange }: Fri
 
   type SectionKey = 'Favorites' | AccountStatus | 'InGameNoJoin'
 
-  const getSectionKey = useCallback((friend: Friend): SectionKey => {
-    if (favorites.includes(friend.userId)) return 'Favorites'
-    if (friend.status === AccountStatus.InGame && !friend.gameActivity?.placeId) {
-      return 'InGameNoJoin'
-    }
-    return friend.status
-  }, [favorites])
+  const getSectionKey = useCallback(
+    (friend: Friend): SectionKey => {
+      if (favorites.includes(friend.userId)) return 'Favorites'
+      if (friend.status === AccountStatus.InGame && !friend.gameActivity?.placeId) {
+        return 'InGameNoJoin'
+      }
+      return friend.status
+    },
+    [favorites]
+  )
 
   const groupedFriends = useMemo(() => {
     const groups: Partial<Record<SectionKey, Friend[]>> = {}
@@ -280,23 +283,6 @@ const FriendsTab = ({ selectedAccount, onFriendJoin, onFriendsCountChange }: Fri
         return 'bg-red-500'
       default:
         return 'bg-neutral-600'
-    }
-  }
-
-  const getStatusBorderColor = (status: AccountStatus) => {
-    switch (status) {
-      case AccountStatus.Online:
-        return 'border-blue-500/50'
-      case AccountStatus.InGame:
-        return 'border-emerald-500/50'
-      case AccountStatus.InStudio:
-        return 'border-orange-500/50'
-      case AccountStatus.Offline:
-        return 'border-neutral-600/50'
-      case AccountStatus.Banned:
-        return 'border-red-500/50'
-      default:
-        return 'border-neutral-600/50'
     }
   }
 
@@ -510,8 +496,12 @@ const FriendsTab = ({ selectedAccount, onFriendJoin, onFriendsCountChange }: Fri
                                     </AvatarFallback>
                                   </Avatar>
                                   <div
-                                    className={`absolute bottom-0 right-0 w-4 h-4 rounded-full border-2 border-dotted ${getStatusBorderColor(friend.status)} ${getStatusColor(friend.status)}`}
-                                  />
+                                    className={`absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full flex items-center justify-center ${getStatusRingColor(friend.status)}`}
+                                  >
+                                    <div
+                                      className={`w-2.5 h-2.5 rounded-full ${getStatusColor(friend.status)}`}
+                                    />
+                                  </div>
 
                                   {isFavorite && (
                                     <div className="absolute -top-1 -right-1 bg-neutral-950 rounded-full p-0.5 border border-neutral-800 z-10">

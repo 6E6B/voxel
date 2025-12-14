@@ -14,6 +14,11 @@ import {
 import { avatarHeadshotSchema } from '@shared/ipc-schemas/avatar'
 
 export class RobloxUserService {
+  private static appendQueryParam(url: string, key: string, value: string): string {
+    const separator = url.includes('?') ? '&' : '?'
+    return `${url}${separator}${encodeURIComponent(key)}=${encodeURIComponent(value)}`
+  }
+
   static async getAuthenticatedUser(cookie: string) {
     return await request(userSummarySchema, {
       url: 'https://users.roblox.com/v1/users/authenticated',
@@ -22,17 +27,14 @@ export class RobloxUserService {
   }
 
   static async getAvatarUrl(userId: string | number): Promise<string> {
-    const avatarResponseSchema = z.object({
-      data: z.array(avatarHeadshotSchema)
-    })
-
-    const result = await request(avatarResponseSchema, {
-      url: `https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${userId}&size=420x420&format=Png&isCircular=false`
-    })
-
-    if (result.data && result.data.length > 0 && result.data[0].imageUrl) {
-      return result.data[0].imageUrl
+    const numeric = typeof userId === 'number' ? userId : Number(userId)
+    if (!Number.isFinite(numeric)) {
+      throw new Error(`Invalid userId: ${userId}`)
     }
+
+    const map = await RobloxUserService.getBatchUserAvatarHeadshots([numeric], '420x420')
+    const url = map.get(numeric)
+    if (url) return url
     throw new Error('No avatar URL found in response')
   }
 
@@ -107,7 +109,10 @@ export class RobloxUserService {
           if (response.data) {
             response.data.forEach((entry) => {
               if (entry.state === 'Completed' && entry.imageUrl) {
-                resultMap.set(entry.targetId, entry.imageUrl)
+                const cacheBusted = entry.version
+                  ? RobloxUserService.appendQueryParam(entry.imageUrl, 'v', entry.version)
+                  : entry.imageUrl
+                resultMap.set(entry.targetId, cacheBusted)
               } else {
                 resultMap.set(entry.targetId, null)
               }

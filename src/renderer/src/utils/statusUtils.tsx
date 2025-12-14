@@ -21,17 +21,34 @@ export const getStatusColor = (status: AccountStatus): string => {
 export const getStatusBorderColor = (status: AccountStatus): string => {
   switch (status) {
     case AccountStatus.Online:
-      return 'border-[color:color-mix(in_srgb,var(--accent-color)_50%,transparent)]'
+      return 'border-[color:color-mix(in_srgb,var(--accent-color)_75%,black)]'
     case AccountStatus.InGame:
-      return 'border-emerald-500/50'
+      return 'border-emerald-700'
     case AccountStatus.InStudio:
-      return 'border-orange-500/50'
+      return 'border-orange-700'
     case AccountStatus.Offline:
-      return 'border-neutral-500/50'
+      return 'border-neutral-700'
     case AccountStatus.Banned:
-      return 'border-red-500/50'
+      return 'border-red-700'
     default:
-      return 'border-neutral-500/50'
+      return 'border-neutral-700'
+  }
+}
+
+export const getStatusRingColor = (status: AccountStatus): string => {
+  switch (status) {
+    case AccountStatus.Online:
+      return 'bg-[color:color-mix(in_srgb,var(--accent-color)_75%,black)]'
+    case AccountStatus.InGame:
+      return 'bg-emerald-700'
+    case AccountStatus.InStudio:
+      return 'bg-orange-700'
+    case AccountStatus.Offline:
+      return 'bg-neutral-700'
+    case AccountStatus.Banned:
+      return 'bg-red-700'
+    default:
+      return 'bg-neutral-700'
   }
 }
 

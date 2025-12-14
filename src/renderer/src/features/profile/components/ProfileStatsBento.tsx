@@ -76,6 +76,8 @@ export const ProfileStatsBento: React.FC<ProfileStatsBentoProps> = ({
 
   if (!hasAny) return null
 
+  const primaryCardSpan = hasValueStats ? 'lg:col-span-4' : 'lg:col-span-6'
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -86,7 +88,7 @@ export const ProfileStatsBento: React.FC<ProfileStatsBentoProps> = ({
       <BentoCard
         title="Account"
         icon={<Users size={14} className="text-[var(--color-text-muted)]" />}
-        className="lg:col-span-4"
+        className={primaryCardSpan}
       >
         {(() => {
           const relative = formatRelativeDate(profile.joinDate, { fallback: '-' })
@@ -111,7 +113,7 @@ export const ProfileStatsBento: React.FC<ProfileStatsBentoProps> = ({
             <SlidingNumber
               number={profile.groupMemberCount}
               formatter={formatNumber}
-              className="text-sm text-[var(--color-text-primary)] font-semibold"
+              className="text-xs text-[var(--color-text-primary)] font-semibold"
             />
           }
         />
@@ -121,7 +123,7 @@ export const ProfileStatsBento: React.FC<ProfileStatsBentoProps> = ({
             icon={Clock}
             label="Last Online"
             value={
-              <span className="text-sm text-[var(--color-text-primary)] font-semibold">
+              <span className="text-xs text-[var(--color-text-primary)] font-semibold">
                 {formatRelativeDate(lastOnlineDate)}
               </span>
             }
@@ -134,7 +136,7 @@ export const ProfileStatsBento: React.FC<ProfileStatsBentoProps> = ({
             icon={History}
             label="Past Usernames"
             value={
-              <span className="text-sm text-[var(--color-text-primary)] font-semibold">
+              <span className="text-xs text-[var(--color-text-primary)] font-semibold">
                 {formatNumber(filteredPastUsernames.length)}
               </span>
             }
@@ -148,7 +150,7 @@ export const ProfileStatsBento: React.FC<ProfileStatsBentoProps> = ({
       <BentoCard
         title="Activity"
         icon={<Activity size={14} className="text-[var(--color-text-muted)]" />}
-        className="lg:col-span-4"
+        className={primaryCardSpan}
       >
         {profile.placeVisits !== undefined && (
           <StatRow
@@ -158,7 +160,7 @@ export const ProfileStatsBento: React.FC<ProfileStatsBentoProps> = ({
               <SlidingNumber
                 number={profile.placeVisits}
                 formatter={formatNumber}
-                className="text-sm text-[var(--color-text-primary)] font-semibold"
+                className="text-xs text-[var(--color-text-primary)] font-semibold"
               />
             }
           />
@@ -172,7 +174,7 @@ export const ProfileStatsBento: React.FC<ProfileStatsBentoProps> = ({
               <SlidingNumber
                 number={profile.totalFavorites}
                 formatter={formatNumber}
-                className="text-sm text-[var(--color-text-primary)] font-semibold"
+                className="text-xs text-[var(--color-text-primary)] font-semibold"
               />
             }
           />
@@ -186,7 +188,7 @@ export const ProfileStatsBento: React.FC<ProfileStatsBentoProps> = ({
               <SlidingNumber
                 number={profile.concurrentPlayers}
                 formatter={formatNumber}
-                className="text-sm text-[var(--color-text-primary)] font-semibold"
+                className="text-xs text-[var(--color-text-primary)] font-semibold"
               />
             }
           />
@@ -210,7 +212,7 @@ export const ProfileStatsBento: React.FC<ProfileStatsBentoProps> = ({
               icon={Coins}
               label="Value"
               value={
-                <span className="flex items-center gap-1.5 text-sm text-[var(--color-text-primary)] font-semibold">
+                <span className="flex items-center gap-1.5 text-xs text-[var(--color-text-primary)] font-semibold">
                   {formatNumber(rolimonsPlayer.value)}
                   <RobuxIcon className="w-3.5 h-3.5" />
                 </span>
@@ -223,7 +225,7 @@ export const ProfileStatsBento: React.FC<ProfileStatsBentoProps> = ({
               icon={TrendingUp}
               label="RAP"
               value={
-                <span className="flex items-center gap-1.5 text-sm text-[var(--color-text-primary)] font-semibold">
+                <span className="flex items-center gap-1.5 text-xs text-[var(--color-text-primary)] font-semibold">
                   {formatNumber(rolimonsPlayer.rap)}
                   <RobuxIcon className="w-3.5 h-3.5" />
                 </span>

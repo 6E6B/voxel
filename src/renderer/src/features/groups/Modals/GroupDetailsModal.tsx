@@ -10,8 +10,10 @@ import {
 } from '@renderer/components/UI/dialogs/Sheet'
 import { GroupDetailsPanel, type GroupDetailsPanelProps } from '../components/GroupDetailsPanel'
 
-interface GroupDetailsModalProps
-  extends Omit<GroupDetailsPanelProps, 'emptyStateMessage' | 'showActions' | 'tabLayoutId'> {
+interface GroupDetailsModalProps extends Omit<
+  GroupDetailsPanelProps,
+  'emptyStateMessage' | 'showActions' | 'tabLayoutId'
+> {
   isOpen: boolean
   onClose: () => void
 }

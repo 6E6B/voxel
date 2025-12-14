@@ -142,7 +142,7 @@ const CatalogSearchBar = forwardRef<CatalogSearchBarRef, CatalogSearchBarProps>(
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -10, scale: 0.95 }}
               transition={{ duration: 0.2 }}
-              className="absolute top-full left-0 right-0 mt-2 bg-neutral-900 border border-neutral-800 rounded-xl shadow-2xl z-[80] overflow-hidden max-h-60 overflow-y-auto ring-1 ring-[var(--accent-color-ring)]"
+              className="absolute top-full left-0 right-0 mt-2 bg-neutral-900 border border-neutral-800 rounded-[var(--menu-radius)] shadow-2xl z-[80] overflow-hidden max-h-60 overflow-y-auto ring-1 ring-[var(--accent-color-ring)]"
             >
               {suggestions.map((suggestion, index) => (
                 <button

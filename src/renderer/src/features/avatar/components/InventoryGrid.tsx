@@ -151,12 +151,12 @@ export const InventoryGrid: React.FC<InventoryGridProps> = ({
                     transition={{ duration: 0.4, delay: index * 0.03 }}
                     onClick={() => onItemClick(item.id)}
                     onContextMenu={(e) => onItemContextMenu(e, item)}
-                    className={`group relative aspect-square bg-neutral-900 border rounded-xl cursor-pointer transition-all overflow-hidden hover:shadow-lg isolate ${
+                    className={`group relative aspect-square bg-[var(--color-surface-hover)] border rounded-xl cursor-pointer transition-all overflow-hidden hover:shadow-lg isolate ${
                       isItemLoading
                         ? 'border-blue-500 ring-1 ring-blue-500/50'
                         : isEquipped
                           ? 'border-emerald-500 ring-1 ring-emerald-500/50'
-                          : 'border-neutral-800 hover:border-neutral-600'
+                          : 'border-[var(--color-border)] hover:border-[var(--color-border-strong)]'
                     }`}
                   >
                     {/* Loading Overlay */}
@@ -217,13 +217,13 @@ export const InventoryGrid: React.FC<InventoryGridProps> = ({
                         className="absolute inset-0 pointer-events-none"
                         style={{
                           background:
-                            'linear-gradient(180deg, rgba(8,8,8,0) 0%, rgba(8,8,8,0.15) 35%, rgba(8,8,8,0.85) 100%)'
+                            'linear-gradient(180deg, rgba(8,8,8,0) 0%, rgba(8,8,8,0.12) 35%, rgba(8,8,8,0.65) 100%)'
                         }}
                       />
                       <div className="relative p-3">
                         <TruncatedText
                           text={item.name}
-                          className="text-sm font-bold text-white line-clamp-2 whitespace-normal leading-tight"
+                          className="text-sm font-bold text-white drop-shadow-md line-clamp-2 whitespace-normal leading-tight"
                         />
                       </div>
                     </div>

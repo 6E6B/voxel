@@ -243,7 +243,7 @@ const NotificationTray: React.FC = () => {
           setIsOpen(!isOpen)
         }}
         className={`
-          relative p-2 rounded-md transition-all
+          relative p-2 rounded-[var(--control-radius)] transition-all
           ${isOpen ? 'bg-neutral-700/50 text-neutral-200' : 'hover:bg-neutral-800/50 text-neutral-400 hover:text-neutral-200'}
         `}
         title="Notifications"
@@ -273,7 +273,7 @@ const NotificationTray: React.FC = () => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.95 }}
             transition={{ duration: 0.15 }}
-            className="absolute right-0 top-full mt-2 w-96 max-h-[500px] bg-neutral-900 border border-neutral-800 rounded-xl shadow-2xl overflow-hidden z-[100]"
+            className="absolute right-0 top-full mt-2 w-96 max-h-[500px] bg-neutral-900 border border-neutral-800 rounded-[var(--menu-radius)] shadow-2xl overflow-hidden z-[100]"
           >
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-800 bg-neutral-900/80 backdrop-blur-sm sticky top-0 z-10">
