@@ -148,8 +148,6 @@ export const registerRobloxHandlers = (): void => {
     return resultObj
   })
 
-
-
   handle('get-user-presence', z.tuple([z.string(), z.number()]), async (_, cookieRaw, userId) => {
     const cookie = RobloxAuthService.extractCookie(cookieRaw)
     return RobloxUserService.getPresence(cookie, userId)

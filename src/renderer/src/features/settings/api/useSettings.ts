@@ -68,7 +68,6 @@ export function useSettings() {
   })
 }
 
-
 // Update settings mutation (optimistic)
 export function useUpdateSettings() {
   const queryClient = useQueryClient()

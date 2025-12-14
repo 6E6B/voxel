@@ -127,10 +127,11 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5, delay: 0 }}
-      className={`relative w-full rounded-xl overflow-hidden flex flex-col text-[var(--color-text-secondary)] ${variant === 'default'
+      className={`relative w-full rounded-xl overflow-hidden flex flex-col text-[var(--color-text-secondary)] ${
+        variant === 'default'
           ? 'bg-[var(--color-surface-strong)] border border-[var(--color-border)]'
           : ''
-        }`}
+      }`}
       style={{ minHeight: `${minHeightPx}px` }}
     >
       {/* Background Gradients */}
@@ -239,8 +240,11 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
         <div className="shrink-0 relative pointer-events-auto">
           <div className="relative flex items-center justify-center">
             <Avatar
-              className={`w-32 h-32 md:w-40 md:h-40 shadow-2xl bg-[var(--color-surface-strong)] ${profile.status !== AccountStatus.Offline ? `ring-4 ${getStatusRingUtilityClass(profile.status)}` : ''
-                } ${blurIdentity ? 'privacy-blur' : ''}`}
+              className={`w-32 h-32 md:w-40 md:h-40 shadow-2xl bg-[var(--color-surface-strong)] ${
+                profile.status !== AccountStatus.Offline
+                  ? `ring-4 ${getStatusRingUtilityClass(profile.status)}`
+                  : ''
+              } ${blurIdentity ? 'privacy-blur' : ''}`}
             >
               <AvatarImage src={profile.avatarUrl} alt={blurIdentity ? '' : profile.displayName} />
               <AvatarFallback className="text-xl font-bold text-[var(--color-text-primary)] bg-[var(--color-surface-hover)]">
@@ -283,8 +287,9 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
             </div>
 
             <p
-              className={`text-base md:text-lg text-[var(--color-text-secondary)] drop-shadow-md leading-none break-words ${blurIdentity ? 'privacy-blur' : ''
-                }`}
+              className={`text-base md:text-lg text-[var(--color-text-secondary)] drop-shadow-md leading-none break-words ${
+                blurIdentity ? 'privacy-blur' : ''
+              }`}
             >
               @{profile.username}
             </p>

@@ -26,10 +26,10 @@ export function useFriends(account: Account | null, options?: { forceRefresh?: b
         description: f.description,
         gameActivity: f.placeId
           ? {
-            name: f.lastLocation || 'Unknown Game',
-            placeId: f.placeId.toString(),
-            jobId: f.gameId
-          }
+              name: f.lastLocation || 'Unknown Game',
+              placeId: f.placeId.toString(),
+              jobId: f.gameId
+            }
           : undefined
       }))
     },

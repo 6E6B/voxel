@@ -242,8 +242,6 @@ const FriendsTab = ({ selectedAccount, onFriendJoin, onFriendsCountChange }: Fri
     { key: AccountStatus.Banned, label: 'Banned', icon: User, color: 'text-red-500' }
   ]
 
-
-
   return (
     <TooltipProvider>
       <div className="flex flex-col h-full bg-neutral-950">
