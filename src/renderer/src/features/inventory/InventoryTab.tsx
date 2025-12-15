@@ -89,8 +89,9 @@ const InventoryItemCard = ({
                 src={thumbnailUrl}
                 alt={displayName}
                 onLoad={() => setImageLoaded(true)}
-                className={`w-full h-full object-contain transition-all duration-500 group-hover:scale-110 ${imageLoaded ? 'opacity-100' : 'opacity-0'
-                  }`}
+                className={`w-full h-full object-contain transition-all duration-500 group-hover:scale-110 ${
+                  imageLoaded ? 'opacity-100' : 'opacity-0'
+                }`}
                 loading="lazy"
               />
             </>
@@ -526,9 +527,9 @@ const InventoryTab = ({ account }: InventoryTabProps) => {
           initialData={
             selectedAccessory
               ? {
-                name: selectedAccessory.name,
-                imageUrl: selectedAccessory.imageUrl || ''
-              }
+                  name: selectedAccessory.name,
+                  imageUrl: selectedAccessory.imageUrl || ''
+                }
               : undefined
           }
         />

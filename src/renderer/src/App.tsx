@@ -1,4 +1,4 @@
-import type {} from './window'
+import type { } from './window'
 import React, { useState, useMemo, useRef, useEffect, useCallback, lazy, Suspense } from 'react'
 import notificationIcon from '../../../resources/build/icons/png/256x256.png'
 import { AnimatePresence } from 'framer-motion'
@@ -97,7 +97,6 @@ interface JoinConfig {
 const isMac = window.platform?.isMac ?? false
 
 const App: React.FC = () => {
-  const perfLoggedRef = useRef(false)
   const catalogInitTriggeredRef = useRef(false)
   const lastAvatarRefreshAtRef = useRef(0)
   const avatarRefreshInFlightRef = useRef(false)
@@ -254,7 +253,7 @@ const App: React.FC = () => {
 
   const filterRef = useRef<HTMLDivElement>(null)
 
-  useClickOutside(filterRef, () => {})
+  useClickOutside(filterRef, () => { })
 
   useEffect(() => {
     if (!activeMenu) return
@@ -972,9 +971,9 @@ const App: React.FC = () => {
           initialData={
             commandPaletteAccessory
               ? {
-                  name: commandPaletteAccessory.name,
-                  imageUrl: commandPaletteAccessory.imageUrl || ''
-                }
+                name: commandPaletteAccessory.name,
+                imageUrl: commandPaletteAccessory.imageUrl || ''
+              }
               : undefined
           }
         />

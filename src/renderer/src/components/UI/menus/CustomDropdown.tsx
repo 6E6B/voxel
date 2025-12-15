@@ -42,13 +42,10 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
   // Handle click outside to close dropdown
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      // Check if click is outside BOTH the dropdown trigger and the menu
-      // We must check if refs exist since menuRef is only present when open
       const target = event.target as Node
       const isOutsideDropdown = dropdownRef.current && !dropdownRef.current.contains(target)
       const isOutsideMenu = menuRef.current && !menuRef.current.contains(target)
 
-      // Only close if click is outside both (ignore clicks inside the menu)
       if (isOutsideDropdown && (isOutsideMenu || !menuRef.current)) {
         setIsOpen(false)
       }
@@ -95,8 +92,9 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
 
   const selectedOption = options.find((opt) => opt.value === value)
 
-  const defaultButtonClasses = `px-3 py-2.5 bg-[var(--color-surface-muted)] border border-[var(--color-border)] rounded-[var(--control-radius)] text-sm transition-all hover:border-[var(--color-border-strong)] focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring)] ${isOpen ? 'border-[var(--color-border-strong)] ring-1 ring-[var(--focus-ring)]' : ''
-    }`
+  const defaultButtonClasses = `px-3 py-2.5 bg-[var(--color-surface-muted)] border border-[var(--color-border)] rounded-[var(--control-radius)] text-sm transition-all hover:border-[var(--color-border-strong)] focus:outline-none focus:ring-1 focus:ring-[var(--focus-ring)] ${
+    isOpen ? 'border-[var(--color-border-strong)] ring-1 ring-[var(--focus-ring)]' : ''
+  }`
 
   const menuElement = (
     <AnimatePresence>
@@ -126,10 +124,11 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
                   onChange(option.value)
                   setIsOpen(false)
                 }}
-                className={`pressable w-full text-left px-3 py-2.5 text-sm flex items-center justify-between rounded-[calc(var(--menu-radius)-6px)] transition-colors ${value === option.value
+                className={`pressable w-full text-left px-3 py-2.5 text-sm flex items-center justify-between rounded-[calc(var(--menu-radius)-6px)] transition-colors ${
+                  value === option.value
                     ? 'bg-[var(--color-surface-hover)] text-[var(--color-text-primary)]'
                     : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]'
-                  }`}
+                }`}
               >
                 <div className="flex items-center gap-2.5 min-w-0 flex-1">
                   {option.icon && <span className="shrink-0">{option.icon}</span>}

@@ -20,7 +20,6 @@ import CustomDropdown from '@renderer/components/UI/menus/CustomDropdown'
 import { Friend, AccountStatus, Account } from '@renderer/types'
 import {
   getStatusRingColor,
-  mapPresenceToStatus,
   getStatusColor
 } from '@renderer/utils/statusUtils'
 import UniversalProfileModal from '@renderer/components/Modals/UniversalProfileModal'

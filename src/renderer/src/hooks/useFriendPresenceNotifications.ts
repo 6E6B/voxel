@@ -243,6 +243,8 @@ export function useFriendPresenceNotifications(
       }, 500)
       return () => clearTimeout(timeoutId)
     }
+
+    return undefined
   }, [
     friends,
     enabled,
