@@ -117,4 +117,4 @@ Voxel is not affiliated with, endorsed by, or sponsored by Roblox Corporation. U
 
 ## License
 
-[MIT](LICENSE)
+[GPL-3.0](LICENSE)
