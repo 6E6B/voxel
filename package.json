@@ -5,20 +5,6 @@
   "main": "./out/main/index.js",
   "author": "nick (6E6B)",
   "homepage": "https://github.com/6E6B/voxel",
-  "build": {
-    "directories": {
-      "buildResources": "resources/build"
-    },
-    "mac": {
-      "icon": "resources/build/icons/mac/icon.icns"
-    },
-    "win": {
-      "icon": "resources/build/icons/win/icon.ico"
-    },
-    "linux": {
-      "icon": "resources/build/icons/png"
-    }
-  },
   "scripts": {
     "preview": "electron-vite preview",
     "format": "prettier --write .",
@@ -31,7 +17,7 @@
     "build": "npm run typecheck && electron-vite build",
     "postinstall": "electron-builder install-app-deps",
     "build:unpack": "npm run build && electron-builder --dir",
-    "build:win": "npm run build && electron-builder --win",
+    "build:win": "npm run build && electron-builder --config electron-builder.yml --win",
     "build:mac": "electron-vite build && electron-builder --mac",
     "build:linux": "electron-vite build && electron-builder --linux"
   },
