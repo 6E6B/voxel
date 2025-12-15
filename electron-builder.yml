@@ -22,7 +22,7 @@ win:
   fileAssociations: []
   icon: resources/build/icons/win/icon.ico
 nsis:
-  artifactName: ${name}-${version}-setup.${ext}
+  artifactName: ${name}-setup-${version}.${ext}
   shortcutName: ${productName}
   uninstallDisplayName: ${productName}
   createDesktopShortcut: always
