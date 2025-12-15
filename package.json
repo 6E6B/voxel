@@ -1,6 +1,6 @@
 {
   "name": "voxel",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "The open-source Roblox launcher.",
   "main": "./out/main/index.js",
   "author": "nick (6E6B)",
