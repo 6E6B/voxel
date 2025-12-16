@@ -68,6 +68,7 @@ import {
   isValidGoogleFontFamily
 } from '../../utils/fontUtils'
 import { UpdaterCard } from '../updater'
+import PrivacyPolicyModal from '../../components/Modals/PrivacyPolicyModal'
 import {
   DEFAULT_SIDEBAR_TAB_ORDER,
   LOCKED_SIDEBAR_TABS,
@@ -157,6 +158,7 @@ const SettingsTab: React.FC<SettingsTabProps> = ({ accounts, settings, onUpdateS
   const [newFontFamily, setNewFontFamily] = useState('')
   const [fontError, setFontError] = useState<string | null>(null)
   const [isAddingFont, setIsAddingFont] = useState(false)
+  const [isPrivacyModalOpen, setIsPrivacyModalOpen] = useState(false)
   const queryClient = useQueryClient()
   const setAppUnlocked = useSetAppUnlocked()
 
@@ -722,7 +724,7 @@ const SettingsTab: React.FC<SettingsTabProps> = ({ accounts, settings, onUpdateS
                         : 'Launch more than one Roblox client at the same time.'
                     }
                     checked={false}
-                    onChange={() => {}}
+                    onChange={() => { }}
                     disabled
                     hint={
                       !isMac && (
@@ -1048,11 +1050,10 @@ const SettingsTab: React.FC<SettingsTabProps> = ({ accounts, settings, onUpdateS
                   <div className="flex items-center gap-3 flex-wrap">
                     <button
                       onClick={() => setIsPinDialogOpen(true)}
-                      className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                        settings.pinCode
-                          ? 'text-green-400 bg-green-500/10 hover:bg-green-500/20 border border-green-500/20'
-                          : 'text-neutral-300 bg-neutral-800 hover:bg-neutral-700 border border-neutral-700'
-                      }`}
+                      className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${settings.pinCode
+                        ? 'text-green-400 bg-green-500/10 hover:bg-green-500/20 border border-green-500/20'
+                        : 'text-neutral-300 bg-neutral-800 hover:bg-neutral-700 border border-neutral-700'
+                        }`}
                     >
                       {settings.pinCode ? 'PIN Enabled - Click to Manage' : 'Set Up PIN'}
                     </button>
@@ -1109,10 +1110,30 @@ const SettingsTab: React.FC<SettingsTabProps> = ({ accounts, settings, onUpdateS
                   </div>
                 </SettingsCard>
               </Section>
+
+              <Section title="Legal" description="Terms and policies.">
+                <SettingsCard
+                  title="Privacy Policy"
+                  description="Read about how we handle your data."
+                  icon={<Shield size={16} />}
+                >
+                  <button
+                    onClick={() => setIsPrivacyModalOpen(true)}
+                    className="text-xs text-[var(--accent-color)] hover:underline flex items-center gap-1"
+                  >
+                    View Privacy Policy
+                  </button>
+                </SettingsCard>
+              </Section>
             </div>
           )}
         </div>
       </div>
+
+      <PrivacyPolicyModal
+        isOpen={isPrivacyModalOpen}
+        onClose={() => setIsPrivacyModalOpen(false)}
+      />
 
       <Dialog isOpen={isColorPickerOpen} onClose={() => setIsColorPickerOpen(false)}>
         <DialogContent className="max-w-md overflow-visible">

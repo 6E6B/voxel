@@ -186,7 +186,6 @@ class StorageService {
     }
 
     const encryptionSalt = pinHash ? pinService.getEncryptionSalt(pinHash) : null
-    const verifiedPin = pinService.getVerifiedPin()
 
     return accounts.map((account) => {
       if (account.cookie) {
@@ -194,12 +193,9 @@ class StorageService {
           const encryptedBuffer = Buffer.from(account.cookie, 'base64')
           let decryptedCookie = safeStorage.decryptString(encryptedBuffer)
 
-          if (pinHash && encryptionSalt && verifiedPin) {
-            const pinDecrypted = pinService.decryptWithPin(
-              decryptedCookie,
-              verifiedPin,
-              encryptionSalt
-            )
+
+          if (pinHash && pinService.hasEncryptionKey()) {
+            const pinDecrypted = pinService.decryptWithVerifiedKey(decryptedCookie)
             if (pinDecrypted) {
               decryptedCookie = pinDecrypted
             } else {
@@ -227,19 +223,15 @@ class StorageService {
 
     const pinHash = this.getPinHash()
     const encryptionSalt = pinHash ? pinService.getEncryptionSalt(pinHash) : null
-    const verifiedPin = pinService.getVerifiedPin()
 
     const encryptedAccounts = accounts.map((account) => {
       if (account.cookie) {
         try {
           let cookieToEncrypt = account.cookie
 
-          if (pinHash && encryptionSalt && verifiedPin) {
-            const pinEncrypted = pinService.encryptWithPin(
-              account.cookie,
-              verifiedPin,
-              encryptionSalt
-            )
+
+          if (pinHash && pinService.hasEncryptionKey()) {
+            const pinEncrypted = pinService.encryptWithVerifiedKey(account.cookie)
             if (pinEncrypted) {
               cookieToEncrypt = pinEncrypted
             } else {
@@ -410,8 +402,10 @@ class StorageService {
 
     this.data.settings.pinCodeHash = hash
 
-    pinService.markVerified()
-    pinService.resetAttempts()
+    this.data.settings.pinCodeHash = hash
+
+    // Verify the new PIN to set the internal encryption key state
+    pinService.verifyPin(pin, hash)
 
     const newEncryptionSalt = pinService.getEncryptionSalt(hash)
     if (newEncryptionSalt && decryptedAccounts.length > 0) {
