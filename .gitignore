@@ -1,0 +1,53 @@
+# Dependencies
+node_modules
+
+# Build outputs
+dist
+out
+
+# Vite
+.vite
+.vite/
+
+# OS files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Editor & IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Logs
+*.log*
+logs/
+
+# Cache
+.eslintcache
+*.tsbuildinfo
+.cache
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Electron-builder output
+release/
+*.exe
+*.dmg
+*.AppImage
+*.snap
+*.deb
+*.rpm
+!resources/build/**
+
+# Test coverage
+coverage/
+
+# Misc
+*.local
+.turbo
+.cursor/worktrees.json

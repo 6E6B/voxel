@@ -1,0 +1,64 @@
+appId: com.voxel.app
+productName: voxel
+directories:
+  buildResources: resources/build
+files:
+  - '!**/.vscode/*'
+  - '!src/*'
+  - '!electron.vite.config.{js,ts,mjs,cjs}'
+  - '!{.eslintcache,eslint.config.mjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}'
+  - '!{.env,.env.*,.npmrc,pnpm-lock.yaml}'
+  - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
+extraResources:
+  - from: 'assets/lists/roblox_items.db'
+    to: 'assets/lists/roblox_items.db'
+  - from: 'resources/app-update.yml'
+    to: 'app-update.yml'
+  - from: 'resources/roavatar-assets'
+    to: 'roavatar-assets'
+asarUnpack:
+  - resources/**
+win:
+  executableName: voxel
+  legalTrademarks: voxel
+  fileAssociations: []
+  icon: resources/build/icons/win/icon.ico
+nsis:
+  artifactName: ${name}-setup-${version}.${ext}
+  shortcutName: ${productName}
+  uninstallDisplayName: ${productName}
+  createDesktopShortcut: always
+  installerSidebar: null
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  runAfterFinish: true
+  deleteAppDataOnUninstall: false
+  installerIcon: resources/build/icons/win/icon.ico
+  uninstallerIcon: resources/build/icons/win/icon.ico
+mac:
+  executableName: voxel
+  category: public.app-category.utilities
+  icon: resources/build/icons/mac/icon.icns
+  extendInfo:
+    CFBundleName: voxel
+    CFBundleDisplayName: voxel
+    NSDownloadsFolderUsageDescription: Application requests access to the user's Downloads folder.
+  notarize: false
+dmg:
+  artifactName: ${name}-${version}.${ext}
+linux:
+  target:
+    - AppImage
+    - snap
+    - deb
+  maintainer: electronjs.org
+  category: Utility
+  icon: resources/build/icons/png
+appImage:
+  artifactName: ${name}-${version}.${ext}
+npmRebuild: false
+publish:
+  provider: github
+  owner: 6E6B
+  repo: voxel

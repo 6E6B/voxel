@@ -1,0 +1,503 @@
+import {
+  useState,
+  useMemo,
+  useCallback,
+  CSSProperties
+} from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { VirtuosoGrid } from 'react-virtuoso'
+import { Package, Loader2, Grid3X3, Grid2X2, ArrowUpDown } from 'lucide-react'
+import { TooltipProvider } from '@renderer/shared/ui/display/Tooltip'
+import { PageHeaderPortal } from '@renderer/shared/ui/navigation/PageHeaderPortal'
+import { FloatingAction, type FloatingDropdownOption } from '@renderer/shared/ui/navigation/FloatingAction'
+import {
+  createAnchoredOverlayPosition,
+  type AnchoredOverlayPosition
+} from '@renderer/shared/ui/menus/anchoredPosition'
+
+const SORT_OPTIONS: FloatingDropdownOption[] = [
+  { value: '0', label: 'Relevance' },
+  { value: '1', label: 'Most Favorited' },
+  { value: '2', label: 'Bestselling' },
+  { value: '3', label: 'Recently Published' },
+  { value: '4', label: 'Price (High to Low)' },
+  { value: '5', label: 'Price (Low to High)' }
+]
+import { SkeletonSquareCard } from '@renderer/shared/ui/display/SkeletonCard'
+import { EmptyState } from '@renderer/shared/ui/feedback/EmptyState'
+import { CatalogItemCard } from '@renderer/shared/ui/display/CatalogItemCard'
+import {
+  useCatalogNavigation,
+  useCatalogSearch,
+  useCatalogThumbnails as useFetchCatalogThumbnails
+} from '@renderer/features/catalog/useCatalog'
+import type {
+  CatalogSearchParams as CatalogItemsSearchParams,
+  CatalogItemsSearchResponse
+} from '@shared/contracts/avatar'
+import {
+  useCatalogAppliedSearchQuery,
+  useSetCatalogAppliedSearchQuery,
+  useCatalogSelectedCategory,
+  useSetCatalogSelectedCategory,
+  useCatalogSelectedSubcategory,
+  useSetCatalogSelectedSubcategory,
+  useCatalogSortType,
+  useSetCatalogSortType,
+  useCatalogSalesTypeFilter,
+  useSetCatalogSalesTypeFilter,
+  useCatalogUnavailableItems,
+  useSetCatalogUnavailableItems,
+  useCatalogMinPrice,
+  useSetCatalogMinPrice,
+  useCatalogMaxPrice,
+  useSetCatalogMaxPrice,
+  useCatalogCreatorName,
+  useSetCatalogCreatorName,
+  useCatalogAppliedMinPrice,
+  useSetCatalogAppliedMinPrice,
+  useCatalogAppliedMaxPrice,
+  useSetCatalogAppliedMaxPrice,
+  useCatalogAppliedCreatorName,
+  useSetCatalogAppliedCreatorName,
+  useCatalogThumbnails,
+  useClearCatalogFilters
+} from '@renderer/features/catalog/useCatalogStore'
+import { useCatalogViewMode, useSetCatalogViewMode } from '@renderer/shared/stores/useViewPreferencesStore'
+import CatalogItemContextMenu from './CatalogItemContextMenu'
+import { CatalogFilterSidebar } from './CatalogFilterSidebar'
+import { CatalogActiveFilters } from './CatalogActiveFilters'
+
+interface CatalogTabProps {
+  onItemSelect?: (item: { id: number; name: string; imageUrl?: string }) => void
+  onCreatorSelect?: (creatorId: number, creatorName?: string) => void
+  cookie?: string // Optional cookie for authenticated requests (higher rate limits)
+}
+
+const CatalogTab = ({ onItemSelect, onCreatorSelect, cookie }: CatalogTabProps) => {
+  // View Mode (persisted via Zustand)
+  const viewMode = useCatalogViewMode()
+  const setViewMode = useSetCatalogViewMode()
+
+  // Context menu state
+  const [contextMenu, setContextMenu] = useState<({
+    assetId: number
+    assetName: string
+    assetType?: number
+  } & AnchoredOverlayPosition) | null>(null)
+
+  // Search state from store
+  const appliedSearchQuery = useCatalogAppliedSearchQuery()
+  const setAppliedSearchQuery = useSetCatalogAppliedSearchQuery()
+  const [catalogSearchQuery, setCatalogSearchQuery] = useState(appliedSearchQuery)
+
+  // Filter state from store
+  const selectedCategory = useCatalogSelectedCategory()
+  const setSelectedCategory = useSetCatalogSelectedCategory()
+  const selectedSubcategory = useCatalogSelectedSubcategory()
+  const setSelectedSubcategory = useSetCatalogSelectedSubcategory()
+  const sortType = useCatalogSortType()
+  const setSortType = useSetCatalogSortType()
+  const salesTypeFilter = useCatalogSalesTypeFilter()
+  const setSalesTypeFilter = useSetCatalogSalesTypeFilter()
+  const unavailableItems = useCatalogUnavailableItems()
+  const setUnavailableItems = useSetCatalogUnavailableItems()
+  const minPrice = useCatalogMinPrice()
+  const setMinPrice = useSetCatalogMinPrice()
+  const maxPrice = useCatalogMaxPrice()
+  const setMaxPrice = useSetCatalogMaxPrice()
+  const creatorName = useCatalogCreatorName()
+  const setCreatorName = useSetCatalogCreatorName()
+
+  // Applied filters from store
+  const appliedMinPrice = useCatalogAppliedMinPrice()
+  const setAppliedMinPrice = useSetCatalogAppliedMinPrice()
+  const appliedMaxPrice = useCatalogAppliedMaxPrice()
+  const setAppliedMaxPrice = useSetCatalogAppliedMaxPrice()
+  const appliedCreatorName = useCatalogAppliedCreatorName()
+  const setAppliedCreatorName = useSetCatalogAppliedCreatorName()
+
+  // Thumbnails cache from store
+  const thumbnails = useCatalogThumbnails()
+
+  // Clear filters function
+  const clearCatalogFilters = useClearCatalogFilters()
+
+  // Fetch navigation menu
+  const { data: categories = [] } = useCatalogNavigation()
+
+  // Build search params
+  const searchParams: CatalogItemsSearchParams = useMemo(() => {
+    const params: CatalogItemsSearchParams = {
+      limit: 120,
+      sortType: parseInt(sortType),
+      includeNotForSale: unavailableItems === 'show'
+    }
+
+    // Only include salesTypeFilter if it's not '1' (All)
+    const salesTypeFilterNum = parseInt(salesTypeFilter)
+    if (salesTypeFilterNum !== 1) {
+      params.salesTypeFilter = salesTypeFilterNum
+    }
+
+    if (appliedSearchQuery) {
+      params.keyword = appliedSearchQuery
+    }
+
+    // Use subcategory taxonomy if selected, otherwise category taxonomy
+    if (selectedSubcategory) {
+      params.taxonomy = selectedSubcategory.taxonomy
+    } else if (selectedCategory) {
+      params.taxonomy = selectedCategory.taxonomy
+    }
+
+    if (appliedMinPrice !== undefined) {
+      params.minPrice = appliedMinPrice
+    }
+    if (appliedMaxPrice !== undefined) {
+      params.maxPrice = appliedMaxPrice
+    }
+    if (appliedCreatorName) {
+      params.creatorName = appliedCreatorName
+    }
+
+    // Include cookie for authenticated requests (higher rate limits)
+    if (cookie) {
+      params.cookie = cookie
+    }
+
+    return params
+  }, [
+    appliedSearchQuery,
+    selectedCategory,
+    selectedSubcategory,
+    sortType,
+    salesTypeFilter,
+    unavailableItems,
+    appliedMinPrice,
+    appliedMaxPrice,
+    appliedCreatorName,
+    cookie
+  ])
+
+  // Fetch catalog items
+  const { data, isLoading, isFetchingNextPage, hasNextPage, fetchNextPage } =
+    useCatalogSearch(searchParams)
+
+  // Flatten pages into single array
+  const items = useMemo(() => {
+    if (!data?.pages) return []
+    return (data.pages as CatalogItemsSearchResponse[]).flatMap((page) => page.data)
+  }, [data])
+
+  // Sync thumbnails using the query hook (replaces manual useEffect)
+  useFetchCatalogThumbnails(items)
+
+  // Apply price filter
+  const handleApplyPriceFilter = useCallback(() => {
+    setAppliedMinPrice(minPrice ? parseInt(minPrice) : undefined)
+    setAppliedMaxPrice(maxPrice ? parseInt(maxPrice) : undefined)
+  }, [minPrice, maxPrice, setAppliedMinPrice, setAppliedMaxPrice])
+
+  // Apply creator filter
+  const handleApplyCreatorFilter = useCallback(
+    (name: string) => {
+      setAppliedCreatorName(name)
+    },
+    [setAppliedCreatorName]
+  )
+
+  // Clear all filters
+  const handleClearFilters = useCallback(() => {
+    clearCatalogFilters()
+    setAppliedSearchQuery('')
+    setCatalogSearchQuery('')
+  }, [clearCatalogFilters, setAppliedSearchQuery])
+
+  // Check if any filters are active
+  const hasActiveFilters = useMemo(() => {
+    return (
+      selectedCategory !== null ||
+      sortType !== '0' ||
+      salesTypeFilter !== '1' ||
+      unavailableItems !== 'show' ||
+      appliedMinPrice !== undefined ||
+      appliedMaxPrice !== undefined ||
+      appliedCreatorName !== ''
+    )
+  }, [
+    selectedCategory,
+    sortType,
+    salesTypeFilter,
+    unavailableItems,
+    appliedMinPrice,
+    appliedMaxPrice,
+    appliedCreatorName
+  ])
+
+  // Handle item click
+  const handleItemClick = useCallback(
+    (item: (typeof items)[0]) => {
+      if (onItemSelect) {
+        onItemSelect({
+          id: item.id,
+          name: item.name,
+          imageUrl: thumbnails[item.id]
+        })
+      }
+    },
+    [onItemSelect, thumbnails]
+  )
+
+  // Handle context menu
+  const handleContextMenu = useCallback(
+    (e: React.MouseEvent, item: { id: number; name: string; assetType?: number }) => {
+      setContextMenu({
+        assetId: item.id,
+        assetName: item.name,
+        assetType: item.assetType,
+        ...createAnchoredOverlayPosition(e)
+      })
+    },
+    []
+  )
+
+  const handleCopyAssetId = useCallback(async (assetId: number) => {
+    try {
+      await navigator.clipboard.writeText(String(assetId))
+    } catch (err) {
+      console.error('Failed to copy asset ID:', err)
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea')
+      textArea.value = String(assetId)
+      document.body.appendChild(textArea)
+      textArea.select()
+      document.execCommand('copy')
+      document.body.removeChild(textArea)
+    }
+  }, [])
+
+  const handleDownloadTemplate = async (assetId: number, assetName: string) => {
+    try {
+      const result = await window.api.downloadCatalogTemplate(assetId, assetName, cookie)
+      if (!result.success) {
+        console.error('Failed to download template:', result.message)
+      }
+    } catch (err) {
+      console.error('Failed to download template:', err)
+    }
+  }
+
+  const gridStyle: CSSProperties = {
+    gridTemplateColumns:
+      viewMode === 'compact'
+        ? 'repeat(auto-fill, minmax(150px, 1fr))'
+        : 'repeat(auto-fill, minmax(200px, 1fr))'
+  }
+
+  const gridClassName =
+    viewMode === 'compact'
+      ? 'grid gap-3 px-5 pb-6 grid-cols-[repeat(auto-fill,minmax(150px,1fr))]'
+      : 'grid gap-3.5 px-5 pb-6 grid-cols-[repeat(auto-fill,minmax(200px,1fr))]'
+
+  return (
+    <TooltipProvider>
+      <div className="flex h-full bg-[var(--color-surface)]">
+        {/* Left Sidebar Filter */}
+        <CatalogFilterSidebar
+          categories={categories}
+          selectedCategory={selectedCategory}
+          selectedSubcategory={selectedSubcategory}
+          onCategoryChange={setSelectedCategory}
+          onSubcategoryChange={setSelectedSubcategory}
+          minPrice={minPrice}
+          maxPrice={maxPrice}
+          onMinPriceChange={setMinPrice}
+          onMaxPriceChange={setMaxPrice}
+          onApplyPrice={handleApplyPriceFilter}
+          salesType={salesTypeFilter}
+          onSalesTypeChange={setSalesTypeFilter}
+          unavailableItems={unavailableItems}
+          onUnavailableItemsChange={setUnavailableItems}
+          creatorName={creatorName}
+          onCreatorNameChange={setCreatorName}
+          onApplyCreator={handleApplyCreatorFilter}
+          onClearAll={handleClearFilters}
+          hasActiveFilters={hasActiveFilters}
+        />
+
+        <div className="flex-1 flex flex-col min-w-0">
+          {/* Toolbar */}
+          <PageHeaderPortal>
+            <FloatingAction.Search
+              value={catalogSearchQuery}
+              onChange={setCatalogSearchQuery}
+              placeholder="Search catalog"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') setAppliedSearchQuery(catalogSearchQuery)
+              }}
+              onClear={() => { setAppliedSearchQuery(''); setCatalogSearchQuery('') }}
+            />
+
+            <FloatingAction.Separator />
+
+            <FloatingAction.Dropdown
+              icon={ArrowUpDown}
+              tooltip="Sort"
+              options={SORT_OPTIONS}
+              value={sortType}
+              onChange={setSortType}
+            />
+
+            <FloatingAction.Separator />
+
+            <FloatingAction.Toggle
+              icon={Grid2X2}
+              tooltip="Default View"
+              active={viewMode === 'default'}
+              onClick={() => setViewMode('default')}
+            />
+            <FloatingAction.Toggle
+              icon={Grid3X3}
+              tooltip="Compact View"
+              active={viewMode === 'compact'}
+              onClick={() => setViewMode('compact')}
+            />
+          </PageHeaderPortal>
+
+          {/* Active Filters Chips */}
+          <CatalogActiveFilters
+            filters={{
+              minPrice: appliedMinPrice,
+              maxPrice: appliedMaxPrice,
+              creatorName: appliedCreatorName,
+              salesType: salesTypeFilter,
+              unavailableItems: unavailableItems
+            }}
+            onClearFilter={(key) => {
+              if (key === 'price') {
+                setAppliedMinPrice(undefined)
+                setAppliedMaxPrice(undefined)
+                setMinPrice('')
+                setMaxPrice('')
+              } else if (key === 'creator') {
+                setAppliedCreatorName('')
+                setCreatorName('')
+              } else if (key === 'salesType') {
+                setSalesTypeFilter('1')
+              } else if (key === 'unavailable') {
+                setUnavailableItems('hide')
+              }
+            }}
+            onClearAll={handleClearFilters}
+          />
+
+          {/* Content */}
+          <div className="flex-1 overflow-y-auto scrollbar-thin bg-[var(--color-surface)]">
+            <AnimatePresence mode="wait">
+              {isLoading && items.length === 0 ? (
+                <motion.div
+                  key="loading"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="grid gap-3.5 px-5 pt-6 pb-6"
+                  style={gridStyle}
+                >
+                  {Array.from({ length: 24 }).map((_, i) => (
+                    <div
+                      key={i}
+                      className="bg-[var(--color-surface-muted)] border border-[var(--color-border)] rounded-xl overflow-hidden"
+                    >
+                      <SkeletonSquareCard showBorder={false} />
+                      <div className="px-3 py-2.5 space-y-2">
+                        <div className="h-3.5 bg-[var(--color-border)] rounded-md animate-pulse w-4/5" />
+                        <div className="h-3 bg-[var(--color-border)] rounded-md animate-pulse w-1/2" />
+                      </div>
+                    </div>
+                  ))}
+                </motion.div>
+              ) : items.length === 0 ? (
+                <motion.div
+                  key="empty"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.3 }}
+                  className="flex items-center justify-center h-full"
+                >
+                  <EmptyState
+                    icon={Package}
+                    title="No items found"
+                    description={
+                      appliedSearchQuery
+                        ? 'Try adjusting your search or filters'
+                        : 'Browse the catalog by selecting a category'
+                    }
+                    variant="minimal"
+                  />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="items"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.3 }}
+                  className="h-full"
+                >
+                  <VirtuosoGrid
+                    totalCount={items.length}
+                    overscan={200}
+                    listClassName={gridClassName}
+                    itemContent={(index) => {
+                      const item = items[index]
+                      return (
+                        <CatalogItemCard
+                          key={`${item.id}-${index}`}
+                          item={item}
+                          thumbnailUrl={thumbnails[item.id]}
+                          index={index}
+                          onClick={() => handleItemClick(item)}
+                          onContextMenu={handleContextMenu}
+                          onCreatorClick={onCreatorSelect}
+                          isCompact={viewMode === 'compact'}
+                        />
+                      )
+                    }}
+                    endReached={() => {
+                      if (hasNextPage && !isFetchingNextPage) {
+                        fetchNextPage()
+                      }
+                    }}
+                    components={{
+                      Header: () => <div className="h-6" />,
+                      Footer: () =>
+                        isFetchingNextPage ? (
+                          <div className="h-16 flex items-center justify-center">
+                            <div className="flex items-center gap-2 text-[var(--color-text-muted)]">
+                              <Loader2 size={16} className="animate-spin" />
+                              <span className="text-xs">Loading more...</span>
+                            </div>
+                          </div>
+                        ) : null
+                    }}
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+
+        {/* Context Menu */}
+        <CatalogItemContextMenu
+          activeMenu={contextMenu}
+          onClose={() => setContextMenu(null)}
+          onDownloadTemplate={handleDownloadTemplate}
+          onCopyAssetId={handleCopyAssetId}
+        />
+      </div>
+    </TooltipProvider>
+  )
+}
+
+export default CatalogTab
+
