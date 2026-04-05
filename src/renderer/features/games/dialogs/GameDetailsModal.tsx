@@ -45,6 +45,7 @@ import { Dialog, DialogBody, DialogContent } from '@renderer/shared/ui/dialogs/D
 import { Button } from '@renderer/shared/ui/buttons/Button'
 import { SlidingNumber } from '@renderer/shared/ui/specialized/SlidingNumber'
 import { Tabs } from '@renderer/shared/ui/navigation/Tabs'
+import { queryKeys } from '@renderer/shared/query/queryKeys'
 import { formatNumber } from '@renderer/shared/utils/numberUtils'
 import { linkify } from '@renderer/shared/utils/linkify'
 import { cn } from '@renderer/shared/lib/utils'
@@ -54,6 +55,7 @@ import { SocialLink, VoteResponse, GamePass } from '@shared/contracts/games'
 import { useNotification } from '@renderer/features/system/useSnackbarStore'
 import FavoriteParticles from '@renderer/shared/ui/specialized/FavoriteParticles'
 import {
+  useGameDetails,
   useFavoriteGames,
   useAddFavoriteGame,
   useRemoveFavoriteGame
@@ -119,9 +121,18 @@ const GameDetailsModal: React.FC<GameDetailsModalProps> = ({
   const [isGroupModalOpen, setIsGroupModalOpen] = useState(false)
   const [selectedCreatorId, setSelectedCreatorId] = useState<string | number | null>(null)
   const [isDragging, setIsDragging] = useState(false)
-  const [dragStartX, setDragStartX] = useState(0)
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
+  const animationFrameRef = useRef<number | null>(null)
   const dragOffsetRef = useRef(0)
+  const dragPointerIdRef = useRef<number | null>(null)
+  const dragStartXRef = useRef(0)
+  const lastPointerXRef = useRef(0)
+  const lastPointerTimeRef = useRef(0)
+  const dragVelocityRef = useRef(0)
+  const pendingTransformRef = useRef<{ index: number; offset: number; animate: boolean } | null>(
+    null
+  )
+  const carouselViewportRef = useRef<HTMLDivElement>(null)
   const carouselRef = useRef<HTMLDivElement>(null)
   const { showNotification } = useNotification()
 
@@ -222,6 +233,9 @@ const GameDetailsModal: React.FC<GameDetailsModalProps> = ({
   const targetPlaceId = displayedGame?.placeId || displayedGame?.id
   const lastServerJobId = displayedGame?.lastServerJobId ?? null
   const hasFriendsPlaying = (displayedGame?.friendsPlayingCount ?? 0) > 0
+  const universeId = game?.universeId ? Number(game.universeId) : null
+
+  const { data: refreshedGame } = useGameDetails(universeId, isOpen)
 
   const handleRejoinLastServer = useCallback(() => {
     if (!displayedGame || !targetPlaceId) return
@@ -295,7 +309,9 @@ const GameDetailsModal: React.FC<GameDetailsModalProps> = ({
         }
 
         // Refresh game stats
-        queryClient.invalidateQueries({ queryKey: ['gameDetails', game?.universeId] })
+        if (universeId) {
+          queryClient.invalidateQueries({ queryKey: queryKeys.games.details(universeId) })
+        }
       } else if (data.modalType === 'PlayGame') {
         showNotification('You must play the game before you can vote', 'error')
       } else {
@@ -309,12 +325,44 @@ const GameDetailsModal: React.FC<GameDetailsModalProps> = ({
   })
 
   // Auto-advance carousel
+  const stopCarousel = useCallback(() => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current)
+      intervalRef.current = null
+    }
+  }, [])
+
   const startCarousel = useCallback(() => {
-    if (intervalRef.current) clearInterval(intervalRef.current)
+    if (thumbnails.length <= 1) {
+      stopCarousel()
+      return
+    }
+
+    stopCarousel()
     intervalRef.current = setInterval(() => {
       setCarouselIndex((prev) => (prev + 1) % Math.max(thumbnails.length, 1))
     }, CAROUSEL_INTERVAL)
-  }, [thumbnails.length])
+  }, [stopCarousel, thumbnails.length])
+
+  const queueCarouselTransform = useCallback((index: number, offset = 0, animate = true) => {
+    pendingTransformRef.current = { index, offset, animate }
+
+    if (animationFrameRef.current !== null) {
+      return
+    }
+
+    animationFrameRef.current = requestAnimationFrame(() => {
+      animationFrameRef.current = null
+      const pending = pendingTransformRef.current
+      const carouselNode = carouselRef.current
+      if (!pending || !carouselNode) return
+
+      carouselNode.style.transition = pending.animate
+        ? 'transform 420ms cubic-bezier(0.22, 1, 0.36, 1)'
+        : 'none'
+      carouselNode.style.transform = `translate3d(calc(-${pending.index * 100}% + ${pending.offset}px), 0, 0)`
+    })
+  }, [])
 
   const showCarouselControls = thumbnails.length > 1
   const canCarouselLeft = showCarouselControls && carouselIndex > 0
@@ -332,73 +380,128 @@ const GameDetailsModal: React.FC<GameDetailsModalProps> = ({
     startCarousel()
   }, [showCarouselControls, startCarousel, thumbnails.length])
 
+  const finishDrag = useCallback(
+    (pointerTarget?: HTMLDivElement | null, pointerId?: number) => {
+      if (dragPointerIdRef.current === null || !isDragging) return
+
+      if (
+        pointerTarget &&
+        pointerId !== undefined &&
+        pointerTarget.hasPointerCapture(pointerId)
+      ) {
+        pointerTarget.releasePointerCapture(pointerId)
+      }
+
+      setIsDragging(false)
+
+      const viewportWidth = carouselViewportRef.current?.clientWidth ?? 0
+      const threshold = Math.min(140, Math.max(48, viewportWidth * 0.18))
+      const velocityThreshold = 0.45
+      const finalOffset = dragOffsetRef.current
+      const finalVelocity = dragVelocityRef.current
+      let nextIndex = carouselIndex
+
+      if (
+        (finalOffset > threshold || finalVelocity > velocityThreshold) &&
+        carouselIndex > 0
+      ) {
+        nextIndex = carouselIndex - 1
+      } else if (
+        (finalOffset < -threshold || finalVelocity < -velocityThreshold) &&
+        carouselIndex < thumbnails.length - 1
+      ) {
+        nextIndex = carouselIndex + 1
+      }
+
+      dragOffsetRef.current = 0
+      dragPointerIdRef.current = null
+      dragVelocityRef.current = 0
+
+      queueCarouselTransform(nextIndex, 0, true)
+      setCarouselIndex(nextIndex)
+      startCarousel()
+    },
+    [carouselIndex, isDragging, queueCarouselTransform, startCarousel, thumbnails.length]
+  )
+
+  const handleCarouselPointerDown = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      if (thumbnails.length <= 1) return
+      if (e.pointerType === 'mouse' && e.button !== 0) return
+      if (e.target instanceof HTMLElement && e.target.closest('button')) return
+
+      dragPointerIdRef.current = e.pointerId
+      dragStartXRef.current = e.clientX
+      lastPointerXRef.current = e.clientX
+      lastPointerTimeRef.current = e.timeStamp
+      dragVelocityRef.current = 0
+      dragOffsetRef.current = 0
+
+      e.currentTarget.setPointerCapture(e.pointerId)
+      setIsDragging(true)
+      stopCarousel()
+      queueCarouselTransform(carouselIndex, 0, false)
+    },
+    [carouselIndex, queueCarouselTransform, stopCarousel, thumbnails.length]
+  )
+
+  const handleCarouselPointerMove = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      if (!isDragging || dragPointerIdRef.current !== e.pointerId) return
+
+      const rawOffset = e.clientX - dragStartXRef.current
+      const atLeadingEdge = carouselIndex === 0 && rawOffset > 0
+      const atTrailingEdge = carouselIndex === thumbnails.length - 1 && rawOffset < 0
+      const constrainedOffset = atLeadingEdge || atTrailingEdge ? rawOffset * 0.35 : rawOffset
+      const deltaTime = Math.max(e.timeStamp - lastPointerTimeRef.current, 1)
+      const deltaX = e.clientX - lastPointerXRef.current
+      const velocity = deltaX / deltaTime
+
+      dragVelocityRef.current = dragVelocityRef.current * 0.35 + velocity * 0.65
+      dragOffsetRef.current = constrainedOffset
+      lastPointerXRef.current = e.clientX
+      lastPointerTimeRef.current = e.timeStamp
+
+      queueCarouselTransform(carouselIndex, constrainedOffset, false)
+    },
+    [carouselIndex, isDragging, queueCarouselTransform, thumbnails.length]
+  )
+
   useEffect(() => {
     if (isOpen && thumbnails.length > 1) {
       startCarousel()
     }
     return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current)
+      stopCarousel()
     }
-  }, [isOpen, thumbnails.length, startCarousel])
-
-  const finishDrag = useCallback(() => {
-    if (!isDragging) return
-    setIsDragging(false)
-
-    const threshold = 100
-    const finalOffset = dragOffsetRef.current
-    let nextIndex = carouselIndex
-
-    if (finalOffset > threshold && carouselIndex > 0) {
-      nextIndex = carouselIndex - 1
-    } else if (finalOffset < -threshold && carouselIndex < thumbnails.length - 1) {
-      nextIndex = carouselIndex + 1
-    }
-
-    dragOffsetRef.current = 0
-
-    if (carouselRef.current) {
-      carouselRef.current.style.transition = 'transform 500ms cubic-bezier(0.4, 0, 0.2, 1)'
-      carouselRef.current.style.transform = `translateX(calc(-${nextIndex * 100}%))`
-    }
-
-    setCarouselIndex(nextIndex)
-    startCarousel()
-  }, [carouselIndex, isDragging, startCarousel, thumbnails.length])
+  }, [isOpen, startCarousel, stopCarousel, thumbnails.length])
 
   // Update carousel transform when index changes (when not dragging)
   useEffect(() => {
-    if (!isDragging && carouselRef.current) {
-      carouselRef.current.style.transform = `translateX(calc(-${carouselIndex * 100}%))`
+    if (!isDragging) {
+      queueCarouselTransform(carouselIndex, 0, true)
     }
-  }, [carouselIndex, isDragging])
+  }, [carouselIndex, isDragging, queueCarouselTransform])
 
-  // Refresh game stats
   useEffect(() => {
-    if (!isOpen || !game?.universeId) return
-
-    const fetchStats = async () => {
-      try {
-        const games = await window.api.getGamesByUniverseIds([Number(game.universeId)])
-        if (games && games.length > 0) {
-          const details = games[0]
-          setDisplayedGame((prev) => {
-            if (!prev) return null
-            return {
-              ...prev,
-              playing: details.playing ?? prev.playing,
-              visits: details.visits ?? prev.visits
-            }
-          })
-        }
-      } catch (error) {
-        console.error('Failed to refresh game stats', error)
+    return () => {
+      if (animationFrameRef.current !== null) {
+        cancelAnimationFrame(animationFrameRef.current)
       }
     }
+  }, [])
 
-    const statsInterval = setInterval(fetchStats, 10000)
-    return () => clearInterval(statsInterval)
-  }, [isOpen, game])
+  useEffect(() => {
+    if (!refreshedGame) return
+
+    setDisplayedGame((prev) => {
+      if (!prev) return refreshedGame
+      return {
+        ...prev,
+        ...refreshedGame
+      }
+    })
+  }, [refreshedGame])
 
   useEffect(() => {
     if (game) {
@@ -452,33 +555,22 @@ const GameDetailsModal: React.FC<GameDetailsModalProps> = ({
               <div className="w-full lg:w-1/2 flex flex-col bg-neutral-950 border-b lg:border-b-0 lg:border-r border-neutral-800 relative">
                 {/* Carousel */}
                 <div
-                  className="relative w-full aspect-video bg-neutral-900 overflow-hidden cursor-grab active:cursor-grabbing group"
-                  onMouseDown={(e) => {
-                    setIsDragging(true)
-                    setDragStartX(e.clientX)
-                    dragOffsetRef.current = 0
-                    if (intervalRef.current) clearInterval(intervalRef.current)
-                    if (carouselRef.current) {
-                      carouselRef.current.style.transition = 'none'
-                    }
-                  }}
-                  onMouseMove={(e) => {
-                    if (!isDragging || !carouselRef.current) return
-                    const diff = e.clientX - dragStartX
-                    dragOffsetRef.current = diff
-                    carouselRef.current.style.transform = `translateX(calc(-${carouselIndex * 100}% + ${diff}px))`
-                  }}
-                  onMouseUp={finishDrag}
-                  onMouseLeave={() => {
-                    if (isDragging) {
-                      finishDrag()
-                    }
-                  }}
+                  ref={carouselViewportRef}
+                  className={cn(
+                    'relative w-full aspect-video bg-neutral-900 overflow-hidden group select-none',
+                    isDragging ? 'cursor-grabbing' : 'cursor-grab'
+                  )}
+                  style={{ touchAction: 'pan-y' }}
+                  onPointerDown={handleCarouselPointerDown}
+                  onPointerMove={handleCarouselPointerMove}
+                  onPointerUp={(e) => finishDrag(e.currentTarget, e.pointerId)}
+                  onPointerCancel={(e) => finishDrag(e.currentTarget, e.pointerId)}
                 >
                   {showCarouselControls && (
                     <>
                       {canCarouselLeft && (
                         <button
+                          onPointerDown={(e) => e.stopPropagation()}
                           onClick={(e) => {
                             e.stopPropagation()
                             handleCarouselLeft()
@@ -491,6 +583,7 @@ const GameDetailsModal: React.FC<GameDetailsModalProps> = ({
                       )}
                       {canCarouselRight && (
                         <button
+                          onPointerDown={(e) => e.stopPropagation()}
                           onClick={(e) => {
                             e.stopPropagation()
                             handleCarouselRight()
@@ -511,10 +604,10 @@ const GameDetailsModal: React.FC<GameDetailsModalProps> = ({
                   )}
                   <div
                     ref={carouselRef}
-                    className="flex h-full"
+                    className="flex h-full will-change-transform"
                     style={{
-                      transform: `translateX(calc(-${carouselIndex * 100}%))`,
-                      transition: 'transform 500ms cubic-bezier(0.4, 0, 0.2, 1)'
+                      transform: `translate3d(calc(-${carouselIndex * 100}% + 0px), 0, 0)`,
+                      transition: 'transform 420ms cubic-bezier(0.22, 1, 0.36, 1)'
                     }}
                   >
                     {thumbnails.map((url, idx) => (

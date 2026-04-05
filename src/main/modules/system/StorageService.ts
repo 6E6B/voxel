@@ -4,6 +4,7 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs'
 import {
   Account,
   DEFAULT_ACCENT_COLOR,
+  RecentServerJoin,
   TabId,
   ThemePreference,
   TintPreference
@@ -24,9 +25,17 @@ const customFontSchema = z.object({
   url: z.string()
 })
 
+const recentServerJoinSchema = z.object({
+  placeId: z.string(),
+  serverId: z.string(),
+  serverType: z.enum(['public', 'private']),
+  joinedAt: z.number().int().nonnegative()
+})
+
 const sidebarTabIdEnum = z.enum(SIDEBAR_TAB_IDS)
 const themePreferenceEnum = z.enum(['system', 'dark', 'light'])
 const tintPreferenceEnum = z.enum(['neutral', 'cool'])
+const MAX_RECENT_SERVER_JOINS = 20
 
 const storeDataSchema = z.object({
   sidebarWidth: z.number().optional(),
@@ -37,6 +46,7 @@ const storeDataSchema = z.object({
   windowHeight: z.number().optional(),
   accounts: z.array(accountSchema).optional(),
   favoriteGames: z.array(z.string()).optional(),
+  recentServerJoins: z.array(recentServerJoinSchema).optional(),
   favoriteItems: z.array(favoriteItemSchema).optional(),
   excludeFullGames: z.boolean().optional(),
   customFonts: z.array(customFontSchema).optional(),
@@ -315,6 +325,35 @@ class StorageService {
   public removeFavoriteGame(placeId: string): void {
     const favorites = this.data.favoriteGames || []
     this.data.favoriteGames = favorites.filter((id) => id !== placeId)
+    this.save()
+  }
+
+  public getRecentServerJoins(placeId?: string): RecentServerJoin[] {
+    const recentServerJoins = this.data.recentServerJoins || []
+
+    if (!placeId) {
+      return [...recentServerJoins]
+    }
+
+    return recentServerJoins.filter((entry) => entry.placeId === placeId)
+  }
+
+  public addRecentServerJoin(join: Omit<RecentServerJoin, 'joinedAt'>): void {
+    const nextEntry: RecentServerJoin = {
+      ...join,
+      joinedAt: Date.now()
+    }
+
+    const recentServerJoins = (this.data.recentServerJoins || []).filter(
+      (entry) =>
+        !(
+          entry.placeId === nextEntry.placeId &&
+          entry.serverType === nextEntry.serverType &&
+          entry.serverId === nextEntry.serverId
+        )
+    )
+
+    this.data.recentServerJoins = [nextEntry, ...recentServerJoins].slice(0, MAX_RECENT_SERVER_JOINS)
     this.save()
   }
 

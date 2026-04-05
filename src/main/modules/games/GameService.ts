@@ -827,4 +827,58 @@ export class RobloxGameService {
       body
     })
   }
+
+  /**
+   * Fetch avatar headshot thumbnails for player tokens (from game servers).
+   * Sends a POST to the Roblox thumbnails batch endpoint.
+   * Batches are capped at 100 tokens per request.
+   */
+  static async getPlayerThumbnailsByTokens(
+    playerTokens: string[]
+  ): Promise<{ requestId: string; token: string; imageUrl: string | null; errorCode: number; errorMessage: string }[]> {
+    if (!playerTokens.length) return []
+
+    const BATCH_SIZE = 100
+    const results: { requestId: string; token: string; imageUrl: string | null; errorCode: number; errorMessage: string }[] = []
+
+    for (let i = 0; i < playerTokens.length; i += BATCH_SIZE) {
+      const chunk = playerTokens.slice(i, i + BATCH_SIZE)
+      const body = chunk.map((token) => ({
+        requestId: `${token}:undefined:AvatarHeadShot:420x420:png:circular`,
+        token,
+        type: 'AvatarHeadShot',
+        size: '150x150',
+        format: null,
+        isCircular: true
+      }))
+
+      try {
+        const response = await safeRequest<{ data: { requestId: string; imageUrl: string | null; errorCode: number; errorMessage: string }[] }>({
+          method: 'POST',
+          url: 'https://thumbnails.roblox.com/v1/batch',
+          body,
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        })
+
+        if (response.data) {
+          for (const entry of response.data) {
+            const token = chunk.find((t) => entry.requestId.startsWith(t)) || ''
+            results.push({
+              requestId: entry.requestId,
+              token,
+              imageUrl: entry.imageUrl,
+              errorCode: entry.errorCode,
+              errorMessage: entry.errorMessage
+            })
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch player thumbnails batch', error)
+      }
+    }
+
+    return results
+  }
 }

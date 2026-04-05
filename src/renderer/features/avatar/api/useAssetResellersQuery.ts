@@ -11,6 +11,8 @@ import {
 import { useBatchUserAvatars } from './useBatchQueries'
 import { robloxGet } from '@renderer/shared/lib/robloxApi'
 
+const RESELLER_DISPLAY_LIMIT = 10
+
 // ============================================================================
 // Asset Resellers Infinite Query
 // ============================================================================
@@ -33,7 +35,7 @@ export function useAssetResellersQuery({
     queryFn: async ({ pageParam }) => {
       if (!collectibleItemId) throw new Error('Missing collectibleItemId')
 
-      let url = `https://apis.roblox.com/marketplace-sales/v1/item/${collectibleItemId}/resellers?limit=100`
+      let url = `https://apis.roblox.com/marketplace-sales/v1/item/${collectibleItemId}/resellers?limit=${RESELLER_DISPLAY_LIMIT}`
       if (pageParam) url += `&cursor=${pageParam}`
 
       const response = await robloxGet(resellersResponseSchema, url)
@@ -87,10 +89,6 @@ export function useAssetResellersQuery({
     resellers,
     resellersLoading: query.isLoading,
     resellerAvatars,
-    resellersCursor: query.hasNextPage ? 'has-more' : null,
-    loadingMoreResellers: query.isFetchingNextPage,
-    loadMoreResellers: query.fetchNextPage,
-    hasNextPage: query.hasNextPage,
     refetchResellers
   }
 }
@@ -172,10 +170,7 @@ interface UseAssetResellersResult {
   resellersLoading: boolean
   resellerAvatars: Map<number, string>
   purchasingReseller: string | null
-  resellersCursor: string | null
-  loadingMoreResellers: boolean
   handleBuyReseller: (reseller: ResellerItem) => Promise<PurchaseCatalogResult>
-  loadMoreResellers: () => Promise<void>
   setPurchasingReseller: (id: string | null) => void
 }
 
@@ -224,12 +219,7 @@ export function useAssetResellersWithPurchase(
     resellersLoading: resellersQuery.resellersLoading,
     resellerAvatars: resellersQuery.resellerAvatars,
     purchasingReseller,
-    resellersCursor: resellersQuery.resellersCursor,
-    loadingMoreResellers: resellersQuery.loadingMoreResellers,
     handleBuyReseller,
-    loadMoreResellers: async () => {
-      await resellersQuery.loadMoreResellers()
-    },
     setPurchasingReseller
   }
 }

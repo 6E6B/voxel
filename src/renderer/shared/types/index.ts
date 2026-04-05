@@ -1,5 +1,7 @@
 import type {
   Account,
+  RecentServerJoin,
+  RecentServerType,
   RobloxInstallation,
   TabId,
   ThemePreference,
@@ -7,7 +9,15 @@ import type {
 } from '@shared/models/app'
 import { AccountStatus, BinaryType, DEFAULT_ACCENT_COLOR } from '@shared/models/app'
 
-export type { Account, RobloxInstallation, TabId, ThemePreference, TintPreference }
+export type {
+  Account,
+  RecentServerJoin,
+  RecentServerType,
+  RobloxInstallation,
+  TabId,
+  ThemePreference,
+  TintPreference
+}
 export { AccountStatus, BinaryType, DEFAULT_ACCENT_COLOR }
 
 export interface Badge {
@@ -81,6 +91,7 @@ export interface GameServer {
   maxPlayers: number
   ping: number
   fps: number
+  playerTokens: string[]
 }
 
 export interface PrivateServer {

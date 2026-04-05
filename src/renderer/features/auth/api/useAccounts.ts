@@ -226,7 +226,7 @@ export function updateAccountsWithStatuses(
  * Hook that automatically polls and updates account statuses.
  * Uses TanStack Query's refetchInterval for built-in polling.
  */
-export function useAccountStatusPolling() {
+export function useAccountStatusPolling(enabled: boolean = true) {
   const queryClient = useQueryClient()
   const activeTab = useActiveTab()
 
@@ -238,7 +238,7 @@ export function useAccountStatusPolling() {
 
   // Use the existing useAccountStatuses hook with dynamic interval
   const { data: batchResults } = useAccountStatuses(accounts, {
-    enabled: accounts.length > 0,
+    enabled: enabled && accounts.length > 0,
     refetchInterval: pollInterval
   })
 
@@ -258,11 +258,7 @@ export function useAccountStatusPolling() {
 
     if (hasChanges) {
       // Update cache directly without triggering save (status is transient)
-      // Check for deep equality to prevent infinite render loops if hasChanges is false positive
-      const cached = queryClient.getQueryData<Account[]>(queryKeys.accounts.list())
-      if (JSON.stringify(cached) !== JSON.stringify(updatedAccounts)) {
-        queryClient.setQueryData(queryKeys.accounts.list(), updatedAccounts)
-      }
+      queryClient.setQueryData(queryKeys.accounts.list(), updatedAccounts)
     }
   }, [batchResults, queryClient])
 }

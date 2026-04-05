@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Package, Loader2, Grid2X2, Grid3X3, ArrowUpDown, User } from 'lucide-react'
+import { Package, Loader2, Grid2X2, Grid3X3, ArrowUpDown, User, RefreshCw } from 'lucide-react'
+import { useQueryClient } from '@tanstack/react-query'
 import { VirtuosoGrid } from 'react-virtuoso'
 import { TooltipProvider } from '@renderer/shared/ui/display/Tooltip'
 import { PageHeaderPortal } from '@renderer/shared/ui/navigation/PageHeaderPortal'
@@ -33,6 +34,7 @@ import {
     useInventoryViewMode,
     useSetInventoryViewMode
 } from '@renderer/shared/stores/useViewPreferencesStore'
+import { queryKeys } from '@renderer/shared/query/queryKeys'
 
 const SORT_OPTIONS: FloatingDropdownOption[] = [
     { value: 'Desc', label: 'Newest First' },
@@ -127,6 +129,7 @@ interface InventoryBrowserProps {
 }
 
 const InventoryBrowser = ({ account }: InventoryBrowserProps) => {
+    const queryClient = useQueryClient()
     const viewMode = useInventoryViewMode()
     const setViewMode = useSetInventoryViewMode()
 
@@ -203,7 +206,7 @@ const InventoryBrowser = ({ account }: InventoryBrowserProps) => {
 
     const hasActiveFilters = useMemo(() => resolvedSelectedCategory !== null, [resolvedSelectedCategory])
 
-    const { data, isLoading, isFetchingNextPage, hasNextPage, fetchNextPage } = useInventoryV2({
+    const { data, isLoading, isFetching, isFetchingNextPage, hasNextPage, fetchNextPage } = useInventoryV2({
         cookie,
         userId,
         assetTypes,
@@ -230,7 +233,7 @@ const InventoryBrowser = ({ account }: InventoryBrowserProps) => {
         return items.map((item) => item.assetId).filter((id, index, self) => self.indexOf(id) === index)
     }, [items])
 
-    const { thumbnails } = useInventoryThumbnails(assetIds, items.length > 0)
+    const { thumbnails, isLoading: isThumbnailsLoading } = useInventoryThumbnails(assetIds, items.length > 0)
 
     const gridStyle: React.CSSProperties = {
         gridTemplateColumns:
@@ -293,6 +296,19 @@ const InventoryBrowser = ({ account }: InventoryBrowserProps) => {
         [cookie]
     )
 
+    const handleRefresh = useCallback(async () => {
+        await queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all })
+    }, [queryClient])
+
+    const isRefreshing = isFetching || isThumbnailsLoading
+
+    const RefreshIcon = ({ size, className }: { size?: number; className?: string }) => (
+        <RefreshCw
+            size={size}
+            className={[className, isRefreshing ? 'animate-spin' : ''].filter(Boolean).join(' ')}
+        />
+    )
+
     if (!account || !cookie || !userId) {
         return (
             <div className="flex items-center justify-center h-full">
@@ -336,6 +352,17 @@ const InventoryBrowser = ({ account }: InventoryBrowserProps) => {
                             options={SORT_OPTIONS}
                             value={sortOrder}
                             onChange={(value) => setSortOrder(value as 'Asc' | 'Desc')}
+                        />
+
+                        <FloatingAction.Separator />
+
+                        <FloatingAction.Button
+                            icon={RefreshIcon}
+                            tooltip="Refresh inventory"
+                            onClick={() => {
+                                void handleRefresh()
+                            }}
+                            disabled={isRefreshing}
                         />
 
                         <FloatingAction.Separator />

@@ -10,6 +10,7 @@ export const gamesContracts = {
     getGameIconThumbnail: defineProcedure(z.tuple([z.number()])),
     searchGames: defineProcedure(z.tuple([z.string(), z.string().optional()])),
     getRecentlyPlayedGames: defineProcedure(z.tuple([z.string().optional()])),
+    getRecentServerJoins: defineProcedure(z.tuple([z.string().optional()])),
     launchGame: defineProcedure(
         z.tuple([
             z.string(),
@@ -53,5 +54,6 @@ export const gamesContracts = {
             z.string().optional()
         ])
     ),
-    saveGameImage: defineProcedure(z.tuple([z.string(), z.string()]))
+    saveGameImage: defineProcedure(z.tuple([z.string(), z.string()])),
+    getPlayerThumbnailsByTokens: defineProcedure(z.tuple([z.array(z.string())]))
 } as const

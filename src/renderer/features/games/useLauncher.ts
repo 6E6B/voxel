@@ -1,5 +1,5 @@
 import { useCallback } from 'react'
-import { Account, JoinMethod } from '@renderer/shared/types'
+import { Account, JoinConfig, JoinMethod } from '@renderer/shared/types'
 import { useNotification } from '@renderer/features/system/useSnackbarStore'
 import { useInstallations } from '@renderer/features/install/useInstallationsStore'
 import {
@@ -12,11 +12,6 @@ import {
 import { useSelectedIds } from '@renderer/shared/stores/useSelectionStore'
 import { useQueryClient } from '@tanstack/react-query'
 import { queryKeys } from '@renderer/shared/query/queryKeys'
-
-export interface JoinConfig {
-    method: JoinMethod
-    target: string
-}
 
 const isMac = window.platform?.isMac ?? false
 
@@ -39,6 +34,13 @@ export function useLauncher(
     const refreshRecentlyPlayed = useCallback(() => {
         queryClient.invalidateQueries({ queryKey: queryKeys.games.recentlyPlayed() })
     }, [queryClient])
+
+    const refreshRecentServers = useCallback(
+        (placeId: string) => {
+            queryClient.invalidateQueries({ queryKey: queryKeys.servers.recent(placeId) })
+        },
+        [queryClient]
+    )
 
     const performLaunch = useCallback(
         async (config: JoinConfig, installPath?: string) => {
@@ -157,6 +159,10 @@ export function useLauncher(
                 }
 
                 if (launchedAny) {
+                    if (launchJobId || launchAccessCode) {
+                        refreshRecentServers(String(launchPlaceId))
+                    }
+
                     window.setTimeout(() => {
                         refreshRecentlyPlayed()
                     }, 4000)
@@ -172,6 +178,7 @@ export function useLauncher(
             selectedIds,
             showNotification,
             multiInstanceAllowed,
+            refreshRecentServers,
             refreshRecentlyPlayed
         ]
     )

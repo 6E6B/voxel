@@ -85,7 +85,6 @@ interface AssetInfoTabProps {
   resellerAvatars: Map<number, string>
   purchasingReseller: string | null
   onBuyReseller: (reseller: ResellerItem) => void
-  onLoadMoreResellers: () => void
   onCreatorClick: () => void
   onRecommendationClick: (item: RecommendationItem) => void
   onPurchaseSuccess?: (details: AssetDetails, price: number | string) => void
@@ -108,7 +107,6 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
   resellerAvatars,
   purchasingReseller,
   onBuyReseller,
-  onLoadMoreResellers,
   onCreatorClick,
   onRecommendationClick,
   onPurchaseSuccess,
@@ -202,7 +200,6 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
           resellerAvatars={resellerAvatars}
           purchasingReseller={purchasingReseller}
           onBuy={onBuyReseller}
-          onLoadMore={onLoadMoreResellers}
         />
       )}
 

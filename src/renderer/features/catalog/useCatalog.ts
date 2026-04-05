@@ -47,10 +47,11 @@ export function useCatalogSearch(params: CatalogItemsSearchParams, enabled = tru
       // Exponential backoff: 2s, 4s, 8s
       return Math.min(1000 * Math.pow(2, attemptIndex + 1), 8000)
     },
-    staleTime: 2 * 60 * 1000, // Keep data warm for tab switches
-    gcTime: 10 * 60 * 1000, // Drop from cache after 10 minutes unused
+    staleTime: 5 * 60 * 1000, // Keep data warm for tab switches
+    gcTime: 15 * 60 * 1000, // Drop from cache after 15 minutes unused
     refetchOnMount: false,
-    refetchOnWindowFocus: false
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false
   })
 }
 

@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useRef, useCallback, CSSProperties } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Users, Star, Gamepad2, ThumbsUp, Play, X, ArrowUpDown } from 'lucide-react'
+import { Users, Star, Gamepad2, ThumbsUp, Play, X, ArrowUpDown, RefreshCw } from 'lucide-react'
+import { useQueryClient } from '@tanstack/react-query'
 import { Game } from '@renderer/shared/types'
 import GameContextMenu from './GameContextMenu'
 import { useNotification } from '@renderer/features/system/useSnackbarStore'
@@ -33,6 +34,13 @@ import {
   useAddFavoriteGame,
   useRemoveFavoriteGame
 } from '@renderer/features/games/api/useGames'
+import {
+  useGamesSearchQuery,
+  useSetGamesSearchQuery,
+  useGamesSelectedSortId,
+  useSetGamesSelectedSortId
+} from '@renderer/features/games/useGamesStore'
+import { queryKeys } from '@renderer/shared/query/queryKeys'
 import { useOpenModal } from '@renderer/shared/stores/useUIStore'
 import { useSelectedIds } from '@renderer/shared/stores/useSelectionStore'
 
@@ -340,10 +348,13 @@ const GameCard = ({
 const GamesTab = ({ onGameSelect }: GamesTabProps) => {
   const { showNotification } = useNotification()
   const openModal = useOpenModal()
+  const queryClient = useQueryClient()
   const selectedIds = useSelectedIds()
-  const [searchQuery, setSearchQuery] = useState('')
-  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('')
-  const [selectedSortId, setSelectedSortId] = useState<string | null>(null)
+  const searchQuery = useGamesSearchQuery()
+  const setSearchQuery = useSetGamesSearchQuery()
+  const selectedSortId = useGamesSelectedSortId()
+  const setSelectedSortId = useSetGamesSelectedSortId()
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(() => searchQuery)
 
   const [favoriteGameBurstKeys, setFavoriteGameBurstKeys] = useState<Record<string, number>>({})
   const favoriteGameBurstTimeouts = useRef<Map<string, number>>(new Map())
@@ -358,8 +369,8 @@ const GamesTab = ({ onGameSelect }: GamesTabProps) => {
   const [sessionId] = useState(() => self.crypto.randomUUID())
 
   // TanStack Query hooks
-  const { data: sorts = [] } = useGameSorts(sessionId)
-  const { data: favorites = [] } = useFavoriteGames()
+  const { data: sorts = [], isFetching: isSortsFetching } = useGameSorts(sessionId)
+  const { data: favorites = [], isFetching: isFavoritesFetching } = useFavoriteGames()
 
   const addFavoriteMutation = useAddFavoriteGame()
   const removeFavoriteMutation = useRemoveFavoriteGame()
@@ -368,22 +379,22 @@ const GamesTab = ({ onGameSelect }: GamesTabProps) => {
   const isSearchMode = debouncedSearchQuery.trim().length > 0
 
   // Games in sort (default mode)
-  const { data: sortGames = [], isLoading: isSortLoading } = useGamesInSort(
+  const { data: sortGames = [], isLoading: isSortLoading, isFetching: isSortGamesFetching } = useGamesInSort(
     !isSearchMode ? selectedSortId : null,
     sessionId
   )
 
   // Search results
-  const { data: searchGames = [], isLoading: isSearchLoading } = useSearchGames(
+  const { data: searchGames = [], isLoading: isSearchLoading, isFetching: isSearchGamesFetching } = useSearchGames(
     debouncedSearchQuery,
     sessionId
   )
 
   // Favorite games
-  const { data: favoriteGames = [], isLoading: isFavoritesLoading } = useGamesByPlaceIds(favorites)
+  const { data: favoriteGames = [], isLoading: isFavoritesLoading, isFetching: isFavoriteGamesFetching } = useGamesByPlaceIds(favorites)
 
   // Recently played games (requires at least one stored account with a cookie)
-  const { data: recentlyPlayedGames = [], isLoading: isRecentLoading } =
+  const { data: recentlyPlayedGames = [], isLoading: isRecentLoading, isFetching: isRecentFetching } =
     useRecentlyPlayedGames(sessionId)
 
   // Compute final games list
@@ -488,6 +499,25 @@ const GamesTab = ({ onGameSelect }: GamesTabProps) => {
     setDebouncedSearchQuery('')
   }, [])
 
+  const handleRefresh = useCallback(async () => {
+    await queryClient.invalidateQueries({ queryKey: queryKeys.games.all })
+  }, [queryClient])
+
+  const RefreshIcon = ({ size, className }: { size?: number; className?: string }) => (
+    <RefreshCw
+      size={size}
+      className={[className, isRefreshing ? 'animate-spin' : ''].filter(Boolean).join(' ')}
+    />
+  )
+
+  const isRefreshing =
+    isSortsFetching ||
+    isFavoritesFetching ||
+    isFavoriteGamesFetching ||
+    isRecentFetching ||
+    isSortGamesFetching ||
+    isSearchGamesFetching
+
   const formatPlayerCount = (num: number) => formatNumber(num)
 
   return (
@@ -512,6 +542,16 @@ const GamesTab = ({ onGameSelect }: GamesTabProps) => {
               />
             </>
           )}
+
+          <FloatingAction.Separator />
+          <FloatingAction.Button
+            icon={RefreshIcon}
+            tooltip="Refresh games"
+            onClick={() => {
+              void handleRefresh()
+            }}
+            disabled={isRefreshing}
+          />
 
           {selectedIds.size > 0 && (
             <>

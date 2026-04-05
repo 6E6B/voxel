@@ -1,16 +1,18 @@
-import React from 'react'
+import React, { Suspense, useEffect, useState, useTransition } from 'react'
 import { Account, Game, Settings, TabId } from '@renderer/shared/types'
-import AccountsTab from '@renderer/features/auth'
-import ProfileTab from '@renderer/features/profile'
-import FriendsTab from '@renderer/features/friends'
-import GroupsTab from '@renderer/features/groups'
-import GamesTab from '@renderer/features/games'
-import CatalogTab from '@renderer/features/catalog'
-import InventoryTab from '@renderer/features/inventory'
-import TransactionsTab from '@renderer/features/transactions'
-import SettingsTab from '@renderer/features/settings'
-import AvatarTab from '@renderer/features/avatar'
-import InstallTab from '@renderer/features/install'
+import {
+    AccountsTab,
+    AvatarTab,
+    CatalogTab,
+    FriendsTab,
+    GamesTab,
+    GroupsTab,
+    InstallTab,
+    InventoryTab,
+    ProfileTab,
+    SettingsTab,
+    TransactionsTab
+} from './tab-loaders'
 
 interface AppTabContentProps {
     activeTab: TabId
@@ -45,17 +47,32 @@ const AppTabContent: React.FC<AppTabContentProps> = ({
     onCreatorSelect,
     onUpdateSettings
 }) => {
-    switch (activeTab) {
+    // Keep showing the current tab until the next tab's lazy chunk is ready.
+    // startTransition tells React to NOT show the Suspense fallback for
+    // already-revealed content — it holds the old UI until the new one resolves.
+    const [displayedTab, setDisplayedTab] = useState(activeTab)
+    const [, startTransition] = useTransition()
+
+    useEffect(() => {
+        startTransition(() => {
+            setDisplayedTab(activeTab)
+        })
+    }, [activeTab, startTransition])
+
+    let content: React.ReactNode = null
+
+    switch (displayedTab) {
         case 'Accounts':
-            return (
+            content = (
                 <AccountsTab
                     accounts={accounts}
                     onAccountsChange={onAccountsChange}
                     allowMultipleInstances={multiInstanceAllowed}
                 />
             )
+            break
         case 'Profile':
-            return selectedAccount ? (
+            content = selectedAccount ? (
                 <ProfileTab
                     account={selectedAccount}
                     privacyMode={settings.privacyMode}
@@ -64,39 +81,52 @@ const AppTabContent: React.FC<AppTabContentProps> = ({
             ) : (
                 <EmptySelection message="Select an account to view profile" />
             )
+            break
         case 'Friends':
-            return <FriendsTab selectedAccount={selectedAccount} onFriendJoin={onFriendJoin} />
+            content = <FriendsTab selectedAccount={selectedAccount} onFriendJoin={onFriendJoin} />
+            break
         case 'Groups':
-            return <GroupsTab selectedAccount={selectedAccount} />
+            content = <GroupsTab selectedAccount={selectedAccount} />
+            break
         case 'Games':
-            return <GamesTab onGameSelect={onGameSelect} />
+            content = <GamesTab onGameSelect={onGameSelect} />
+            break
         case 'Catalog':
-            return (
+            content = (
                 <CatalogTab
                     onItemSelect={onAccessorySelect}
                     onCreatorSelect={onCreatorSelect}
                     cookie={accounts.find((a) => a.cookie)?.cookie}
                 />
             )
+            break
         case 'Inventory':
-            return <InventoryTab account={selectedAccount} />
+            content = <InventoryTab account={selectedAccount} />
+            break
         case 'Transactions':
-            return <TransactionsTab account={selectedAccount} />
+            content = <TransactionsTab account={selectedAccount} />
+            break
         case 'Avatar':
-            return <AvatarTab account={selectedAccount} />
+            content = <AvatarTab account={selectedAccount} />
+            break
         case 'Install':
-            return <InstallTab />
+            content = <InstallTab />
+            break
         case 'Settings':
-            return (
+            content = (
                 <SettingsTab
                     accounts={accounts}
                     settings={settings}
                     onUpdateSettings={onUpdateSettings}
                 />
             )
+            break
         default:
-            return null
+            content = null
+            break
     }
+
+    return <Suspense fallback={null}>{content}</Suspense>
 }
 
 export default AppTabContent

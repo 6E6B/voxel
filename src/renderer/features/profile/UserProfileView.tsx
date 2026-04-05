@@ -13,7 +13,7 @@ import {
   Star,
   Music
 } from 'lucide-react'
-import { Account } from '@renderer/shared/types'
+import { Account, Game } from '@renderer/shared/types'
 import { AccountStatus } from '@renderer/shared/types'
 import UserListModal from '@renderer/app/dialogs/UserListModal'
 import AccessoryDetailsModal from '@renderer/features/avatar/dialogs/AccessoryDetailsModal'
@@ -59,6 +59,7 @@ import {
   createAnchoredOverlayPosition,
   type AnchoredOverlayPosition
 } from '@renderer/shared/ui/menus/anchoredPosition'
+import { useSetSelectedGame } from '@renderer/shared/stores/useUIStore'
 
 const SOUND_HAT_IDS = [24114402, 305888394, 24112667, 33070696]
 
@@ -179,6 +180,7 @@ const UserProfileView: React.FC<ProfileViewProps> = ({
   } | null>(null)
   const [outfitDetailsLoading, setOutfitDetailsLoading] = useState(false)
   const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null)
+  const setSelectedGame = useSetSelectedGame()
 
   const userIdNum = typeof userId === 'string' ? parseInt(userId) : userId
   const accountUserIdNum =
@@ -301,6 +303,20 @@ const UserProfileView: React.FC<ProfileViewProps> = ({
     [handleCopyUserId]
   )
 
+  const handleOpenGameDetails = useCallback(async () => {
+    const placeId = profile.gameActivity?.placeId
+    if (!placeId) return
+
+    try {
+      const games = (await window.api.getGamesByPlaceIds([String(placeId)])) as Game[]
+      if (games?.length) {
+        setSelectedGame(games[0])
+      }
+    } catch (err) {
+      console.error('Failed to fetch game details:', err)
+    }
+  }, [profile.gameActivity?.placeId, setSelectedGame])
+
   return (
     <div
       className="relative flex flex-col w-full h-full bg-[var(--color-surface)] overflow-hidden font-sans"
@@ -323,6 +339,7 @@ const UserProfileView: React.FC<ProfileViewProps> = ({
             rawDescription={rawDescription}
             onSelectProfile={onSelectProfile}
             onJoinGame={onJoinGame}
+            onOpenGameDetails={profile.gameActivity ? handleOpenGameDetails : undefined}
           />
 
           {/* Stat pills bar */}

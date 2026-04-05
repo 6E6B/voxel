@@ -6,7 +6,8 @@ import {
 } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { VirtuosoGrid } from 'react-virtuoso'
-import { Package, Loader2, Grid3X3, Grid2X2, ArrowUpDown } from 'lucide-react'
+import { Package, Loader2, Grid3X3, Grid2X2, ArrowUpDown, RefreshCw } from 'lucide-react'
+import { useQueryClient } from '@tanstack/react-query'
 import { TooltipProvider } from '@renderer/shared/ui/display/Tooltip'
 import { PageHeaderPortal } from '@renderer/shared/ui/navigation/PageHeaderPortal'
 import { FloatingAction, type FloatingDropdownOption } from '@renderer/shared/ui/navigation/FloatingAction'
@@ -67,6 +68,7 @@ import { useCatalogViewMode, useSetCatalogViewMode } from '@renderer/shared/stor
 import CatalogItemContextMenu from './CatalogItemContextMenu'
 import { CatalogFilterSidebar } from './CatalogFilterSidebar'
 import { CatalogActiveFilters } from './CatalogActiveFilters'
+import { queryKeys } from '@renderer/shared/query/queryKeys'
 
 interface CatalogTabProps {
   onItemSelect?: (item: { id: number; name: string; imageUrl?: string }) => void
@@ -75,6 +77,7 @@ interface CatalogTabProps {
 }
 
 const CatalogTab = ({ onItemSelect, onCreatorSelect, cookie }: CatalogTabProps) => {
+  const queryClient = useQueryClient()
   // View Mode (persisted via Zustand)
   const viewMode = useCatalogViewMode()
   const setViewMode = useSetCatalogViewMode()
@@ -124,7 +127,7 @@ const CatalogTab = ({ onItemSelect, onCreatorSelect, cookie }: CatalogTabProps) 
   const clearCatalogFilters = useClearCatalogFilters()
 
   // Fetch navigation menu
-  const { data: categories = [] } = useCatalogNavigation()
+  const { data: categories = [], isFetching: isNavigationFetching } = useCatalogNavigation()
 
   // Build search params
   const searchParams: CatalogItemsSearchParams = useMemo(() => {
@@ -181,7 +184,7 @@ const CatalogTab = ({ onItemSelect, onCreatorSelect, cookie }: CatalogTabProps) 
   ])
 
   // Fetch catalog items
-  const { data, isLoading, isFetchingNextPage, hasNextPage, fetchNextPage } =
+  const { data, isLoading, isFetching, isFetchingNextPage, hasNextPage, fetchNextPage } =
     useCatalogSearch(searchParams)
 
   // Flatten pages into single array
@@ -300,6 +303,19 @@ const CatalogTab = ({ onItemSelect, onCreatorSelect, cookie }: CatalogTabProps) 
       ? 'grid gap-3 px-5 pb-6 grid-cols-[repeat(auto-fill,minmax(150px,1fr))]'
       : 'grid gap-3.5 px-5 pb-6 grid-cols-[repeat(auto-fill,minmax(200px,1fr))]'
 
+  const handleRefresh = useCallback(async () => {
+    await queryClient.invalidateQueries({ queryKey: queryKeys.catalog.all })
+  }, [queryClient])
+
+  const isRefreshing = isNavigationFetching || isFetching
+
+  const RefreshIcon = ({ size, className }: { size?: number; className?: string }) => (
+    <RefreshCw
+      size={size}
+      className={[className, isRefreshing ? 'animate-spin' : ''].filter(Boolean).join(' ')}
+    />
+  )
+
   return (
     <TooltipProvider>
       <div className="flex h-full bg-[var(--color-surface)]">
@@ -347,6 +363,17 @@ const CatalogTab = ({ onItemSelect, onCreatorSelect, cookie }: CatalogTabProps) 
               options={SORT_OPTIONS}
               value={sortType}
               onChange={setSortType}
+            />
+
+            <FloatingAction.Separator />
+
+            <FloatingAction.Button
+              icon={RefreshIcon}
+              tooltip="Refresh catalog"
+              onClick={() => {
+                void handleRefresh()
+              }}
+              disabled={isRefreshing}
             />
 
             <FloatingAction.Separator />

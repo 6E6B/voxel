@@ -112,8 +112,7 @@ const AccessoryDetailsModal: React.FC<AccessoryDetailsModalProps> = ({
     resellersLoading,
     resellerAvatars,
     purchasingReseller,
-    handleBuyReseller,
-    loadMoreResellers
+    handleBuyReseller
   } = useAssetResellersWithPurchase(
     details,
     account && account.cookie ? { cookie: account.cookie, userId: account.userId } : null
@@ -504,7 +503,6 @@ const AccessoryDetailsModal: React.FC<AccessoryDetailsModalProps> = ({
                         resellerAvatars={resellerAvatars}
                         purchasingReseller={purchasingReseller}
                         onBuyReseller={handleResellerPurchaseClick}
-                        onLoadMoreResellers={loadMoreResellers}
                         onCreatorClick={() => {
                           if (details.creatorType === 'User' && details.creatorTargetId) {
                             setShowCreatorProfile(true)

@@ -1,12 +1,16 @@
-import { useCallback, useEffect, useState } from 'react'
-import { useQuery, useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useInfiniteQuery, useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 import { queryKeys } from '@renderer/shared/query/queryKeys'
-import { GameServer, PrivateServer } from '@renderer/shared/types'
+import { GameServer, PrivateServer, RecentServerJoin } from '@renderer/shared/types'
 
 interface GameServersResponse {
   data: GameServer[]
   nextPageCursor: string | null
 }
+
+const ONE_MINUTE = 60 * 1000
+const PLAYER_THUMBNAIL_BATCH_SIZE = 100
+const MAX_PLAYER_THUMBNAILS_PER_SERVER = 5
 
 // Fetch game servers with infinite query for pagination
 export function useGameServers(
@@ -32,7 +36,8 @@ export function useGameServers(
           playing: s.playing,
           maxPlayers: s.maxPlayers,
           ping: s.ping,
-          fps: s.fps
+          fps: s.fps,
+          playerTokens: s.playerTokens || []
         }))
 
         return {
@@ -48,7 +53,8 @@ export function useGameServers(
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     refetchOnReconnect: false,
-    staleTime: 30 * 1000,
+    staleTime: ONE_MINUTE,
+    refetchInterval: ONE_MINUTE,
     initialPageParam: undefined as string | undefined
   })
 }
@@ -66,6 +72,18 @@ export function useGameName(placeId: string, enabled: boolean = true) {
     },
     enabled: enabled && !!placeId.trim(),
     staleTime: 5 * 60 * 1000 // 5 minutes (game names don't change often)
+  })
+}
+
+export function useRecentServerJoins(placeId: string, enabled: boolean = true) {
+  return useQuery({
+    queryKey: queryKeys.servers.recent(placeId),
+    queryFn: () => window.api.getRecentServerJoins(placeId) as Promise<RecentServerJoin[]>,
+    enabled: enabled && !!placeId.trim(),
+    staleTime: ONE_MINUTE,
+    refetchInterval: ONE_MINUTE,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false
   })
 }
 
@@ -195,8 +213,90 @@ export function usePrivateServers(placeId: string, enabled: boolean = true) {
     },
     getNextPageParam: (lastPage) => lastPage.nextPageCursor,
     enabled: enabled && !!placeId.trim(),
-    staleTime: 30000,
+    staleTime: ONE_MINUTE,
+    refetchInterval: ONE_MINUTE,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
     initialPageParam: undefined as string | undefined
   })
 }
 
+/**
+ * Fetch avatar headshot thumbnails for all player tokens across servers.
+ * Returns a Record<token, imageUrl>.
+ */
+export function useServerPlayerThumbnails(servers: GameServer[]) {
+  const playerTokens = useMemo(() => {
+    const seen = new Set<string>()
+    const tokens: string[] = []
+
+    for (const server of servers) {
+      for (const token of server.playerTokens.slice(0, MAX_PLAYER_THUMBNAILS_PER_SERVER)) {
+        if (seen.has(token)) {
+          continue
+        }
+
+        seen.add(token)
+        tokens.push(token)
+      }
+    }
+
+    return tokens
+  }, [servers])
+
+  const playerTokenChunks = useMemo(() => {
+    const chunks: string[][] = []
+
+    for (let i = 0; i < playerTokens.length; i += PLAYER_THUMBNAIL_BATCH_SIZE) {
+      chunks.push(playerTokens.slice(i, i + PLAYER_THUMBNAIL_BATCH_SIZE))
+    }
+
+    return chunks
+  }, [playerTokens])
+
+  const thumbnailQueries = useQueries({
+    queries: playerTokenChunks.map((chunk) => ({
+      queryKey: queryKeys.servers.playerThumbnails(servers[0]?.placeId ?? '', chunk),
+      queryFn: async (): Promise<Record<string, string>> => {
+        const results = await window.api.getPlayerThumbnailsByTokens(chunk) as {
+          token: string
+          imageUrl: string | null
+        }[]
+        const map: Record<string, string> = {}
+
+        for (const entry of results) {
+          if (entry.imageUrl) {
+            map[entry.token] = entry.imageUrl
+          }
+        }
+
+        return map
+      },
+      enabled: chunk.length > 0,
+      staleTime: ONE_MINUTE,
+      refetchOnWindowFocus: false,
+      refetchOnMount: false,
+      refetchOnReconnect: false
+    }))
+  })
+
+  const data = useMemo(() => {
+    const map: Record<string, string> = {}
+
+    for (const query of thumbnailQueries) {
+      if (!query.data) {
+        continue
+      }
+
+      Object.assign(map, query.data)
+    }
+
+    return map
+  }, [thumbnailQueries])
+
+  return {
+    data,
+    isLoading: thumbnailQueries.some((query) => query.isLoading),
+    isFetching: thumbnailQueries.some((query) => query.isFetching)
+  }
+}

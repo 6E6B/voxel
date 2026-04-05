@@ -55,6 +55,15 @@ export enum BinaryType {
     MacStudio = 'MacStudio'
 }
 
+export type RecentServerType = 'public' | 'private'
+
+export interface RecentServerJoin {
+    placeId: string
+    serverId: string
+    serverType: RecentServerType
+    joinedAt: number
+}
+
 export interface RobloxInstallation {
     id: string
     name: string

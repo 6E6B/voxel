@@ -32,6 +32,7 @@ export const queryKeys = {
             [...queryKeys.games.all, 'inSort', sortId] as const,
         search: (query: string, _sessionId?: string) =>
             [...queryKeys.games.all, 'search', query] as const,
+        details: (universeId: number) => [...queryKeys.games.all, 'details', universeId] as const,
         byPlaceIds: (placeIds: string[]) => [...queryKeys.games.all, 'byPlaceIds', placeIds] as const,
         favorites: () => [...queryKeys.games.all, 'favorites'] as const,
         recentlyPlayed: () => [...queryKeys.games.all, 'recentlyPlayed'] as const
@@ -91,11 +92,14 @@ export const queryKeys = {
         all: ['servers'] as const,
         list: (placeId: string, excludeFull: boolean) =>
             [...queryKeys.servers.all, 'list', placeId, excludeFull] as const,
+        recent: (placeId: string) => [...queryKeys.servers.all, 'recent', placeId] as const,
         privateList: (placeId: string) =>
             [...queryKeys.servers.all, 'private', placeId] as const,
         gameName: (placeId: string) => [...queryKeys.servers.all, 'gameName', placeId] as const,
         queuePosition: (placeId: string, serverId: string) =>
-            [...queryKeys.servers.all, 'queuePosition', placeId, serverId] as const
+            [...queryKeys.servers.all, 'queuePosition', placeId, serverId] as const,
+        playerThumbnails: (placeId: string, playerTokens: string[]) =>
+            [...queryKeys.servers.all, 'playerThumbnails', placeId, playerTokens] as const
     },
     rolimons: {
         all: ['rolimons'] as const,

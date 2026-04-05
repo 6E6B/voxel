@@ -1,4 +1,5 @@
-import React, { useState } from 'react'
+import React from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn } from '@renderer/shared/lib/utils'
 import { RecommendationItem } from '@shared/contracts/avatar'
@@ -38,47 +39,61 @@ export const RecommendationsList: React.FC<RecommendationsListProps> = ({
       <div className={cn(showSeparator ? 'pt-6 border-t border-neutral-800' : 'pt-3')}>
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-sm font-medium text-white">Recommended Accessories</h3>
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => scrollCarousel('left')}
-              disabled={!canScrollLeft}
-              className={cn(
-                'p-1.5 rounded-lg transition-all',
-                canScrollLeft
-                  ? 'bg-neutral-800 hover:bg-neutral-700 text-white'
-                  : 'bg-neutral-900 text-neutral-600 cursor-not-allowed'
-              )}
-            >
-              <ChevronLeft size={16} />
-            </button>
-            <button
-              onClick={() => scrollCarousel('right')}
-              disabled={!canScrollRight}
-              className={cn(
-                'p-1.5 rounded-lg transition-all',
-                canScrollRight
-                  ? 'bg-neutral-800 hover:bg-neutral-700 text-white'
-                  : 'bg-neutral-900 text-neutral-600 cursor-not-allowed'
-              )}
-            >
-              <ChevronRight size={16} />
-            </button>
-          </div>
         </div>
-        <div
-          ref={carouselRef}
-          className="flex gap-3 overflow-x-auto overflow-y-visible scrollbar-none scroll-smooth py-2 -my-2"
-          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-        >
-          {recommendations.map((item, index) => (
-            <RecommendationCard
-              key={item.id}
-              item={item}
-              imageUrl={recommendationThumbnails.get(item.id)}
-              index={index}
-              onClick={() => onItemClick(item)}
-            />
-          ))}
+        <div className="relative overflow-visible">
+          <AnimatePresence>
+            {canScrollLeft && (
+              <motion.button
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                transition={{ duration: 0.15 }}
+                onClick={() => scrollCarousel('left')}
+                className="absolute -left-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 flex items-center justify-center bg-[var(--color-surface-muted)] hover:bg-[var(--color-surface-hover)] rounded-full shadow-lg transition-colors border border-[var(--color-border)]"
+                aria-label="Scroll left"
+              >
+                <ChevronLeft size={24} className="text-[var(--color-text-primary)]" />
+              </motion.button>
+            )}
+          </AnimatePresence>
+          <AnimatePresence>
+            {canScrollRight && (
+              <motion.button
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                transition={{ duration: 0.15 }}
+                onClick={() => scrollCarousel('right')}
+                className="absolute -right-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 flex items-center justify-center bg-[var(--color-surface-muted)] hover:bg-[var(--color-surface-hover)] rounded-full shadow-lg transition-colors border border-[var(--color-border)]"
+                aria-label="Scroll right"
+              >
+                <ChevronRight size={24} className="text-[var(--color-text-primary)]" />
+              </motion.button>
+            )}
+          </AnimatePresence>
+          {canScrollLeft && (
+            <div className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-[var(--color-surface)] to-transparent z-10 pointer-events-none" />
+          )}
+          {canScrollRight && (
+            <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-[var(--color-surface)] to-transparent z-10 pointer-events-none" />
+          )}
+          <div
+            ref={carouselRef}
+            className="overflow-x-auto overflow-y-visible py-2 -my-2 scrollbar-hide"
+            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          >
+            <div className="flex gap-3 pr-3">
+              {recommendations.map((item, index) => (
+                <RecommendationCard
+                  key={item.id}
+                  item={item}
+                  imageUrl={recommendationThumbnails.get(item.id)}
+                  index={index}
+                  onClick={() => onItemClick(item)}
+                />
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </TooltipProvider>

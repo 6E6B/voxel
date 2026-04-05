@@ -85,7 +85,6 @@ interface ResellersListProps {
   resellerAvatars: Map<number, string>
   purchasingReseller: string | null
   onBuy: (reseller: ResellerItem) => void
-  onLoadMore: () => void
 }
 
 export const ResellersList: React.FC<ResellersListProps> = ({
@@ -93,8 +92,7 @@ export const ResellersList: React.FC<ResellersListProps> = ({
   resellersLoading,
   resellerAvatars,
   purchasingReseller,
-  onBuy,
-  onLoadMore
+  onBuy
 }) => {
   if (resellersLoading) {
     return (
@@ -175,14 +173,6 @@ export const ResellersList: React.FC<ResellersListProps> = ({
           )
         })}
       </div>
-      {resellers.length >= 10 && (
-        <button
-          onClick={onLoadMore}
-          className="w-full mt-2 py-2 text-xs text-neutral-500 hover:text-neutral-300 transition-colors"
-        >
-          Load more
-        </button>
-      )}
     </div>
   )
 }

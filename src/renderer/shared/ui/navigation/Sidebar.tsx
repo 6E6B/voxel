@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react'
+import React, { useCallback, useMemo, useRef, useState } from 'react'
 import {
   Settings,
   Menu,
@@ -367,6 +367,13 @@ const Sidebar = ({
     [selectedAccount, showProfileCard, sidebarTabs]
   )
 
+  const handleTabSelect = useCallback(
+    (tabId: TabId) => {
+      setActiveTab(tabId)
+    },
+    [setActiveTab]
+  )
+
   return (
     <TooltipProvider>
       <motion.aside
@@ -420,7 +427,7 @@ const Sidebar = ({
                     label={tab.label}
                     isActive={activeTab === tab.id}
                     isCollapsed={isSidebarCollapsed}
-                    onClick={() => setActiveTab(tab.id)}
+                    onClick={() => handleTabSelect(tab.id)}
                     disableLayoutAnimation={isResizing || isSidebarCollapsed}
                   />
                 </React.Fragment>

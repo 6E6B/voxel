@@ -27,6 +27,8 @@ import {
 import { useFriendPresenceNotifications } from '@renderer/shared/hooks/useFriendPresenceNotifications'
 import { useAccountsViewMode } from '../features/settings/useSettings'
 import { useTheme } from '@renderer/shared/theme/ThemeContext'
+import { useStartupReady } from '@renderer/shared/utils/startup'
+import { preloadAllTabs } from '@renderer/app/tab-loaders'
 
 import {
     useActiveTab,
@@ -56,6 +58,12 @@ const isMac = window.platform?.isMac ?? false
 const App: React.FC = () => {
     const queryClient = useQueryClient()
     const hasCompletedOnboarding = useHasCompletedOnboarding()
+    const isStartupReady = useStartupReady()
+
+    // Preload all tab chunks in the background after first paint.
+    useEffect(() => {
+        if (isStartupReady) preloadAllTabs()
+    }, [isStartupReady])
 
     const isAppUnlocked = useAppUnlocked()
     const setAppUnlocked = useSetAppUnlocked()
@@ -84,7 +92,7 @@ const App: React.FC = () => {
     const setSelectedIds = useSetSelectedIds()
 
     useAccountsViewMode()
-    useAccountStatusPolling()
+    useAccountStatusPolling(isStartupReady)
 
     const { accounts, isLoading: isLoadingAccounts, setAccounts, addAccount } = useAccountsManager()
     const { settings, isLoading: isLoadingSettings, updateSettings } = useSettingsManager()
@@ -225,6 +233,7 @@ const App: React.FC = () => {
     }, [accounts, selectedAccount?.avatarUrl, settings.primaryAccountId])
 
     useEffect(() => {
+        if (!isStartupReady) return
         if (!settings.useDynamicAccentColor || !accentAvatarUrl) return
         const controller = new AbortController()
         getDominantAccentColorFromImageUrl(accentAvatarUrl, { signal: controller.signal })
@@ -237,11 +246,16 @@ const App: React.FC = () => {
                 console.warn('[theme] failed to derive accent from avatar thumbnail', error)
             })
         return () => controller.abort()
-    }, [accentAvatarUrl, settings.useDynamicAccentColor])
+    }, [accentAvatarUrl, isStartupReady, settings.useDynamicAccentColor])
 
     // --- Friends & presence ---
-    const { data: friendsData = [] } = useFriends(selectedAccount)
-    useFriendPresenceNotifications(friendsData, !!selectedAccount, selectedAccount?.id)
+    const shouldLoadFriends = isStartupReady || activeTab === 'Friends'
+    const { data: friendsData = [] } = useFriends(shouldLoadFriends ? selectedAccount : null)
+    useFriendPresenceNotifications(
+        friendsData,
+        isStartupReady && !!selectedAccount,
+        selectedAccount?.id
+    )
 
     // --- Theme sync ---
     const { setTheme } = useTheme()

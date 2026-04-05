@@ -43,11 +43,22 @@ export const gamesRouter = router({
     getRecentlyPlayedGames: contractMutation(gamesContracts.getRecentlyPlayedGames, async (_ctx, sessionId) => {
         return RobloxGameService.getRecentlyPlayedGames(getStoredCookie(), sessionId)
     }),
+    getRecentServerJoins: contractMutation(gamesContracts.getRecentServerJoins, async (_ctx, placeId) => {
+        return storageService.getRecentServerJoins(placeId)
+    }),
     launchGame: authContractMutation(gamesContracts.launchGame, async (_ctx, cookie, placeId, jobId, friendId, installPath, accessCode) => {
         const result = await RobloxLauncherService.launchGame(cookie, placeId, jobId, friendId, installPath, accessCode)
 
         if (result.success) {
             gameSessionService.startSession(placeId)
+
+            if (jobId || accessCode) {
+                storageService.addRecentServerJoin({
+                    placeId: String(placeId),
+                    serverId: accessCode ?? jobId!,
+                    serverType: accessCode ? 'private' : 'public'
+                })
+            }
         }
 
         return result
@@ -150,5 +161,8 @@ export const gamesRouter = router({
 
         await downloadFileToPath(imageUrl, result.filePath)
         return { success: true, path: result.filePath }
+    }),
+    getPlayerThumbnailsByTokens: contractMutation(gamesContracts.getPlayerThumbnailsByTokens, async (_ctx, tokens) => {
+        return RobloxGameService.getPlayerThumbnailsByTokens(tokens)
     })
 })

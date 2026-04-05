@@ -22,6 +22,7 @@ interface ProfileHeaderProps {
   rawDescription: string
   onSelectProfile?: (userId: number) => void
   onJoinGame?: (placeId: number | string, jobId?: string, userId?: number | string) => void
+  onOpenGameDetails?: () => void
   variant?: 'default' | 'transparent'
 }
 
@@ -37,6 +38,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   rawDescription,
   onSelectProfile,
   onJoinGame,
+  onOpenGameDetails,
   variant = 'default'
 }) => {
   const gameActivity = profile.gameActivity
@@ -166,7 +168,18 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
             {gameActivity && (
               <div className="flex items-center gap-2.5 text-sm">
                 <span className="text-[var(--color-text-muted)]">
-                  Playing <span className="text-[var(--color-text-secondary)] font-medium">{gameActivity.name}</span>
+                  Playing{' '}
+                  {onOpenGameDetails ? (
+                    <button
+                      type="button"
+                      className="font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:underline underline-offset-2 transition-colors cursor-pointer"
+                      onClick={onOpenGameDetails}
+                    >
+                      {gameActivity.name}
+                    </button>
+                  ) : (
+                    <span className="text-[var(--color-text-secondary)] font-medium">{gameActivity.name}</span>
+                  )}
                 </span>
                 {onJoinGame && (
                   <button

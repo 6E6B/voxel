@@ -1,8 +1,9 @@
-import React, { useCallback, useLayoutEffect, useRef, useState } from 'react'
+import React, { Suspense, lazy, useCallback, useLayoutEffect, useRef, useState } from 'react'
 import { Minus, Square, X } from 'lucide-react'
 import { TabId, Friend, Game } from '@renderer/shared/types'
-import NotificationTray from '@renderer/shared/ui/feedback/NotificationTray'
-import TitleBarSearch from './TitleBarSearch'
+
+const NotificationTray = lazy(() => import('@renderer/shared/ui/feedback/NotificationTray'))
+const TitleBarSearch = lazy(() => import('./TitleBarSearch'))
 
 interface AppTitleBarProps {
     activeTab: TabId
@@ -20,6 +21,10 @@ interface SearchLayout {
     centerX: number
     width: number
 }
+
+const SearchFallback: React.FC = () => (
+    <div className="h-9 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)]/60" />
+)
 
 const AppTitleBar: React.FC<AppTitleBarProps> = ({
     activeTab,
@@ -95,7 +100,13 @@ const AppTitleBar: React.FC<AppTitleBarProps> = ({
                     }}
                 >
                     <div className="w-full">
-                        <TitleBarSearch friends={friends} onOpenUserProfile={onOpenUserProfile} onGameSelect={onGameSelect} />
+                        <Suspense fallback={<SearchFallback />}>
+                            <TitleBarSearch
+                                friends={friends}
+                                onOpenUserProfile={onOpenUserProfile}
+                                onGameSelect={onGameSelect}
+                            />
+                        </Suspense>
                     </div>
                 </div>
             )}
@@ -121,7 +132,9 @@ const AppTitleBar: React.FC<AppTitleBarProps> = ({
                     }
                 >
                     <div ref={notificationRef} className="shrink-0">
-                        <NotificationTray onOpenUserProfile={onOpenUserProfile} />
+                        <Suspense fallback={<div className="h-10 w-10" />}>
+                            <NotificationTray onOpenUserProfile={onOpenUserProfile} />
+                        </Suspense>
                     </div>
                     {!isMac && (
                         <>

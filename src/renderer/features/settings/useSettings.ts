@@ -10,6 +10,7 @@ import {
 import { applyAccentColor } from '@renderer/shared/utils/themeUtils'
 import { applyTint, getCurrentThemeNameFromDom } from '@renderer/shared/theme/theme'
 import { initializeFonts, CustomFont } from '@renderer/shared/utils/fontUtils'
+import { scheduleAfterFirstPaint } from '@renderer/shared/utils/startup'
 
 // ============================================================================
 // Default Settings
@@ -138,18 +139,29 @@ export function useSettingsManager() {
 
   // Initialize custom fonts on first load
   useEffect(() => {
+    let cancelled = false
+
     const loadFonts = async () => {
       try {
         const [customFonts, activeFont] = await Promise.all([
           window.api.getCustomFonts(),
           window.api.getActiveFont()
         ])
+        if (cancelled) return
         await initializeFonts(customFonts as CustomFont[], activeFont)
       } catch (error) {
         console.error('Failed to initialize fonts:', error)
       }
     }
-    loadFonts()
+
+    const cancel = scheduleAfterFirstPaint(() => {
+      void loadFonts()
+    })
+
+    return () => {
+      cancelled = true
+      cancel()
+    }
   }, []) // Only run once on mount
 
   // Update settings (partial, optimistic)

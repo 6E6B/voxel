@@ -8,12 +8,17 @@ interface GameSort {
   displayName: string
 }
 
+const ONE_MINUTE = 60 * 1000
+
 // Fetch game sorts
 export function useGameSorts(sessionId?: string) {
   return useQuery({
     queryKey: queryKeys.games.sorts(sessionId),
     queryFn: () => window.api.getGameSorts(sessionId) as Promise<GameSort[]>,
-    staleTime: 5 * 60 * 1000 // Sorts don't change often
+    staleTime: 5 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false
   })
 }
 
@@ -43,16 +48,35 @@ export function useSearchGames(query: string, sessionId?: string) {
   })
 }
 
+export function useGameDetails(universeId: number | null | undefined, enabled: boolean = true) {
+  return useQuery({
+    queryKey: queryKeys.games.details(universeId || 0),
+    queryFn: async () => {
+      if (!universeId) return null
+
+      const games = await window.api.getGamesByUniverseIds([universeId])
+      return games?.[0] ?? null
+    },
+    enabled: enabled && !!universeId,
+    staleTime: ONE_MINUTE,
+    gcTime: 5 * 60 * 1000,
+    refetchInterval: ONE_MINUTE,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false
+  })
+}
+
 // Fetch recently played games for the authenticated user (requires a cookie in main)
 export function useRecentlyPlayedGames(sessionId?: string) {
   return useQuery({
     queryKey: queryKeys.games.recentlyPlayed(),
     queryFn: () => window.api.getRecentlyPlayedGames(sessionId) as Promise<Game[]>,
-    staleTime: 60 * 1000,
-    gcTime: 10 * 60 * 1000,
-    refetchInterval: 60 * 1000,
-    refetchOnWindowFocus: true,
-    refetchOnReconnect: true
+    staleTime: 2 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false
   })
 }
 
@@ -71,10 +95,13 @@ export function useGamesByPlaceIds(placeIds: string[]) {
 
 // Fetch favorite game IDs
 export function useFavoriteGames() {
-  return useQuery({
+  return useQuery<string[]>({
     queryKey: queryKeys.games.favorites(),
-    queryFn: () => window.api.getFavoriteGames(),
-    staleTime: 60 * 1000 // 1 minute
+    queryFn: () => window.api.getFavoriteGames() as Promise<string[]>,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false
   })
 }
 

@@ -1,17 +1,47 @@
-import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react'
-import { Server, Wifi, ArrowRight, Loader2, Globe, Users, Crown, RefreshCw } from 'lucide-react'
+import { useState, useRef, useEffect, useCallback, useMemo, type MouseEvent } from 'react'
+import { Server, Wifi, ArrowRight, Loader2, Globe, Users, Crown, RefreshCw, History, Copy } from 'lucide-react'
 import { getPingColor } from '@renderer/shared/utils/serverUtils'
 import CustomCheckbox from '@renderer/shared/ui/buttons/CustomCheckbox'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@renderer/shared/ui/display/Tooltip'
+import GenericContextMenu, { type ContextMenuSection } from '@renderer/shared/ui/menus/GenericContextMenu'
+import {
+  createAnchoredOverlayPosition,
+  type AnchoredOverlayPosition
+} from '@renderer/shared/ui/menus/anchoredPosition'
 import {
   useGameServers,
   usePrivateServers,
-  useServerQueuePositions
+  useRecentServerJoins,
+  useServerQueuePositions,
+  useServerPlayerThumbnails
 } from '@renderer/features/games/api/useServers'
 import { ErrorMessage } from '@renderer/shared/ui/feedback/ErrorMessage'
 import { EmptyState } from '@renderer/shared/ui/feedback/EmptyState'
 import { ConfirmModal } from '@renderer/shared/ui/dialogs/ConfirmModal'
-import { PrivateServer } from '@renderer/shared/types'
+import { PrivateServer, RecentServerJoin } from '@renderer/shared/types'
+
+const relativeTimeFormatter = new Intl.RelativeTimeFormat(undefined, { numeric: 'auto' })
+
+function formatRecentJoinTime(joinedAt: number) {
+  const diffMs = joinedAt - Date.now()
+  const diffMinutes = Math.round(diffMs / 60000)
+
+  if (Math.abs(diffMinutes) < 60) {
+    return relativeTimeFormatter.format(diffMinutes, 'minute')
+  }
+
+  const diffHours = Math.round(diffMs / 3600000)
+  if (Math.abs(diffHours) < 24) {
+    return relativeTimeFormatter.format(diffHours, 'hour')
+  }
+
+  const diffDays = Math.round(diffMs / 86400000)
+  if (Math.abs(diffDays) < 30) {
+    return relativeTimeFormatter.format(diffDays, 'day')
+  }
+
+  return new Date(joinedAt).toLocaleString()
+}
 
 interface ServersListProps {
   placeId: string
@@ -19,12 +49,19 @@ interface ServersListProps {
   onJoinPrivateServer?: (placeId: string, accessCode: string) => void
 }
 
+type ServerContextMenuState = {
+  serverId: string
+} & AnchoredOverlayPosition
+
 const ServersList = ({ placeId, onJoin, onJoinPrivateServer }: ServersListProps) => {
   const [excludeFullGames, setExcludeFullGames] = useState(false)
   const isPreferenceLoaded = useRef(false)
+  const hasFetchedInitialQueuePositions = useRef(false)
 
   const [selectedServerId, setSelectedServerId] = useState<string | null>(null)
   const [selectedPrivateServer, setSelectedPrivateServer] = useState<PrivateServer | null>(null)
+  const [selectedRecentServer, setSelectedRecentServer] = useState<RecentServerJoin | null>(null)
+  const [serverContextMenu, setServerContextMenu] = useState<ServerContextMenuState | null>(null)
 
   // Both queries always enabled
   const {
@@ -41,6 +78,11 @@ const ServersList = ({ placeId, onJoin, onJoinPrivateServer }: ServersListProps)
     isLoading: isLoadingPrivateServers,
     error: privateServersError
   } = usePrivateServers(placeId, !!placeId)
+
+  const {
+    data: recentServerJoins = [],
+    isLoading: isLoadingRecentServerJoins
+  } = useRecentServerJoins(placeId, !!placeId)
 
   // Flatten pages into a single array, deduplicating by id
   const servers = useMemo(() => {
@@ -64,7 +106,17 @@ const ServersList = ({ placeId, onJoin, onJoinPrivateServer }: ServersListProps)
     return servers.filter((server) => server.playing < server.maxPlayers)
   }, [servers, excludeFullGames])
 
+  const recentServers = useMemo(
+    () =>
+      recentServerJoins.filter(
+        (server) => server.serverType === 'public' || typeof onJoinPrivateServer === 'function'
+      ),
+    [onJoinPrivateServer, recentServerJoins]
+  )
+
   const { queuePositionsByServerId, loadingServerIds, refreshServerQueuePosition } = useServerQueuePositions(placeId)
+
+  const { data: playerThumbnails = {} } = useServerPlayerThumbnails(filteredServers)
 
   // Load saved excludeFullGames preference on mount
   useEffect(() => {
@@ -95,14 +147,78 @@ const ServersList = ({ placeId, onJoin, onJoinPrivateServer }: ServersListProps)
     savePreference()
   }, [excludeFullGames])
 
+  useEffect(() => {
+    hasFetchedInitialQueuePositions.current = false
+  }, [placeId])
+
+  useEffect(() => {
+    if (hasFetchedInitialQueuePositions.current || isLoadingServers) {
+      return
+    }
+
+    hasFetchedInitialQueuePositions.current = true
+
+    const fullServerIds = servers.filter((server) => server.playing >= server.maxPlayers).map((server) => server.id)
+
+    if (fullServerIds.length === 0) {
+      return
+    }
+
+    void Promise.allSettled(fullServerIds.map((serverId) => refreshServerQueuePosition(serverId)))
+  }, [isLoadingServers, refreshServerQueuePosition, servers])
+
   const handleLoadMore = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
       fetchNextPage()
     }
   }, [hasNextPage, isFetchingNextPage, fetchNextPage])
 
+  const handleServerContextMenu = useCallback((event: MouseEvent<HTMLElement>, serverId: string) => {
+    event.preventDefault()
+    setServerContextMenu({
+      serverId,
+      ...createAnchoredOverlayPosition(event)
+    })
+  }, [])
+
+  const handleCopyJobId = useCallback(async () => {
+    if (!serverContextMenu) {
+      return
+    }
+
+    try {
+      await navigator.clipboard.writeText(serverContextMenu.serverId)
+    } catch (error) {
+      console.error('Failed to copy job ID:', error)
+    } finally {
+      setServerContextMenu(null)
+    }
+  }, [serverContextMenu])
+
+  const serverContextMenuSections = useMemo<ContextMenuSection[]>(
+    () =>
+      serverContextMenu
+        ? [
+          {
+            items: [
+              {
+                label: 'Copy Job ID',
+                icon: <Copy size={16} />,
+                onClick: () => {
+                  void handleCopyJobId()
+                }
+              }
+            ]
+          }
+        ]
+        : [],
+    [handleCopyJobId, serverContextMenu]
+  )
+
   const hasPrivateServers = privateServers.length > 0
+  const hasRecentServers = recentServers.length > 0
   const showPrivateSection = hasPrivateServers || isLoadingPrivateServers
+  const showRecentSection = hasRecentServers || isLoadingRecentServerJoins
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -120,6 +236,69 @@ const ServersList = ({ placeId, onJoin, onJoinPrivateServer }: ServersListProps)
         )}
 
         <div className="space-y-5">
+          {showRecentSection && (
+            <div>
+              <div className="flex items-center gap-2.5 py-1.5">
+                <div className="flex items-center gap-2 text-xs font-semibold text-sky-400">
+                  <History size={14} />
+                  Recent
+                </div>
+                {hasRecentServers && (
+                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-sky-500/15 text-sky-300">
+                    {recentServers.length}
+                  </span>
+                )}
+                <div className="flex-1 h-px bg-[var(--color-border)]" />
+              </div>
+
+              <div className="mt-2 space-y-2">
+                {isLoadingRecentServerJoins ? (
+                  <div className="flex items-center justify-center gap-2 text-[var(--color-text-muted)] text-sm py-8">
+                    <Loader2 className="animate-spin" size={14} />
+                    <span>Loading recent servers...</span>
+                  </div>
+                ) : (
+                  recentServers.map((server) => (
+                    <div
+                      key={`${server.serverType}:${server.serverId}`}
+                      role="button"
+                      tabIndex={0}
+                      className="w-full text-left rounded-xl border bg-[var(--color-surface)] border-[var(--color-border)] hover:border-[var(--color-border-strong)] hover:bg-[var(--color-surface-muted)] transition-all group cursor-pointer px-4 py-3"
+                      onClick={() => setSelectedRecentServer(server)}
+                      onContextMenu={
+                        server.serverType === 'public'
+                          ? (event) => handleServerContextMenu(event, server.serverId)
+                          : undefined
+                      }
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault()
+                          setSelectedRecentServer(server)
+                        }
+                      }}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="min-w-0 flex-1">
+                          <div className="font-mono text-xs text-[var(--color-text-muted)] group-hover:text-[var(--color-text-secondary)] truncate transition-colors">
+                            {server.serverType === 'private' ? 'Private server' : server.serverId}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3 shrink-0 ml-3">
+                          <div className="flex items-center gap-1.5">
+                            <History size={12} className="text-[var(--color-text-muted)]" />
+                            <span className="text-xs text-[var(--color-text-secondary)] tabular-nums" title={new Date(server.joinedAt).toLocaleString()}>
+                              {formatRecentJoinTime(server.joinedAt)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+
           {/* ─── Private Servers Section ─── */}
           {showPrivateSection && (
             <div>
@@ -147,7 +326,7 @@ const ServersList = ({ placeId, onJoin, onJoinPrivateServer }: ServersListProps)
                     <button
                       key={server.vipServerId}
                       onClick={() => setSelectedPrivateServer(server)}
-                      className="w-full text-left rounded-xl border bg-[var(--color-surface)] border-[var(--color-border)] hover:border-[var(--color-border-strong)] hover:bg-[var(--color-surface-hover)] transition-all group cursor-pointer px-4 py-3"
+                      className="w-full text-left rounded-xl border bg-[var(--color-surface)] border-[var(--color-border)] hover:border-[var(--color-border-strong)] hover:bg-[var(--color-surface-muted)] transition-all group cursor-pointer px-4 py-3"
                     >
                       <div className="flex items-center justify-between">
                         <div className="min-w-0 flex-1">
@@ -230,8 +409,9 @@ const ServersList = ({ placeId, onJoin, onJoinPrivateServer }: ServersListProps)
                       key={server.id}
                       role="button"
                       tabIndex={0}
-                      className="w-full text-left rounded-xl border bg-[var(--color-surface)] border-[var(--color-border)] hover:border-[var(--color-border-strong)] hover:bg-[var(--color-surface-hover)] transition-all group cursor-pointer px-4 py-3"
+                      className="w-full text-left rounded-xl border bg-[var(--color-surface)] border-[var(--color-border)] hover:border-[var(--color-border-strong)] hover:bg-[var(--color-surface-muted)] transition-all group cursor-pointer px-4 py-3"
                       onClick={() => setSelectedServerId(server.id)}
+                      onContextMenu={(event) => handleServerContextMenu(event, server.id)}
                       onKeyDown={(event) => {
                         if (event.key === 'Enter' || event.key === ' ') {
                           event.preventDefault()
@@ -240,21 +420,51 @@ const ServersList = ({ placeId, onJoin, onJoinPrivateServer }: ServersListProps)
                       }}
                     >
                       <div className="flex items-center justify-between">
-                        <div className="font-mono text-xs text-[var(--color-text-muted)] group-hover:text-[var(--color-text-secondary)] truncate transition-colors min-w-0 flex-1">
-                          {server.id}
+                        <div className="min-w-0 flex-1">
+                          {server.playerTokens && server.playerTokens.length > 0 && (
+                            <div className="flex items-center gap-1 mb-2 flex-wrap">
+                              {server.playerTokens.slice(0, 5).map((token, idx) => {
+                                const url = playerThumbnails[token]
+                                return url ? (
+                                  <img
+                                    key={idx}
+                                    src={url}
+                                    alt=""
+                                    className="w-8 h-8 rounded-full bg-[var(--color-surface-hover)] shrink-0"
+                                    loading="lazy"
+                                  />
+                                ) : (
+                                  <div
+                                    key={idx}
+                                    className="w-8 h-8 rounded-full bg-[var(--color-surface-hover)] shrink-0"
+                                  />
+                                )
+                              })}
+                              {server.playerTokens.length > 5 && (
+                                <span className="text-[10px] text-[var(--color-text-muted)] ml-1">
+                                  +{server.playerTokens.length - 5}
+                                </span>
+                              )}
+                            </div>
+                          )}
+                          <div className="font-mono text-xs text-[var(--color-text-muted)] group-hover:text-[var(--color-text-secondary)] truncate transition-colors">
+                            {server.id}
+                          </div>
                         </div>
                         <div className="flex items-center gap-3 shrink-0 ml-3">
                           <div className="flex items-center gap-1.5">
                             <Users size={12} className="text-[var(--color-text-muted)]" />
-                            <span className="text-xs text-[var(--color-text-secondary)] tabular-nums">
-                              {server.playing}
-                              <span className="text-[var(--color-text-muted)]">/{server.maxPlayers}</span>
+                            <div className="inline-flex items-center gap-1.5 text-xs text-[var(--color-text-secondary)] tabular-nums">
+                              <span>
+                                {server.playing}
+                                <span className="text-[var(--color-text-muted)]">/{server.maxPlayers}</span>
+                              </span>
                               {server.playing >= server.maxPlayers ? (
                                 <button
                                   type="button"
                                   aria-label="Refresh queue position"
                                   title="Refresh queue position"
-                                  className="ml-1.5 inline-flex items-center justify-center rounded text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors"
+                                  className="inline-flex h-4 w-4 items-center justify-center rounded text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors"
                                   onClick={(event) => {
                                     event.stopPropagation()
                                     void refreshServerQueuePosition(server.id)
@@ -268,9 +478,9 @@ const ServersList = ({ placeId, onJoin, onJoinPrivateServer }: ServersListProps)
                                 </button>
                               ) : null}
                               {queuePositionsByServerId[server.id] ? (
-                                <span className="ml-1 text-amber-400">+{queuePositionsByServerId[server.id]}</span>
+                                <span className="text-amber-400">+{queuePositionsByServerId[server.id]}</span>
                               ) : null}
-                            </span>
+                            </div>
                           </div>
                           <div className="flex items-center gap-1.5">
                             <Wifi size={12} className={getPingColor(server.ping)} />
@@ -310,6 +520,13 @@ const ServersList = ({ placeId, onJoin, onJoinPrivateServer }: ServersListProps)
       </div>
 
       {/* Public server join confirmation */}
+      <GenericContextMenu
+        position={serverContextMenu}
+        sections={serverContextMenuSections}
+        onClose={() => setServerContextMenu(null)}
+        width={200}
+      />
+
       <ConfirmModal
         isOpen={selectedServerId !== null}
         onClose={() => setSelectedServerId(null)}
@@ -320,6 +537,34 @@ const ServersList = ({ placeId, onJoin, onJoinPrivateServer }: ServersListProps)
         }}
         title="Join Server"
         message={`Are you sure you want to join server ${selectedServerId}?`}
+        confirmText="Join"
+        cancelText="Cancel"
+      />
+
+      <ConfirmModal
+        isOpen={selectedRecentServer !== null}
+        onClose={() => setSelectedRecentServer(null)}
+        onConfirm={() => {
+          if (!selectedRecentServer) {
+            return
+          }
+
+          if (selectedRecentServer.serverType === 'private') {
+            onJoinPrivateServer?.(placeId, selectedRecentServer.serverId)
+          } else {
+            onJoin(selectedRecentServer.serverId)
+          }
+
+          setSelectedRecentServer(null)
+        }}
+        title={selectedRecentServer?.serverType === 'private' ? 'Join Recent Private Server' : 'Join Recent Server'}
+        message={
+          selectedRecentServer
+            ? selectedRecentServer.serverType === 'private'
+              ? `Rejoin the private server you joined ${formatRecentJoinTime(selectedRecentServer.joinedAt)}?`
+              : `Rejoin server ${selectedRecentServer.serverId} from ${formatRecentJoinTime(selectedRecentServer.joinedAt)}?`
+            : ''
+        }
         confirmText="Join"
         cancelText="Cancel"
       />
