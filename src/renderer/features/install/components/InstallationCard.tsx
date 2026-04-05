@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { Box, Laptop, Play, Monitor, RefreshCw } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@renderer/shared/ui/display/Tooltip'
 import { Card } from '@renderer/shared/ui/display/Card'
+import { Button } from '@renderer/shared/ui/buttons/Button'
 import { BinaryType } from '@renderer/shared/types'
 import { UnifiedInstallation } from '../types'
 
@@ -25,6 +26,7 @@ export const InstallationCard: React.FC<InstallationCardProps> = ({
 }) => {
   const isStudio =
     install.binaryType === BinaryType.WindowsStudio || install.binaryType === BinaryType.MacStudio
+  const showStatus = install.status !== 'Ready'
 
   return (
     <motion.div
@@ -71,39 +73,36 @@ export const InstallationCard: React.FC<InstallationCardProps> = ({
             </p>
           </div>
 
-          <button
+          <Button
             onClick={(e) => {
               e.stopPropagation()
               onLaunch(install)
             }}
             disabled={isVerifying}
-            className="pressable shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[var(--accent-color)] text-[var(--accent-color-foreground)] text-xs font-bold transition-all hover:bg-[color:color-mix(in_srgb,var(--accent-color)_92%,var(--color-text-primary))] disabled:opacity-40 disabled:cursor-not-allowed shadow-sm shadow-[0_3px_10px_var(--accent-color-shadow)] border border-[color:color-mix(in_srgb,var(--accent-color)_65%,var(--color-text-primary))]"
+            size="sm"
+            className="shrink-0 gap-1.5 text-xs"
           >
             <Play size={12} fill="currentColor" />
             Launch
-          </button>
+          </Button>
         </div>
 
-        {/* Bottom row: status + version */}
+        {/* Bottom row: non-ready status + version */}
         <div className="flex items-center gap-2 mt-3 pt-3 border-t border-[var(--color-border)]">
-          <span
-            className={`inline-flex items-center gap-1 text-[11px] font-medium ${install.status === 'Ready'
-                ? 'text-emerald-400'
-                : install.status === 'Updating'
-                  ? 'text-blue-400'
-                  : 'text-red-400'
-              }`}
-          >
-            {install.status === 'Updating' && <RefreshCw size={10} className="animate-spin" />}
-            {install.status === 'Ready' && (
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-            )}
-            {install.status === 'Error' && (
-              <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
-            )}
-            {install.status}
-          </span>
-          <span className="text-[var(--color-text-muted)] text-[11px]">&middot;</span>
+          {showStatus && (
+            <>
+              <span
+                className={`inline-flex items-center gap-1 text-[11px] font-medium ${install.status === 'Updating' ? 'text-blue-400' : 'text-red-400'}`}
+              >
+                {install.status === 'Updating' && <RefreshCw size={10} className="animate-spin" />}
+                {install.status === 'Error' && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
+                )}
+                {install.status}
+              </span>
+              <span className="text-[var(--color-text-muted)] text-[11px]">&middot;</span>
+            </>
+          )}
           <Tooltip>
             <TooltipTrigger asChild>
               <span className="text-[11px] font-mono text-[var(--color-text-muted)] truncate">

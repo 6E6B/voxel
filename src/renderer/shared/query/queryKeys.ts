@@ -93,7 +93,9 @@ export const queryKeys = {
             [...queryKeys.servers.all, 'list', placeId, excludeFull] as const,
         privateList: (placeId: string) =>
             [...queryKeys.servers.all, 'private', placeId] as const,
-        gameName: (placeId: string) => [...queryKeys.servers.all, 'gameName', placeId] as const
+        gameName: (placeId: string) => [...queryKeys.servers.all, 'gameName', placeId] as const,
+        queuePosition: (placeId: string, serverId: string) =>
+            [...queryKeys.servers.all, 'queuePosition', placeId, serverId] as const
     },
     rolimons: {
         all: ['rolimons'] as const,

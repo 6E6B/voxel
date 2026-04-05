@@ -1,5 +1,4 @@
-import { request, requestWithCsrf } from '@main/lib/request'
-import { RobloxAuthService } from '../auth/RobloxAuthService'
+import { request } from '@main/lib/request'
 import { RobloxUserService } from '../users/UserService'
 import { z } from 'zod'
 import {
@@ -7,8 +6,7 @@ import {
   friendSchema,
   friendsPageSchema,
   followersResponseSchema,
-  presenceSchema,
-  userPresenceResponseSchema
+  presenceSchema
 } from '@shared/contracts/user'
 
 type HydratedUserDetails = {
@@ -112,23 +110,9 @@ export class RobloxFriendService {
   ) {
     if (userIds.length === 0) return { avatars: {}, userDetails: {}, presences: {} }
 
-    const chunk = (arr: number[], size: number) =>
-      Array.from({ length: Math.ceil(arr.length / size) }, (_, i) =>
-        arr.slice(i * size, i * size + size)
-      )
-
     const avatars: Record<number, string> = {}
     const presences: Record<number, any> = {}
     const userDetails: Record<number, HydratedUserDetails> = {}
-
-    let csrfToken = ''
-    if (!options?.skipPresence) {
-      try {
-        csrfToken = await RobloxAuthService.getCsrfToken(cookie)
-      } catch (e) {
-        console.warn('Failed to get CSRF token for presence, proceeding without presence data', e)
-      }
-    }
 
     try {
       const avatarMap = await RobloxUserService.getBatchUserAvatarHeadshots(
@@ -151,26 +135,16 @@ export class RobloxFriendService {
       console.error('Failed to fetch user details via user-profile-api', error)
     }
 
-    if (csrfToken && !options?.skipPresence) {
-      const presenceChunks = chunk(userIds, 50)
-      for (const ids of presenceChunks) {
-        try {
-          const presenceResult = await requestWithCsrf(userPresenceResponseSchema, {
-            method: 'POST',
-            url: 'https://presence.roblox.com/v1/presence/users',
-            cookie,
-            headers: { 'x-csrf-token': csrfToken },
-            body: { userIds: ids }
-          })
-          const presenceData = presenceResult.userPresences || []
+    if (!options?.skipPresence) {
+      try {
+        const presenceData = await RobloxUserService.getBatchPresences(cookie, userIds)
 
-          presenceData.forEach((p: any) => {
-            const validPresence = presenceSchema.parse(p)
-            presences[validPresence.userId] = validPresence
-          })
-        } catch (e) {
-          console.error('Failed to fetch presence chunk', e)
-        }
+        presenceData.forEach((presence) => {
+          const validPresence = presenceSchema.parse(presence)
+          presences[validPresence.userId] = validPresence
+        })
+      } catch (error) {
+        console.error('Failed to fetch presences for friend hydration', error)
       }
     }
 

@@ -443,7 +443,6 @@ const GameDetailsModal: React.FC<GameDetailsModalProps> = ({
 
         <SheetHeader>
           <SheetTitle>{game?.name || 'Game Details'}</SheetTitle>
-          <SheetClose />
         </SheetHeader>
 
         <SheetBody className="flex-1 overflow-y-auto scrollbar-thin">

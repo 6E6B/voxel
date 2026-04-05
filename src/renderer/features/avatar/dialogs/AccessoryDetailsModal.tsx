@@ -417,7 +417,6 @@ const AccessoryDetailsModal: React.FC<AccessoryDetailsModalProps> = ({
 
         <SheetHeader>
           <SheetTitle>{details?.name || 'Accessory Details'}</SheetTitle>
-          <SheetClose />
         </SheetHeader>
 
         <SheetBody className="flex-1 overflow-y-auto scrollbar-thin">

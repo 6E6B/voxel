@@ -169,7 +169,6 @@ export const LimitedsModal: React.FC<LimitedsModalProps> = ({
                             </p>
                         )}
                     </div>
-                    <SheetClose />
                 </SheetHeader>
 
                 {/* Search bar */}

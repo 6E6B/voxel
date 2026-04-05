@@ -2,6 +2,8 @@ import { request } from '@main/lib/request'
 import { z } from 'zod'
 import {
   groupGamesResponseSchema,
+  groupMembersResponseSchema,
+  groupRoleMembersResponseSchema,
   userGroupMembershipSchema,
   pendingGroupRequestRawSchema,
   type PendingGroupRequestRaw
@@ -69,6 +71,31 @@ export class RobloxGroupService {
     })
 
     return result.data
+  }
+
+  /**
+   * Get group members, optionally filtered by role
+   */
+  static async getGroupMembers(groupId: number, roleId?: number, limit: number = 25) {
+    const queryParams = new URLSearchParams({
+      sortOrder: 'Desc',
+      limit: limit.toString()
+    })
+
+    const url =
+      roleId !== undefined
+        ? `https://groups.roblox.com/v1/groups/${groupId}/roles/${roleId}/users?${queryParams.toString()}`
+        : `https://groups.roblox.com/v1/groups/${groupId}/users?${queryParams.toString()}`
+
+    if (roleId !== undefined) {
+      return request(groupRoleMembersResponseSchema, {
+        url
+      })
+    }
+
+    return request(groupMembersResponseSchema, {
+      url
+    })
   }
 
   /**

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Account, AccountStatus } from '@renderer/shared/types'
 import UserProfileView from '@renderer/features/profile/UserProfileView'
-import { Sheet, SheetContent, SheetHandle, SheetBody } from '@renderer/shared/ui/dialogs/Sheet'
+import { Sheet, SheetContent, SheetHandle, SheetHeader, SheetTitle, SheetBody } from '@renderer/shared/ui/dialogs/Sheet'
 import { PageHeaderHost, PageHeaderProvider } from '@renderer/shared/ui/navigation/PageHeaderPortal'
 
 interface UniversalProfileModalProps {
@@ -48,34 +48,37 @@ const UniversalProfileModal: React.FC<UniversalProfileModalProps> = ({
   initialData,
   onJoinGame
 }) => {
-  const [activeUserId, setActiveUserId] = useState<string | number | null>(userId)
+  const [nestedProfileId, setNestedProfileId] = useState<string | number | null>(null)
 
   useEffect(() => {
-    if (isOpen) {
-      setActiveUserId(userId) // Reset/Update active user when modal opens or userId prop changes
+    if (!isOpen) {
+      setNestedProfileId(null)
     }
-  }, [isOpen, userId])
+  }, [isOpen])
 
   return (
     <Sheet isOpen={isOpen} onClose={onClose}>
       <PageHeaderProvider>
         <SheetContent className="h-full">
           <SheetHandle />
+          <SheetHeader>
+            <SheetTitle>Profile</SheetTitle>
+          </SheetHeader>
           <SheetBody>
-            {activeUserId && selectedAccount?.cookie ? (
-              <div key={activeUserId?.toString()} className="h-full w-full animate-profile-swap">
+            {userId && selectedAccount?.cookie ? (
+              <div key={userId?.toString()} className="h-full w-full animate-profile-swap">
                 <UserProfileView
-                  userId={activeUserId}
+                  userId={userId}
                   requestCookie={selectedAccount.cookie}
                   accountUserId={selectedAccount.userId}
                   isOwnAccount={false}
                   privacyMode={!!privacyMode}
                   onClose={onClose}
                   showCloseButton={false}
-                  onSelectProfile={(id) => setActiveUserId(id)}
+                  onSelectProfile={(id) => setNestedProfileId(id)}
                   onJoinGame={onJoinGame}
                   initialData={
-                    activeUserId === userId && initialData
+                    initialData
                       ? {
                         displayName: initialData.displayName,
                         username: initialData.name,
@@ -104,6 +107,15 @@ const UniversalProfileModal: React.FC<UniversalProfileModalProps> = ({
         </SheetContent>
         <PageHeaderHost />
       </PageHeaderProvider>
+
+      <UniversalProfileModal
+        isOpen={nestedProfileId !== null}
+        onClose={() => setNestedProfileId(null)}
+        userId={nestedProfileId}
+        selectedAccount={selectedAccount}
+        privacyMode={privacyMode}
+        onJoinGame={onJoinGame}
+      />
     </Sheet>
   )
 }

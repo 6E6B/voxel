@@ -1,4 +1,4 @@
-import { shell } from 'electron'
+import { app, shell } from 'electron'
 import fs from 'fs'
 import path from 'path'
 import os from 'os'
@@ -13,6 +13,22 @@ export interface DetectedInstallation {
   binaryType: 'WindowsPlayer' | 'WindowsStudio' | 'MacPlayer' | 'MacStudio'
   exePath: string
 }
+
+const WINDOWS_PLAYER_EXECUTABLE = 'RobloxPlayerBeta.exe'
+const WINDOWS_STUDIO_EXECUTABLE = 'RobloxStudioBeta.exe'
+
+const normalizeWindowsInstallPath = (installPath: string): string =>
+  installPath.toLowerCase().endsWith('.exe') ? path.dirname(installPath) : installPath
+
+const getWindowsPlayerExecutablePath = (installPath: string): string =>
+  path.join(normalizeWindowsInstallPath(installPath), WINDOWS_PLAYER_EXECUTABLE)
+
+const getWindowsStudioExecutablePath = (installPath: string): string =>
+  path.join(normalizeWindowsInstallPath(installPath), WINDOWS_STUDIO_EXECUTABLE)
+
+const hasWindowsExecutable = (installPath: string): boolean =>
+  fs.existsSync(getWindowsPlayerExecutablePath(installPath)) ||
+  fs.existsSync(getWindowsStudioExecutablePath(installPath))
 
 const AWS_MIRROR = 'https://setup-aws.rbxcdn.com'
 const DEPLOY_HISTORY_URL = 'https://setup.rbxcdn.com/DeployHistory.txt'
@@ -281,7 +297,7 @@ export class RobloxInstallService {
               })
 
               request.on('error', (err) => {
-                fs.unlink(dest, () => { })
+                fs.unlink(dest, () => {})
                 reject(err)
               })
             })
@@ -454,8 +470,9 @@ export class RobloxInstallService {
       })
       child.unref()
     } else {
-      const playerExe = path.join(installPath, 'RobloxPlayerBeta.exe')
-      const studioExe = path.join(installPath, 'RobloxStudioBeta.exe')
+      const normalizedInstallPath = normalizeWindowsInstallPath(installPath)
+      const playerExe = getWindowsPlayerExecutablePath(normalizedInstallPath)
+      const studioExe = getWindowsStudioExecutablePath(normalizedInstallPath)
 
       let exePath = ''
       if (fs.existsSync(playerExe)) {
@@ -468,7 +485,7 @@ export class RobloxInstallService {
 
       const child = spawn(exePath, [], {
         detached: true,
-        cwd: installPath,
+        cwd: normalizedInstallPath,
         stdio: 'ignore'
       })
       child.unref()
@@ -607,9 +624,10 @@ export class RobloxInstallService {
       return
     }
 
-    const playerExe = path.join(installPath, 'RobloxPlayerBeta.exe')
+    const normalizedInstallPath = normalizeWindowsInstallPath(installPath)
+    const playerExe = getWindowsPlayerExecutablePath(normalizedInstallPath)
     if (!fs.existsSync(playerExe)) {
-      throw new Error('RobloxPlayerBeta.exe not found in ' + installPath)
+      throw new Error('RobloxPlayerBeta.exe not found in ' + normalizedInstallPath)
     }
 
     // We need to set registry keys for roblox-player protocol
@@ -725,12 +743,20 @@ export class RobloxInstallService {
         // Output looks like:
         // HKEY_CURRENT_USER\Software\Classes\roblox-player\DefaultIcon
         //    (Default)    REG_SZ    C:\Path\To\RobloxPlayerBeta.exe,0
+        // or:
+        //    (Default)    REG_SZ    C:\Path\To\RobloxPlayerBeta.exe
 
-        const match = stdout.match(/REG_SZ\s+([^\r\n]+),0/)
+        const match = stdout.match(/REG_SZ\s+([^\r\n]+)/)
         if (match && match[1]) {
-          const exePath = match[1].trim()
+          const exePath = match[1].trim().replace(/,0$/, '')
+          const installPath = normalizeWindowsInstallPath(exePath)
 
-          resolve(path.dirname(exePath))
+          if (fs.existsSync(exePath) || hasWindowsExecutable(installPath)) {
+            resolve(installPath)
+            return
+          }
+
+          resolve(null)
         } else {
           resolve(null)
         }
@@ -765,17 +791,83 @@ export class RobloxInstallService {
       })
       child.unref()
     } else {
-      const playerExe = path.join(installPath, 'RobloxPlayerBeta.exe')
+      const normalizedInstallPath = normalizeWindowsInstallPath(installPath)
+      const playerExe = getWindowsPlayerExecutablePath(normalizedInstallPath)
       if (!fs.existsSync(playerExe)) {
-        throw new Error('RobloxPlayerBeta.exe not found in ' + installPath)
+        throw new Error('RobloxPlayerBeta.exe not found in ' + normalizedInstallPath)
       }
 
       const child = spawn(playerExe, [protocolUrl], {
         detached: true,
-        cwd: installPath,
+        cwd: normalizedInstallPath,
         stdio: 'ignore'
       })
       child.unref()
+    }
+  }
+
+  private static async detectWindowsInstallationsInDirectory(
+    rootPath: string,
+    getVersion: (entryName: string) => string | null
+  ): Promise<DetectedInstallation[]> {
+    const detected: DetectedInstallation[] = []
+
+    if (!fs.existsSync(rootPath)) {
+      return detected
+    }
+
+    const entries = await fs.promises.readdir(rootPath, { withFileTypes: true })
+
+    for (const entry of entries) {
+      if (!entry.isDirectory()) {
+        continue
+      }
+
+      const version = getVersion(entry.name)
+      if (!version) {
+        continue
+      }
+
+      const versionDir = path.join(rootPath, entry.name)
+      const playerExe = getWindowsPlayerExecutablePath(versionDir)
+      if (fs.existsSync(playerExe)) {
+        detected.push({
+          path: versionDir,
+          version,
+          binaryType: 'WindowsPlayer',
+          exePath: playerExe
+        })
+        continue
+      }
+
+      const studioExe = getWindowsStudioExecutablePath(versionDir)
+      if (fs.existsSync(studioExe)) {
+        detected.push({
+          path: versionDir,
+          version,
+          binaryType: 'WindowsStudio',
+          exePath: studioExe
+        })
+      }
+    }
+
+    return detected
+  }
+
+  static async detectManagedInstallations(): Promise<DetectedInstallation[]> {
+    if (process.platform === 'darwin') {
+      return []
+    }
+
+    try {
+      const managedVersionsPath = path.join(app.getPath('userData'), 'Versions')
+      return this.detectWindowsInstallationsInDirectory(
+        managedVersionsPath,
+        (entryName) => entryName
+      )
+    } catch (e) {
+      console.error('[RobloxInstallService] Failed to detect managed installations:', e)
+      return []
     }
   }
 
@@ -811,46 +903,12 @@ export class RobloxInstallService {
       }
 
       const robloxVersionsPath = path.join(os.homedir(), 'AppData', 'Local', 'Roblox', 'Versions')
-
-      if (!fs.existsSync(robloxVersionsPath)) {
-        return detected
-      }
-
-      const entries = await fs.promises.readdir(robloxVersionsPath, { withFileTypes: true })
-
-      for (const entry of entries) {
-        if (!entry.isDirectory() || !entry.name.startsWith('version-')) {
-          continue
-        }
-
-        const versionDir = path.join(robloxVersionsPath, entry.name)
-        const versionHash = entry.name.replace('version-', '')
-
-        const playerExe = path.join(versionDir, 'RobloxPlayerBeta.exe')
-        if (fs.existsSync(playerExe)) {
-          detected.push({
-            path: versionDir,
-            version: versionHash,
-            binaryType: 'WindowsPlayer',
-            exePath: playerExe
-          })
-          continue
-        }
-
-        const studioExe = path.join(versionDir, 'RobloxStudioBeta.exe')
-        if (fs.existsSync(studioExe)) {
-          detected.push({
-            path: versionDir,
-            version: versionHash,
-            binaryType: 'WindowsStudio',
-            exePath: studioExe
-          })
-        }
-      }
+      return await this.detectWindowsInstallationsInDirectory(robloxVersionsPath, (entryName) =>
+        entryName.startsWith('version-') ? entryName.replace('version-', '') : null
+      )
     } catch (e) {
       console.error('[RobloxInstallService] Failed to detect default installations:', e)
+      return []
     }
-
-    return detected
   }
 }

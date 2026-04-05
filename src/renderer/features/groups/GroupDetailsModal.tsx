@@ -33,7 +33,6 @@ export const GroupDetailsModal = ({
 
         <SheetHeader>
           <SheetTitle>Group Details</SheetTitle>
-          <SheetClose />
         </SheetHeader>
 
         <SheetBody className="flex-1 overflow-hidden p-0 flex flex-col">

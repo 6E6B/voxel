@@ -55,7 +55,6 @@ const PlayerInventorySheet = ({
               </div>
               <SheetTitle>{`${username}'s Inventory`}</SheetTitle>
             </div>
-            <SheetClose />
           </SheetHeader>
 
           <SheetBody className="relative flex-1 overflow-hidden p-0">

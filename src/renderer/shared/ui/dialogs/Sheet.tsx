@@ -1,14 +1,17 @@
 import * as React from 'react'
 import { createPortal } from 'react-dom'
-import { motion, AnimatePresence, useDragControls, PanInfo } from 'framer-motion'
-import { X } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { X, ChevronLeft } from 'lucide-react'
 import { cn } from '@renderer/shared/lib/utils'
 import { registerModal, isTopModal } from './Dialog'
+
+// Track sheet nesting depth via React context (portals preserve the tree)
+const SheetStackContext = React.createContext(0)
 
 const SheetContext = React.createContext<{
   isOpen: boolean
   onClose: () => void
-  dragControls: ReturnType<typeof useDragControls> | null
+  isNested: boolean
   shouldRenderContent: boolean
 } | null>(null)
 
@@ -28,8 +31,6 @@ interface SheetProps {
 }
 
 const SHEET_MARGIN_TOP = 48 // px from top when fully open
-const DRAG_CLOSE_THRESHOLD = 150 // px drag distance to trigger close
-const DRAG_VELOCITY_THRESHOLD = 500 // velocity to trigger close
 const CONTENT_RENDER_DELAY = 50 // ms delay before rendering heavy content
 
 // Track open sheets to handle nested sheets properly
@@ -38,7 +39,8 @@ let openSheetsCount = 0
 const Sheet: React.FC<SheetProps> = ({ isOpen, onClose, children, className }) => {
   const [isVisible, setIsVisible] = React.useState(false)
   const [shouldRenderContent, setShouldRenderContent] = React.useState(false)
-  const dragControls = useDragControls()
+  const parentDepth = React.useContext(SheetStackContext)
+  const isNested = parentDepth > 0
   const constraintsRef = React.useRef<HTMLDivElement>(null)
   const sheetRef = React.useRef<HTMLDivElement>(null)
   const prevIsOpenRef = React.useRef(false)
@@ -134,79 +136,66 @@ const Sheet: React.FC<SheetProps> = ({ isOpen, onClose, children, className }) =
     return undefined
   }, [isOpen, onClose])
 
-  const handleDragEnd = (_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
-    const shouldClose =
-      info.offset.y > DRAG_CLOSE_THRESHOLD || info.velocity.y > DRAG_VELOCITY_THRESHOLD
-
-    if (shouldClose) {
-      onClose()
-    }
-  }
-
   if (!isVisible) return null
 
   // Use portal to render outside of #app-container so it's not affected by the zoom
   return createPortal(
-    <SheetContext.Provider value={{ isOpen, onClose, dragControls, shouldRenderContent }}>
-      <div
-        ref={constraintsRef}
-        className="fixed inset-0 z-[60] overflow-hidden"
-        data-sheet-active={isOpen ? 'true' : 'false'}
-        data-sheet-container="true"
-      >
-        {/* Window drag region */}
+    <SheetStackContext.Provider value={parentDepth + 1}>
+      <SheetContext.Provider value={{ isOpen, onClose, isNested, shouldRenderContent }}>
         <div
-          className="absolute top-0 left-0 right-0 h-[30px] z-[70] pointer-events-auto"
-          style={{ WebkitAppRegion: 'drag', background: 'transparent' } as React.CSSProperties}
-        />
+          ref={constraintsRef}
+          className="fixed inset-0 z-[60] overflow-hidden"
+          data-sheet-active={isOpen ? 'true' : 'false'}
+          data-sheet-container="true"
+        >
+          {/* Window drag region */}
+          <div
+            className="absolute top-0 left-0 right-0 h-[30px] z-[70] pointer-events-auto"
+            style={{ WebkitAppRegion: 'drag', background: 'transparent' } as React.CSSProperties}
+          />
 
-        <AnimatePresence>
-          {isOpen && (
-            <>
-              {/* Backdrop */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.3 }}
-                className="absolute inset-0 bg-black/40"
-                onClick={onClose}
-                onContextMenu={(e) => {
-                  e.preventDefault()
-                  e.stopPropagation()
-                }}
-              />
+          <AnimatePresence>
+            {isOpen && (
+              <>
+                {/* Backdrop */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="absolute inset-0 bg-black/40"
+                  onClick={onClose}
+                  onContextMenu={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                  }}
+                />
 
-              {/* Sheet Container */}
-              <motion.div
-                ref={sheetRef}
-                initial={{ y: window.innerHeight }}
-                animate={{ y: 0 }}
-                exit={{ y: window.innerHeight }}
-                transition={{
-                  type: 'spring',
-                  damping: 30,
-                  stiffness: 300,
-                  mass: 0.8
-                }}
-                drag="y"
-                dragControls={dragControls}
-                dragConstraints={{ top: 0, bottom: 0 }}
-                dragElastic={{ top: 0, bottom: 0.5 }}
-                onDragEnd={handleDragEnd}
-                dragListener={false}
-                style={{
-                  top: SHEET_MARGIN_TOP
-                }}
-                className={cn('absolute inset-x-0 bottom-0 flex flex-col', className)}
-              >
-                {children}
-              </motion.div>
-            </>
-          )}
-        </AnimatePresence>
-      </div>
-    </SheetContext.Provider>,
+                {/* Sheet Container */}
+                <motion.div
+                  ref={sheetRef}
+                  initial={{ y: window.innerHeight }}
+                  animate={{ y: 0 }}
+                  exit={{ y: window.innerHeight }}
+                  transition={{
+                    type: 'spring',
+                    damping: 30,
+                    stiffness: 300,
+                    mass: 0.8
+                  }}
+                  style={{
+                    top: SHEET_MARGIN_TOP
+                  }}
+                  className={cn('absolute inset-x-0 bottom-0 flex flex-col', className)}
+                >
+                  {children}
+                </motion.div>
+              </>
+            )}
+          </AnimatePresence>
+        </div>
+      </SheetContext.Provider>
+    </SheetStackContext.Provider>,
     document.body
   )
 }
@@ -239,45 +228,49 @@ const SheetContent = React.forwardRef<HTMLDivElement, SheetContentProps>(
 SheetContent.displayName = 'SheetContent'
 
 const SheetHandle = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
-  ({ className, ...props }, ref) => {
-    const { dragControls } = useSheet()
+  (_props, _ref) => null
+)
+SheetHandle.displayName = 'SheetHandle'
 
-    const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-      // Start dragging the sheet when handle is pressed
-      if (dragControls) {
-        dragControls.start(e)
-      }
-      props.onPointerDown?.(e)
-    }
+const SheetHeader = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
+  ({ className, children, ...props }, ref) => {
+    const { isNested, onClose } = useSheet()
 
     return (
       <div
         ref={ref}
         className={cn(
-          'flex-shrink-0 py-1.5 cursor-grab active:cursor-grabbing touch-none select-none',
+          'flex-shrink-0 flex items-center pr-3 pt-3 pb-3 border-b border-[var(--color-border)]',
+          isNested ? 'pl-[15px]' : 'pl-[18px]',
           className
         )}
-        onPointerDown={handlePointerDown}
         {...props}
       >
-        <div className="mx-auto w-10 h-1 rounded-full bg-[var(--color-border-strong)]/60" />
+        {isNested && (
+          <motion.button
+            initial={{ opacity: 0, width: 0, marginRight: 0 }}
+            animate={{ opacity: 1, width: 28, marginRight: 8 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+            onClick={onClose}
+            className="pressable flex items-center justify-center h-7 rounded-md text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-hover)] transition-colors shrink-0 overflow-hidden"
+          >
+            <ChevronLeft size={16} />
+          </motion.button>
+        )}
+
+        <div className="flex-1 min-w-0">
+          {children}
+        </div>
+
+        <button
+          onClick={onClose}
+          className="pressable flex items-center justify-center w-7 h-7 rounded-md text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-hover)] transition-colors shrink-0 ml-3"
+        >
+          <X size={15} />
+        </button>
       </div>
     )
   }
-)
-SheetHandle.displayName = 'SheetHandle'
-
-const SheetHeader = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
-  ({ className, ...props }, ref) => (
-    <div
-      ref={ref}
-      className={cn(
-        'flex-shrink-0 flex items-center justify-between pl-[18px] pr-3 pb-3 border-b border-[var(--color-border)]',
-        className
-      )}
-      {...props}
-    />
-  )
 )
 SheetHeader.displayName = 'SheetHeader'
 

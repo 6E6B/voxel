@@ -153,7 +153,7 @@ export const FriendsSection: React.FC<FriendsSectionProps> = ({
                       </div>
                       <div className="flex items-center justify-center gap-1 text-[11px] font-semibold text-[var(--color-text-secondary)] mt-0.5">
                         <span
-                          className={`inline-block w-2 h-2 rounded-full border border-solid ${getStatusBorderColor(friendStatus)} ${getStatusColor(friendStatus)}`}
+                          className={`inline-block w-2 h-2 shrink-0 rounded-full border border-solid ${getStatusBorderColor(friendStatus)} ${getStatusColor(friendStatus)}`}
                         />
                         <span className="truncate">
                           {friendStatus === AccountStatus.InGame && friend.lastLocation

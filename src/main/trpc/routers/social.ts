@@ -49,6 +49,9 @@ export const socialRouter = router({
     getGroupGames: contractMutation(socialContracts.getGroupGames, async (_ctx, groupId, cursor, limit) => {
         return RobloxGroupService.getGroupGames(groupId, cursor, limit)
     }),
+    getGroupMembers: contractMutation(socialContracts.getGroupMembers, async (_ctx, groupId, roleId, limit) => {
+        return RobloxGroupService.getGroupMembers(groupId, roleId, limit)
+    }),
     getUserGroupsFull: contractMutation(socialContracts.getUserGroupsFull, async (_ctx, userId) => {
         return RobloxGroupService.getUserGroups(userId)
     }),

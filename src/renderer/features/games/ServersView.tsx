@@ -1,9 +1,13 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react'
-import { Server, Wifi, ArrowRight, Loader2, Globe, Users, Crown } from 'lucide-react'
+import { Server, Wifi, ArrowRight, Loader2, Globe, Users, Crown, RefreshCw } from 'lucide-react'
 import { getPingColor } from '@renderer/shared/utils/serverUtils'
 import CustomCheckbox from '@renderer/shared/ui/buttons/CustomCheckbox'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@renderer/shared/ui/display/Tooltip'
-import { useGameServers, usePrivateServers } from '@renderer/features/games/api/useServers'
+import {
+  useGameServers,
+  usePrivateServers,
+  useServerQueuePositions
+} from '@renderer/features/games/api/useServers'
 import { ErrorMessage } from '@renderer/shared/ui/feedback/ErrorMessage'
 import { EmptyState } from '@renderer/shared/ui/feedback/EmptyState'
 import { ConfirmModal } from '@renderer/shared/ui/dialogs/ConfirmModal'
@@ -60,12 +64,14 @@ const ServersList = ({ placeId, onJoin, onJoinPrivateServer }: ServersListProps)
     return servers.filter((server) => server.playing < server.maxPlayers)
   }, [servers, excludeFullGames])
 
+  const { queuePositionsByServerId, loadingServerIds, refreshServerQueuePosition } = useServerQueuePositions(placeId)
+
   // Load saved excludeFullGames preference on mount
   useEffect(() => {
     const loadPreference = async () => {
       try {
         const savedPreference = await window.api.getExcludeFullGames()
-        setExcludeFullGames(savedPreference)
+        setExcludeFullGames(Boolean(savedPreference))
         isPreferenceLoaded.current = true
       } catch (error) {
         console.error('Failed to load excludeFullGames preference:', error)
@@ -94,25 +100,6 @@ const ServersList = ({ placeId, onJoin, onJoinPrivateServer }: ServersListProps)
       fetchNextPage()
     }
   }, [hasNextPage, isFetchingNextPage, fetchNextPage])
-
-  const observerRef = useRef<HTMLDivElement | null>(null)
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
-          handleLoadMore()
-        }
-      },
-      { threshold: 0.1 }
-    )
-
-    if (observerRef.current) {
-      observer.observe(observerRef.current)
-    }
-
-    return () => observer.disconnect()
-  }, [handleLoadMore, hasNextPage, isFetchingNextPage])
 
   const hasPrivateServers = privateServers.length > 0
   const showPrivateSection = hasPrivateServers || isLoadingPrivateServers
@@ -239,10 +226,18 @@ const ServersList = ({ placeId, onJoin, onJoinPrivateServer }: ServersListProps)
               ) : (
                 <div className="space-y-2">
                   {filteredServers.map((server) => (
-                    <button
+                    <div
                       key={server.id}
+                      role="button"
+                      tabIndex={0}
                       className="w-full text-left rounded-xl border bg-[var(--color-surface)] border-[var(--color-border)] hover:border-[var(--color-border-strong)] hover:bg-[var(--color-surface-hover)] transition-all group cursor-pointer px-4 py-3"
                       onClick={() => setSelectedServerId(server.id)}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault()
+                          setSelectedServerId(server.id)
+                        }
+                      }}
                     >
                       <div className="flex items-center justify-between">
                         <div className="font-mono text-xs text-[var(--color-text-muted)] group-hover:text-[var(--color-text-secondary)] truncate transition-colors min-w-0 flex-1">
@@ -254,6 +249,27 @@ const ServersList = ({ placeId, onJoin, onJoinPrivateServer }: ServersListProps)
                             <span className="text-xs text-[var(--color-text-secondary)] tabular-nums">
                               {server.playing}
                               <span className="text-[var(--color-text-muted)]">/{server.maxPlayers}</span>
+                              {server.playing >= server.maxPlayers ? (
+                                <button
+                                  type="button"
+                                  aria-label="Refresh queue position"
+                                  title="Refresh queue position"
+                                  className="ml-1.5 inline-flex items-center justify-center rounded text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors"
+                                  onClick={(event) => {
+                                    event.stopPropagation()
+                                    void refreshServerQueuePosition(server.id)
+                                  }}
+                                >
+                                  {loadingServerIds[server.id] ? (
+                                    <Loader2 size={11} className="animate-spin" />
+                                  ) : (
+                                    <RefreshCw size={11} />
+                                  )}
+                                </button>
+                              ) : null}
+                              {queuePositionsByServerId[server.id] ? (
+                                <span className="ml-1 text-amber-400">+{queuePositionsByServerId[server.id]}</span>
+                              ) : null}
                             </span>
                           </div>
                           <div className="flex items-center gap-1.5">
@@ -264,12 +280,12 @@ const ServersList = ({ placeId, onJoin, onJoinPrivateServer }: ServersListProps)
                           </div>
                         </div>
                       </div>
-                    </button>
+                    </div>
                   ))}
 
                   {/* Load more */}
                   {hasNextPage && (
-                    <div ref={observerRef} className="py-3">
+                    <div className="py-3">
                       {isFetchingNextPage ? (
                         <div className="flex items-center justify-center gap-2 text-[var(--color-text-muted)] text-sm">
                           <Loader2 className="animate-spin" size={14} />

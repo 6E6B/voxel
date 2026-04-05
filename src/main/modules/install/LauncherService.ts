@@ -1,5 +1,7 @@
 import { shell } from 'electron'
 import { exec } from 'child_process'
+import fs from 'fs'
+import path from 'path'
 import { promisify } from 'util'
 import { randomUUID } from 'crypto'
 import { RobloxAuthService } from '../auth/RobloxAuthService'
@@ -8,6 +10,55 @@ import { RobloxInstallService } from './InstallService'
 const execAsync = promisify(exec)
 
 export class RobloxLauncherService {
+  private static normalizeLaunchInstallPath(installPath: string): string {
+    return process.platform === 'win32' && installPath.toLowerCase().endsWith('.exe')
+      ? path.dirname(installPath)
+      : installPath
+  }
+
+  private static hasLaunchableExecutable(installPath: string): boolean {
+    const normalizedInstallPath = this.normalizeLaunchInstallPath(installPath)
+
+    if (process.platform === 'darwin') {
+      return fs.existsSync(normalizedInstallPath)
+    }
+
+    return fs.existsSync(path.join(normalizedInstallPath, 'RobloxPlayerBeta.exe'))
+  }
+
+  private static async resolveLaunchInstallPath(
+    preferredInstallPath?: string
+  ): Promise<string | null> {
+    if (preferredInstallPath && this.hasLaunchableExecutable(preferredInstallPath)) {
+      return this.normalizeLaunchInstallPath(preferredInstallPath)
+    }
+
+    const activeInstallPath = await RobloxInstallService.getActiveInstallPath()
+    if (activeInstallPath && this.hasLaunchableExecutable(activeInstallPath)) {
+      return this.normalizeLaunchInstallPath(activeInstallPath)
+    }
+
+    const detectedInstalls = await RobloxInstallService.detectDefaultInstallations()
+    const playerInstall = detectedInstalls.find(
+      (install) =>
+        (install.binaryType === 'WindowsPlayer' || install.binaryType === 'MacPlayer') &&
+        this.hasLaunchableExecutable(install.path)
+    )
+
+    if (playerInstall) {
+      return playerInstall.path
+    }
+
+    const managedInstalls = await RobloxInstallService.detectManagedInstallations()
+    const managedPlayerInstall = managedInstalls.find(
+      (install) =>
+        (install.binaryType === 'WindowsPlayer' || install.binaryType === 'MacPlayer') &&
+        this.hasLaunchableExecutable(install.path)
+    )
+
+    return managedPlayerInstall?.path ?? null
+  }
+
   private static async getRobloxProcessCount(): Promise<number> {
     try {
       if (process.platform === 'darwin') {
@@ -43,8 +94,7 @@ export class RobloxLauncherService {
     accessCode?: string
   ) {
     try {
-      const csrfToken = await RobloxAuthService.getCsrfToken(cookie)
-      const ticket = await RobloxAuthService.getAuthenticationTicket(cookie, csrfToken)
+      const ticket = await RobloxAuthService.getAuthenticationTicket(cookie)
 
       const nowMs = Date.now()
       const browserTrackerId = Date.now().toString() + Math.floor(Math.random() * 10000)
@@ -106,8 +156,10 @@ export class RobloxLauncherService {
 
       const initialCount = await this.getRobloxProcessCount()
 
-      if (installPath) {
-        await RobloxInstallService.launchWithProtocol(installPath, protocolLaunchCommand)
+      const resolvedInstallPath = await this.resolveLaunchInstallPath(installPath)
+
+      if (resolvedInstallPath) {
+        await RobloxInstallService.launchWithProtocol(resolvedInstallPath, protocolLaunchCommand)
       } else {
         await shell.openExternal(protocolLaunchCommand)
       }

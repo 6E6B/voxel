@@ -50,7 +50,8 @@ export const safeRequest = <T>(options: RequestOptions): Promise<T> => {
 
     const request = net.request({
       method,
-      url: options.url
+      url: options.url,
+      credentials: 'omit'
     })
 
     const timeout = setTimeout(() => {

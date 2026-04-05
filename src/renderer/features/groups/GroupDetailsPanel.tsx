@@ -86,35 +86,51 @@ const GameCard = ({ game }: GameCardProps) => {
   }
 
   return (
-    <Card
-      className="flex items-center gap-3 p-3 bg-neutral-900/50 border-neutral-800 hover:border-neutral-700 transition-all cursor-pointer group"
+    <div
       onClick={handleOpenGame}
+      className="group bg-neutral-900/50 border border-neutral-800 rounded-xl overflow-hidden cursor-pointer hover:border-neutral-600 hover:bg-neutral-900 hover:-translate-y-1 transition-all shadow-sm"
     >
-      <div className="w-16 h-16 rounded-lg overflow-hidden bg-neutral-800 shrink-0">
+      <div className="aspect-square w-full relative overflow-hidden bg-black">
         {game.thumbnailUrl ? (
-          <img src={game.thumbnailUrl} alt={game.name} className="w-full h-full object-cover" />
+          <>
+            <img
+              src={game.thumbnailUrl}
+              alt={game.name}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              loading="lazy"
+            />
+            <div
+              className="absolute inset-0 pointer-events-none"
+              style={{
+                background:
+                  'linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.45) 45%, rgba(0,0,0,0.9) 100%)'
+              }}
+            />
+          </>
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-neutral-600">
-            <Gamepad2 size={24} />
+          <div className="w-full h-full flex items-center justify-center text-neutral-700">
+            <Gamepad2 size={32} />
           </div>
         )}
+        <div className="absolute bottom-3 left-3 right-3 z-10">
+          <h3 className="font-bold text-white truncate text-shadow-sm">{game.name}</h3>
+        </div>
       </div>
-      <div className="flex-1 min-w-0">
-        <h4 className="font-medium text-white truncate text-sm group-hover:text-[var(--accent-color)] transition-colors">
-          {game.name}
-        </h4>
-        {game.placeVisits !== undefined && (
-          <div className="flex items-center gap-1 text-xs text-neutral-500 mt-0.5">
-            <TrendingUp size={12} />
-            <span>{formatNumber(game.placeVisits)} visits</span>
+      <div className="p-3 flex items-center justify-between text-xs border-t border-neutral-800">
+        {game.placeVisits !== undefined ? (
+          <div className="flex items-center gap-1.5 text-neutral-400">
+            <TrendingUp size={14} />
+            <span className="font-semibold">{formatNumber(game.placeVisits)} visits</span>
           </div>
+        ) : (
+          <span />
         )}
+        <ExternalLink
+          size={14}
+          className="text-neutral-600 group-hover:text-neutral-400 transition-colors"
+        />
       </div>
-      <ExternalLink
-        size={16}
-        className="text-neutral-600 group-hover:text-neutral-400 transition-colors shrink-0"
-      />
-    </Card>
+    </div>
   )
 }
 
@@ -167,6 +183,7 @@ const MemberAvatar = ({
 interface MembersSectionProps {
   members: (GroupMember | GroupRoleMember)[]
   membersLoading: boolean
+  membersError: boolean
   sortedRoles: GroupRole[]
   selectedRoleId: string | null
   setSelectedRoleId: (value: string | null) => void
@@ -177,6 +194,7 @@ interface MembersSectionProps {
 const MembersSection = ({
   members,
   membersLoading,
+  membersError,
   sortedRoles,
   selectedRoleId,
   setSelectedRoleId,
@@ -205,7 +223,7 @@ const MembersSection = ({
         />
       </div>
 
-      <div className="relative flex items-center">
+      <div className="relative overflow-visible">
         {/* Left scroll button */}
         <AnimatePresence>
           {canScrollLeft && (
@@ -215,7 +233,7 @@ const MembersSection = ({
               exit={{ opacity: 0, scale: 0.8 }}
               transition={{ duration: 0.15 }}
               onClick={() => scroll('left')}
-              className="absolute -left-3 z-20 w-10 h-10 flex items-center justify-center bg-neutral-800 hover:bg-neutral-700 rounded-full shadow-lg transition-colors border border-neutral-700"
+              className="absolute -left-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 flex items-center justify-center bg-neutral-800 hover:bg-neutral-700 rounded-full shadow-lg transition-colors border border-neutral-700"
               aria-label="Scroll left"
             >
               <ChevronLeft size={24} className="text-white" />
@@ -231,16 +249,23 @@ const MembersSection = ({
               exit={{ opacity: 0, scale: 0.8 }}
               transition={{ duration: 0.15 }}
               onClick={() => scroll('right')}
-              className="absolute -right-3 z-20 w-10 h-10 flex items-center justify-center bg-neutral-800 hover:bg-neutral-700 rounded-full shadow-lg transition-colors border border-neutral-700"
+              className="absolute -right-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 flex items-center justify-center bg-neutral-800 hover:bg-neutral-700 rounded-full shadow-lg transition-colors border border-neutral-700"
               aria-label="Scroll right"
             >
               <ChevronRight size={24} className="text-white" />
             </motion.button>
           )}
         </AnimatePresence>
-
+        {/* Left fade gradient */}
+        {canScrollLeft && (
+          <div className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-[var(--color-surface)] to-transparent z-10 pointer-events-none" />
+        )}
+        {/* Right fade gradient */}
+        {canScrollRight && (
+          <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-[var(--color-surface)] to-transparent z-10 pointer-events-none" />
+        )}
         <div ref={scrollRef} className="overflow-x-auto pt-2 pb-4 scrollbar-hide">
-          <div className="flex gap-4">
+          <div className="flex gap-4 pl-3 pr-3">
             {membersLoading ? (
               [1, 2, 3, 4, 5, 6].map((i) => (
                 <div key={i} className="w-28 space-y-2 flex flex-col items-center shrink-0">
@@ -262,6 +287,8 @@ const MembersSection = ({
                   />
                 )
               })
+            ) : membersError ? (
+              <div className="text-red-400 text-sm py-4">Failed to load members.</div>
             ) : (
               <div className="text-neutral-500 text-sm py-4">No members found.</div>
             )}
@@ -337,9 +364,13 @@ export const GroupDetailsPanel = ({
   const { data: rolesData } = useGroupRoles(groupId)
   const { data: games = [] } = useGroupGames(groupId)
   const { data: socialLinks = [] } = useGroupSocialLinks(selectedAccount, groupId)
-  const { data: membersData, isLoading: membersLoading } = useGroupMembers(
+  const {
+    data: membersData,
+    isLoading: membersLoading,
+    isError: membersError
+  } = useGroupMembers(
     groupId,
-    selectedRoleId ? parseInt(selectedRoleId) : undefined
+    selectedRoleId ? parseInt(selectedRoleId, 10) : undefined
   )
 
   // Group store query
@@ -704,15 +735,18 @@ export const GroupDetailsPanel = ({
                 )}
 
                 {/* Members Section */}
-                <MembersSection
-                  members={members}
-                  membersLoading={membersLoading}
-                  sortedRoles={sortedRoles}
-                  selectedRoleId={selectedRoleId}
-                  setSelectedRoleId={setSelectedRoleId}
-                  memberThumbnails={memberThumbnails}
-                  onViewProfile={onViewProfile}
-                />
+                {!membersError && (
+                  <MembersSection
+                    members={members}
+                    membersLoading={membersLoading}
+                    membersError={membersError}
+                    sortedRoles={sortedRoles}
+                    selectedRoleId={selectedRoleId}
+                    setSelectedRoleId={setSelectedRoleId}
+                    memberThumbnails={memberThumbnails}
+                    onViewProfile={onViewProfile}
+                  />
+                )}
 
                 {/* Games Section */}
                 {games.length > 0 && (
@@ -721,7 +755,7 @@ export const GroupDetailsPanel = ({
                       <h3 className="text-lg font-bold text-white">Games</h3>
                       <span className="text-xs text-neutral-500">{games.length} games</span>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))' }}>
                       {games.slice(0, 6).map((game: GroupGame) => (
                         <GameCard key={game.id} game={game} />
                       ))}

@@ -16,6 +16,7 @@ export const socialContracts = {
     unfriend: defineProcedure(z.tuple([z.string(), z.number()])),
     getBatchGroupDetails: defineProcedure(z.tuple([z.array(z.number())])),
     getGroupGames: defineProcedure(z.tuple([z.number(), z.string().optional(), z.number().optional()])),
+    getGroupMembers: defineProcedure(z.tuple([z.number(), z.number().optional(), z.number().optional()])),
     getUserGroupsFull: defineProcedure(z.tuple([z.number()])),
     getPendingGroupRequests: defineProcedure(z.tuple([z.string()])),
     getGroupThumbnails: defineProcedure(z.tuple([z.array(z.number())])),

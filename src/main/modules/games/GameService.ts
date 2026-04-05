@@ -709,7 +709,28 @@ export class RobloxGameService {
     cookie: string
   ): Promise<number | null> {
     try {
-      const joinResult = await this.getJoinScript(placeId, serverId, cookie)
+      const joinResult = await requestWithCsrf(
+        z
+          .object({
+            queuePosition: z.number().nullish()
+          })
+          .passthrough(),
+        {
+          url: 'https://gamejoin.roblox.com/v1/join-game-instance',
+          method: 'POST',
+          body: {
+            placeId: Number(placeId),
+            gameId: serverId,
+            gameJoinAttemptId: randomUUID(),
+            joinOrigin: 'QueueInfo'
+          },
+          cookie,
+          headers: {
+            'X-Roblox-Place-Id': placeId.toString(),
+            'User-Agent': 'Roblox/WinInet'
+          }
+        }
+      )
 
       if (typeof joinResult.queuePosition === 'number') {
         return joinResult.queuePosition

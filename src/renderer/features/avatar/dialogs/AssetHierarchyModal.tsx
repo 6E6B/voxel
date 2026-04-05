@@ -275,7 +275,6 @@ export const AssetHierarchyModal = ({
         <SheetHandle />
         <SheetHeader>
           <SheetTitle>{assetName}</SheetTitle>
-          <SheetClose />
         </SheetHeader>
         <SheetBody className="flex-1 flex min-h-0 p-0">
           {loading ? (

@@ -46,6 +46,20 @@ type ViewerRegistration = {
 
 const viewerRegistrations = new Map<string, ViewerRegistration>()
 
+type ChromeShim = {
+  runtime: {
+    getManifest: () => { version: string }
+    getURL: (path: string) => string
+    sendMessage: () => Promise<void>
+  }
+  storage: {
+    local: {
+      get: () => Promise<Record<string, unknown>>
+      set: () => Promise<void>
+    }
+  }
+}
+
 function isDescendantOfOrEqual(instance: any, ancestor: any): boolean {
   let current = instance
   while (current) {
@@ -66,10 +80,6 @@ function installRendererInstanceFilter(): void {
   mutableRenderer.addInstance = (instance: any, auth: any) => {
     const activeRig = sharedOutfitRenderer?.currentRig
 
-    // Ignore late async addInstance calls from stale renderers. Without this,
-    // an old preview can finish after a newer one and inject a blank/ghost rig
-    // into the shared Three.js scene. We check that the instance is the active
-    // rig or a descendant of it (traversing up the parent chain).
     if (!activeRig || !isDescendantOfOrEqual(instance, activeRig)) {
       return
     }
@@ -119,8 +129,10 @@ function activateHighestPriorityViewer(): void {
 }
 
 function installChromeShim(): void {
-  if (typeof globalThis.chrome === 'undefined') {
-    ; (globalThis as any).chrome = {
+  const globalWithChrome = globalThis as typeof globalThis & { chrome?: ChromeShim }
+
+  if (typeof globalWithChrome.chrome === 'undefined') {
+    globalWithChrome.chrome = {
       runtime: {
         getManifest: () => ({ version: '1.0.0' }),
         getURL: (path: string) => path,
@@ -381,7 +393,7 @@ export const RoAvatarViewer: React.FC<RoAvatarViewerProps> = ({
         if (!success) {
           const msg = 'Failed to initialize RoAvatar renderer'
           setSetupError(msg)
-          onError?.(msg)
+          latestOnErrorRef.current?.(msg)
           return
         }
 
@@ -391,7 +403,7 @@ export const RoAvatarViewer: React.FC<RoAvatarViewerProps> = ({
         if (!mountedRef.current) return
         const msg = err?.message || 'Failed to setup RoAvatar renderer'
         setSetupError(msg)
-        onError?.(msg)
+        latestOnErrorRef.current?.(msg)
       }
     }
 
@@ -405,7 +417,7 @@ export const RoAvatarViewer: React.FC<RoAvatarViewerProps> = ({
         containerRef.current.removeChild(el)
       }
     }
-  }, [clearCameraAdjustmentTimers, onError])
+  }, [clearCameraAdjustmentTimers])
 
   useEffect(() => {
     const id = viewerIdRef.current

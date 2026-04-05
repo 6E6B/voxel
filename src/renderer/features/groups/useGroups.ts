@@ -248,11 +248,11 @@ export function useGroupMembers(groupId: number | null, roleId?: number) {
       data: Array<GroupMembersResponse['data'][number] | GroupRoleMembersResponse['data'][number]>
     }> => {
       if (!groupId) return { data: [] }
-      const params = new URLSearchParams({ sortOrder: 'Desc', limit: '10' })
-      if (roleId) {
-        return robloxGet(groupRoleMembersResponseSchema, `https://groups.roblox.com/v1/groups/${groupId}/roles/${roleId}/users?${params}`)
-      }
-      return robloxGet(groupMembersResponseSchema, `https://groups.roblox.com/v1/groups/${groupId}/users?${params}`)
+      return window.api.getGroupMembers(groupId, roleId, 25) as Promise<{
+        previousPageCursor?: string | null
+        nextPageCursor?: string | null
+        data: Array<GroupMembersResponse['data'][number] | GroupRoleMembersResponse['data'][number]>
+      }>
     },
     enabled: !!groupId,
     staleTime: 60 * 1000 // 1 minute

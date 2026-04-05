@@ -1,4 +1,5 @@
-import { useQuery, useInfiniteQuery } from '@tanstack/react-query'
+import { useCallback, useEffect, useState } from 'react'
+import { useQuery, useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
 import { queryKeys } from '@renderer/shared/query/queryKeys'
 import { GameServer, PrivateServer } from '@renderer/shared/types'
 
@@ -44,8 +45,10 @@ export function useGameServers(
     },
     getNextPageParam: (lastPage) => lastPage.nextPageCursor,
     enabled: enabled && !!placeId.trim(),
-    refetchInterval: 5000, // Auto-refresh every 5 seconds
-    staleTime: 4000, // Slightly less than refetch interval
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+    staleTime: 30 * 1000,
     initialPageParam: undefined as string | undefined
   })
 }
@@ -64,6 +67,65 @@ export function useGameName(placeId: string, enabled: boolean = true) {
     enabled: enabled && !!placeId.trim(),
     staleTime: 5 * 60 * 1000 // 5 minutes (game names don't change often)
   })
+}
+
+export function useServerQueuePositions(
+  placeId: string
+) {
+  const queryClient = useQueryClient()
+  const [queuePositionsByServerId, setQueuePositionsByServerId] = useState<Record<string, number>>({})
+  const [loadingServerIds, setLoadingServerIds] = useState<Record<string, boolean>>({})
+
+  useEffect(() => {
+    setQueuePositionsByServerId({})
+    setLoadingServerIds({})
+  }, [placeId])
+
+  const refreshServerQueuePosition = useCallback(
+    async (serverId: string) => {
+      if (!placeId.trim()) return null
+
+      setLoadingServerIds((current) => ({
+        ...current,
+        [serverId]: true
+      }))
+
+      try {
+        const queuePosition = await queryClient.fetchQuery({
+          queryKey: queryKeys.servers.queuePosition(placeId, serverId),
+          queryFn: () => window.api.getServerQueuePosition(placeId, serverId) as Promise<number | null>,
+          staleTime: 0
+        })
+
+        setQueuePositionsByServerId((current) => {
+          const next = { ...current }
+
+          if (typeof queuePosition === 'number' && queuePosition > 0) {
+            next[serverId] = queuePosition
+          } else {
+            delete next[serverId]
+          }
+
+          return next
+        })
+
+        return queuePosition
+      } finally {
+        setLoadingServerIds((current) => {
+          const next = { ...current }
+          delete next[serverId]
+          return next
+        })
+      }
+    },
+    [placeId, queryClient]
+  )
+
+  return {
+    queuePositionsByServerId,
+    loadingServerIds,
+    refreshServerQueuePosition
+  }
 }
 
 // Private servers response

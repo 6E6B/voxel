@@ -14,13 +14,14 @@
     "typecheck": "npm run typecheck:node && npm run typecheck:web",
     "start": "electron-vite preview",
     "dev": "electron-vite dev",
-    "build": "npm run typecheck && electron-vite build",
+    "generate:icons": "node ./scripts/generate-icons.mjs",
+    "build": "npm run generate:icons && npm run typecheck && electron-vite build",
     "rebuild:native": "electron-builder install-app-deps",
     "postinstall": "electron-builder install-app-deps",
     "build:unpack": "npm run build && electron-builder --dir",
     "build:win": "npm run build && electron-builder --config electron-builder.yml --win",
-    "build:mac": "electron-vite build && electron-builder --mac",
-    "build:linux": "electron-vite build && electron-builder --linux"
+    "build:mac": "npm run build && electron-builder --mac",
+    "build:linux": "npm run build && electron-builder --linux"
   },
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.2",
@@ -31,7 +32,7 @@
     "@trpc/server": "^11.16.0",
     "@types/react-syntax-highlighter": "^15.5.13",
     "@types/xml2js": "^0.4.14",
-    "better-sqlite3": "^12.5.0",
+    "better-sqlite3": "^12.8.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "color": "^5.0.3",
@@ -70,17 +71,19 @@
     "@types/react-dom": "^19.1.9",
     "@vitejs/plugin-react": "^5.0.3",
     "autoprefixer": "^10.4.22",
-    "electron": "^38.1.2",
+    "electron": "^41.1.1",
     "electron-builder": "^26.8.1",
     "electron-vite": "^4.0.1",
     "eslint": "^9.36.0",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
+    "icon-gen": "^5.0.0",
     "postcss": "^8.5.6",
     "prettier": "^3.6.2",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
+    "sharp": "^0.34.5",
     "tailwindcss": "^4.1.17",
     "ts-morph": "^27.0.2",
     "typescript": "^5.9.2",
@@ -96,7 +99,8 @@
       "better-sqlite3",
       "electron",
       "esbuild",
-      "koffi"
+      "koffi",
+      "sharp"
     ]
   }
 }
